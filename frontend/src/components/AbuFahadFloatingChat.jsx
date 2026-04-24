@@ -143,6 +143,61 @@ const AbuFahadFloatingChat = ({
     return json?.data;
   };
 
+  const actionLabelMap = {
+    open_investigation: 'فتح التحقيق',
+    apply_suggested_fix: 'تطبيق المعالجة المقترحة',
+    view_evidence: 'عرض الأدلة',
+    escalate: 'تصعيد',
+  };
+
+  const runInteractiveAction = async (action, assistantMsg) => {
+    if (!action) return;
+    setChatLoading(true);
+    try {
+      const currentSessionId = conversationId || (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      let uploadedEvidence = null;
+      if (selectedEvidenceFile) {
+        setUploadingEvidence(true);
+        uploadedEvidence = await uploadEvidence(selectedEvidenceFile, currentSessionId, assistantMsg?.findingId || undefined);
+      }
+
+      const payload = {
+        message: actionLabelMap[action] || action,
+        action,
+        target_finding_id: assistantMsg?.findingId,
+        session_id: currentSessionId,
+        workshop_id: process.env.REACT_APP_WORKSHOP_ID,
+        account_code: selectedAccountCode || undefined,
+        conversation_id: conversationId || currentSessionId,
+        findings,
+        evidence_id: uploadedEvidence?.evidence_id,
+        evidence_name: uploadedEvidence?.file_name,
+      };
+
+      const res = await aiAPI.financeBotChat(payload);
+      const userActionMsg = { role: 'user', content: `إجراء: ${actionLabelMap[action] || action}` };
+      const botMsg = {
+        role: 'assistant',
+        content: res.data?.response || t('abu_fahad.no_response'),
+        findingId: res.data?.finding_id,
+        state: res.data?.state || res.data?.finding_status,
+        interactive: res.data?.interactive || null,
+      };
+
+      const newId = res.data?.session_id || res.data?.conversation_id || conversationId || currentSessionId;
+      const next = [...chatHistory, userActionMsg, botMsg];
+      setChatHistory(next);
+      if (newId && newId !== conversationId) setConversationId(newId);
+      persistChatToStorage(next, newId);
+      setSelectedEvidenceFile(null);
+    } catch (err) {
+      toast({ title: t('common.error'), description: err?.response?.data?.detail || t('abu_fahad.connection_error') });
+    } finally {
+      setUploadingEvidence(false);
+      setChatLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!chatQuery.trim()) return;
@@ -178,6 +233,9 @@ const AbuFahadFloatingChat = ({
       const botMsg = {
         role: 'assistant',
         content: res.data?.response || t('abu_fahad.no_response'),
+        findingId: res.data?.finding_id,
+        state: res.data?.state || res.data?.finding_status,
+        interactive: res.data?.interactive || null,
       };
 
       const newId = res.data?.session_id || res.data?.conversation_id || conversationId || currentSessionId;
@@ -297,6 +355,27 @@ const AbuFahadFloatingChat = ({
                   {msg.role === 'assistant' ? (
                     <div className="prose prose-invert prose-sm max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                      {msg?.state ? (
+                        <div className="mt-1 text-[10px] text-slate-400" data-testid={`finance-bot-msg-state-${idx}`}>
+                          الحالة: {msg.state}
+                        </div>
+                      ) : null}
+
+                      {msg?.interactive?.enabled && Array.isArray(msg?.interactive?.actions) ? (
+                        <div className="mt-2 flex flex-wrap gap-1" data-testid={`finance-bot-action-card-${idx}`}>
+                          {msg.interactive.actions.map((action) => (
+                            <button
+                              key={`${idx}-${action}`}
+                              type="button"
+                              onClick={() => runInteractiveAction(action, msg)}
+                              className="rounded-md border border-slate-600 bg-slate-700/40 px-2 py-1 text-[10px] text-slate-100 hover:bg-slate-700"
+                              data-testid={`finance-bot-action-${action}-${idx}`}
+                            >
+                              {actionLabelMap[action] || action}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ) : (
                     msg.content

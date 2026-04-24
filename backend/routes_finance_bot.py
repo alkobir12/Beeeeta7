@@ -57,6 +57,12 @@ QUESTION_BANK = {
 
 
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+INTERACTIVE_ACTIONS = [
+    "open_investigation",
+    "apply_suggested_fix",
+    "view_evidence",
+    "escalate",
+]
 AUDIT_SESSION_MEM: Dict[str, Dict[str, Any]] = {}
 _AUDIT_DB = None
 
@@ -111,6 +117,20 @@ def _detect_category(finding: Dict[str, Any]) -> str:
     if any(k in hay for k in ["حاد", "مفاجئ", "قفزة", "انحراف"]):
         return "sudden_change"
     return "elevated"
+
+
+def _pick_single_suggestion(raw: Dict[str, Any]) -> Optional[str]:
+    candidates = [
+        raw.get("suggested_fix"),
+        raw.get("suggestion"),
+        raw.get("correction"),
+        raw.get("recommended_action"),
+    ]
+    for value in candidates:
+        text = str(value or "").strip()
+        if text:
+            return text
+    return None
 
 
 def _enforce_single_question(text: str) -> str:
@@ -174,6 +194,9 @@ def _normalize_finding(raw: Dict[str, Any], idx: int) -> Dict[str, Any]:
         "status": str(raw.get("status") or "open"),
         "category": _detect_category(raw),
         "question_count": int(raw.get("question_count") or 0),
+        "suggested_fix": _pick_single_suggestion(raw),
+        "interactive": True,
+        "actions": INTERACTIVE_ACTIONS,
         "evidence": raw.get("evidence") or [],
         "history": raw.get("history") or [],
     }
@@ -188,6 +211,34 @@ def _sort_findings(findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             -float(f.get("confidence") or 0),
         ),
     )
+
+
+def _build_interactive_card(finding: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not isinstance(finding, dict):
+        return {"enabled": False, "actions": []}
+    return {
+        "enabled": True,
+        "finding_id": finding.get("finding_id"),
+        "state": finding.get("status"),
+        "suggested_fix": finding.get("suggested_fix"),
+        "actions": INTERACTIVE_ACTIONS,
+    }
+
+
+def _find_finding_by_id(findings: List[Dict[str, Any]], finding_id: Optional[str]) -> Optional[Dict[str, Any]]:
+    if not finding_id:
+        return None
+    target = str(finding_id).strip()
+    for finding in findings:
+        if str(finding.get("finding_id") or "").strip() == target:
+            return finding
+    return None
+
+
+def _pending_evidence_message(finding: Dict[str, Any]) -> str:
+    account = str(finding.get("account") or "").strip()
+    prefix = f"في الحساب {account}: " if account else ""
+    return f"{prefix}الملاحظة بانتظار مستند داعم. ارفع مرفقًا من الواجهة للمتابعة."
 
 
 async def _load_session(session_id: str) -> Optional[Dict[str, Any]]:
@@ -225,7 +276,7 @@ def _normalize_findings_from_request(payload: "FinanceBotChatRequest") -> List[D
 
 
 class FinanceBotChatRequest(BaseModel):
-    message: str = Field(..., min_length=1, description="نص سؤال أو طلب المستخدم")
+    message: str = Field("", description="نص سؤال أو طلب المستخدم")
     session_id: Optional[str] = Field(None, description="معرف جلسة التدقيق")
     account_code: Optional[str] = Field(
         None, description="كود الحساب المحاسبي المراد تدقيقه (مثل 411 أو 514)"
@@ -240,6 +291,11 @@ class FinanceBotChatRequest(BaseModel):
         None,
         description="Findings القادمة من محرك التحليل الخلفي",
     )
+    action: Optional[str] = Field(
+        None,
+        description="إجراء تفاعلي (open_investigation/apply_suggested_fix/view_evidence/escalate)",
+    )
+    target_finding_id: Optional[str] = Field(None, description="الملاحظة الهدف للإجراء")
     evidence_id: Optional[str] = Field(None, description="معرف المرفق الداعم")
     evidence_name: Optional[str] = Field(None, description="اسم الملف الداعم")
     # بيانات مالية اختيارية لتمكين التحليل القواعدي (لا تغيّر شكل الرد)
@@ -255,6 +311,8 @@ class FinanceBotChatResponse(BaseModel):
     session_id: str
     finding_id: Optional[str] = None
     finding_status: Optional[str] = None
+    state: Optional[str] = None
+    interactive: Optional[Dict[str, Any]] = None
     provider: str = "openai-gpt-5.1"
     timestamp: str
 
@@ -509,6 +567,10 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
     workshop_id = payload.workshop_id or os.environ.get("DEFAULT_WORKSHOP_ID", "finmodule-sync")
     session_id = payload.session_id or payload.conversation_id or str(uuid.uuid4())
     user_text = (payload.message or "").strip()
+    action = str(payload.action or "").strip().lower()
+
+    if not user_text and not action and not payload.evidence_id:
+        raise HTTPException(status_code=400, detail="الرسالة مطلوبة")
 
     session = await _load_session(session_id)
     incoming_findings = _normalize_findings_from_request(payload)
@@ -565,57 +627,123 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
     if not findings:
         raise HTTPException(status_code=400, detail="لا توجد Findings متاحة لبدء جلسة التدقيق.")
 
+    if action and action not in INTERACTIVE_ACTIONS:
+        raise HTTPException(status_code=400, detail="إجراء غير مدعوم")
+
     active = _first_open_finding(findings)
-    if not active:
-        done_q = _enforce_single_question("تم إغلاق كل الملاحظات الحالية. هل ترغب ببدء دورة تدقيق جديدة؟")
+    if not active and not action:
+        done_message = "تم إغلاق كل الملاحظات الحالية. يمكنك بدء دورة تدقيق جديدة."
         return FinanceBotChatResponse(
-            response=done_q,
+            response=done_message,
             conversation_id=session_id,
             session_id=session_id,
             finding_id=None,
             finding_status="resolved",
+            state="resolved",
+            interactive={"enabled": False, "actions": []},
             timestamp=datetime.now().isoformat(),
         )
 
-    # سجل الرسالة الحالية ضمن تاريخ الملاحظة
-    active.setdefault("history", []).append(
-        {"role": "user", "text": user_text, "at": _now_iso(), "evidence_id": payload.evidence_id}
+    target_finding = _find_finding_by_id(findings, payload.target_finding_id) if action else active
+    if target_finding is None:
+        target_finding = active
+
+    if target_finding is None:
+        raise HTTPException(status_code=400, detail="لا توجد ملاحظة نشطة لمعالجة الطلب")
+
+    target_finding.setdefault("history", []).append(
+        {
+            "role": "user",
+            "text": user_text,
+            "at": _now_iso(),
+            "evidence_id": payload.evidence_id,
+            "action": action or None,
+        }
     )
     if payload.evidence_name:
-        active["latest_evidence_name"] = payload.evidence_name
+        target_finding["latest_evidence_name"] = payload.evidence_name
 
-    if active.get("status") == "open":
-        active["status"] = "probing"
-        question = _build_next_question(active, ask_evidence=False)
-    else:
-        _response_state_transition(active, user_text, payload.evidence_id)
+    reply_text = ""
 
-        if active.get("status") == "resolved":
-            session["closed_count"] = int(session.get("closed_count") or 0) + 1
-            active["resolved_at"] = _now_iso()
-            next_finding = _first_open_finding(findings)
-            if next_finding:
-                next_finding["status"] = "probing"
-                next_finding["question_count"] = int(next_finding.get("question_count") or 0)
-                question = _build_next_question(next_finding, ask_evidence=False)
-                active = next_finding
-            else:
-                question = "تم إغلاق كل الملاحظات الحالية. هل ترغب ببدء دورة تدقيق جديدة؟"
-        elif active.get("status") == "pending_evidence":
-            question = _build_next_question(active, ask_evidence=True)
+    if action == "open_investigation":
+        if target_finding.get("status") in {"open", "pending_evidence"}:
+            target_finding["status"] = "probing"
+        if not target_finding.get("category"):
+            target_finding["category"] = _detect_category(target_finding)
+        if not target_finding.get("suggested_fix"):
+            target_finding["suggested_fix"] = _pick_single_suggestion(target_finding)
+        reply_text = _build_next_question(target_finding, ask_evidence=False)
+
+    elif action == "apply_suggested_fix":
+        if not target_finding.get("suggested_fix"):
+            target_finding["suggested_fix"] = _pick_single_suggestion(target_finding)
+        target_finding["applied_fix"] = target_finding.get("suggested_fix") or "manual_fix_applied"
+
+        if _normalize_severity(target_finding.get("severity")) in {"high", "critical"} and not payload.evidence_id:
+            target_finding["status"] = "pending_evidence"
+            reply_text = _pending_evidence_message(target_finding)
         else:
-            question = _build_next_question(active, ask_evidence=False)
+            target_finding["status"] = "resolved"
+            target_finding["resolved_at"] = _now_iso()
+            session["closed_count"] = int(session.get("closed_count") or 0) + 1
+            reply_text = "تم تطبيق المعالجة المقترحة وتحديث حالة الملاحظة."
 
-    active["question_count"] = int(active.get("question_count") or 0) + 1
-    active.setdefault("history", []).append({"role": "assistant", "text": question, "at": _now_iso()})
+    elif action == "view_evidence":
+        evidence = target_finding.get("evidence") or []
+        if evidence:
+            latest = evidence[-1]
+            reply_text = f"آخر مستند مرفوع: {latest.get('name') or latest.get('evidence_id')}."
+        else:
+            target_finding["status"] = "pending_evidence"
+            reply_text = _pending_evidence_message(target_finding)
+
+    elif action == "escalate":
+        target_finding["status"] = "escalated"
+        target_finding["escalated_at"] = _now_iso()
+        reply_text = "تم تصعيد هذه الملاحظة للمراجعة المتقدمة."
+
+    else:
+        # التدفق الحالي الطبيعي
+        if target_finding.get("status") == "open":
+            target_finding["status"] = "probing"
+            reply_text = _build_next_question(target_finding, ask_evidence=False)
+        else:
+            _response_state_transition(target_finding, user_text, payload.evidence_id)
+
+            if target_finding.get("status") == "resolved":
+                session["closed_count"] = int(session.get("closed_count") or 0) + 1
+                target_finding["resolved_at"] = _now_iso()
+                next_finding = _first_open_finding(findings)
+                if next_finding:
+                    next_finding["status"] = "probing"
+                    next_finding["question_count"] = int(next_finding.get("question_count") or 0)
+                    reply_text = _build_next_question(next_finding, ask_evidence=False)
+                    target_finding = next_finding
+                else:
+                    reply_text = "تم إغلاق كل الملاحظات الحالية. يمكنك بدء دورة تدقيق جديدة."
+            elif target_finding.get("status") == "pending_evidence":
+                reply_text = _pending_evidence_message(target_finding)
+            else:
+                reply_text = _build_next_question(target_finding, ask_evidence=False)
+
+    # لا نزيد عداد الأسئلة إلا عند probing
+    if target_finding.get("status") == "probing":
+        target_finding["question_count"] = int(target_finding.get("question_count") or 0) + 1
+        reply_text = _enforce_single_question(reply_text)
+
+    target_finding.setdefault("history", []).append(
+        {"role": "assistant", "text": reply_text, "at": _now_iso(), "state": target_finding.get("status")}
+    )
 
     await _save_session(session)
 
     return FinanceBotChatResponse(
-        response=_enforce_single_question(question),
+        response=reply_text,
         conversation_id=session_id,
         session_id=session_id,
-        finding_id=active.get("finding_id") if isinstance(active, dict) else None,
-        finding_status=active.get("status") if isinstance(active, dict) else "probing",
+        finding_id=target_finding.get("finding_id") if isinstance(target_finding, dict) else None,
+        finding_status=target_finding.get("status") if isinstance(target_finding, dict) else "probing",
+        state=target_finding.get("status") if isinstance(target_finding, dict) else "probing",
+        interactive=_build_interactive_card(target_finding),
         timestamp=datetime.now().isoformat(),
     )

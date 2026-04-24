@@ -17,6 +17,32 @@
 
 ## What's Been Implemented
 
+### إصلاح محاسبي مباشر: إعادة ترحيل البنك + تصحيح عدم التوازن + تثبيت تطابق الأكواد (24 Apr 2026)
+- Backend (`routes_finance.py`):
+  - إضافة endpoint جديد:
+    - `POST /api/finance/reports/repost-bank-and-fix-imbalance`
+  - ينفذ تلقائيًا:
+    1) إعادة تطبيق ترحيل العمليات المنقولة للبنك
+    2) إصلاح أسطر القيود ذات الحساب الفارغ وربطها بالبنك
+    3) موازنة أي قيد غير متوازن بخط موازنة على حساب فروقات ترحيل
+  - تم التنفيذ فعليًا على Preview (apply مباشرة حسب طلب المستخدم).
+
+- نتائج التطبيق الفعلي:
+  - `fixed_blank_lines = 22`
+  - `trial_balance_after.difference = 0.0`
+  - إزالة تنبيه `tb_unbalanced` من `GET /api/finance/alerts`
+
+- تطابق الأكواد:
+  - تثبيت الكود الجديد المتسلسل (001...) كمرجع رسمي
+  - استمرار الربط الداخلي legacy (1101→003، 1102→004، 1103→005، 1104→006)
+  - بدون تكرار أكواد (211 حساب / 211 كود فريد)
+
+### Testing
+- تقرير تحقق نهائي: `/app/test_reports/iteration_161.json`
+  - Backend: 9/9 PASS
+  - Frontend: PASS
+  - Verdict: ✅ عدم التوازن محلول والأكواد متطابقة.
+
 ### تحديث المدقق المالي (External Auditor Mode) — Session-based + سؤال واحد إجباري (24 Apr 2026)
 - Backend (`routes_finance_bot.py`):
   - تحويل `finance-bot` إلى نمط تدقيق حيّ يعتمد Findings مع إدارة حالة لكل ملاحظة:

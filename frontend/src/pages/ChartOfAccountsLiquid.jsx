@@ -110,6 +110,7 @@ export default function ChartOfAccountsLiquid() {
   const [applyingBankPolicy, setApplyingBankPolicy] = useState(false);
   const [reconciliationLoading, setReconciliationLoading] = useState(false);
   const [reconciliationReport, setReconciliationReport] = useState(null);
+  const [reconciliationCollapsed, setReconciliationCollapsed] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearchQuery(searchInput.trim()), 300);
@@ -215,17 +216,20 @@ export default function ChartOfAccountsLiquid() {
 
   const toggleExpand = async (account) => {
     await persistRecentAccount(account.id);
-    if (isMobile) {
-      setSheetAccountId(account.id);
-      loadAccountDetails(account.id);
-      return;
-    }
+
+    const hasChildren = Array.isArray(account?.children) && account.children.length > 0;
+
     setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(account.id)) next.delete(account.id);
       else next.add(account.id);
       return next;
     });
+
+    if (isMobile && !hasChildren) {
+      setSheetAccountId(account.id);
+    }
+
     await loadAccountDetails(account.id);
   };
 
@@ -642,63 +646,81 @@ export default function ChartOfAccountsLiquid() {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-3" data-testid="coa-reconciliation-panel">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <h2 className="text-sm font-semibold text-slate-100" data-testid="coa-reconciliation-title">تدقيق تطابق مبالغ الحسابات</h2>
-            <button
-              type="button"
-              onClick={fetchReconciliationReport}
-              disabled={reconciliationLoading}
-              className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-slate-100 disabled:opacity-50"
-              data-testid="coa-reconciliation-refresh-inline-button"
-            >
-              {reconciliationLoading ? 'جارٍ الفحص...' : 'إعادة الفحص'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setReconciliationCollapsed((prev) => !prev)}
+                className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-slate-100"
+                data-testid="coa-reconciliation-collapse-toggle-button"
+              >
+                {reconciliationCollapsed ? 'فتح التدقيق' : 'طي التدقيق'}
+              </button>
+              <button
+                type="button"
+                onClick={fetchReconciliationReport}
+                disabled={reconciliationLoading}
+                className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs text-slate-100 disabled:opacity-50"
+                data-testid="coa-reconciliation-refresh-inline-button"
+              >
+                {reconciliationLoading ? 'جارٍ الفحص...' : 'إعادة الفحص'}
+              </button>
+            </div>
           </div>
 
-          <div className="text-xs text-slate-200 flex flex-wrap gap-3" data-testid="coa-reconciliation-summary">
-            <span>إجمالي الحسابات: {reconciliationReport?.summary?.accounts_count || 0}</span>
-            <span>مطابق: {reconciliationReport?.summary?.matched_count || 0}</span>
-            <span>غير مطابق: {reconciliationReport?.summary?.mismatched_count || 0}</span>
-            <span>أكبر فرق: {formatCurrency(reconciliationReport?.summary?.max_abs_difference || 0)}</span>
-          </div>
+          {!reconciliationCollapsed ? (
+            <>
+              <div className="text-xs text-slate-200 flex flex-wrap gap-3" data-testid="coa-reconciliation-summary">
+                <span>إجمالي الحسابات: {reconciliationReport?.summary?.accounts_count || 0}</span>
+                <span>مطابق: {reconciliationReport?.summary?.matched_count || 0}</span>
+                <span>غير مطابق: {reconciliationReport?.summary?.mismatched_count || 0}</span>
+                <span>أكبر فرق: {formatCurrency(reconciliationReport?.summary?.max_abs_difference || 0)}</span>
+              </div>
 
-          {!!reconciliationReport?.error && (
-            <div className="mt-2 text-xs text-rose-200" data-testid="coa-reconciliation-error-message">
-              {reconciliationReport.error}
+              {!!reconciliationReport?.error && (
+                <div className="mt-2 text-xs text-rose-200" data-testid="coa-reconciliation-error-message">
+                  {reconciliationReport.error}
+                </div>
+              )}
+
+              <div className="mt-3 overflow-x-auto" data-testid="coa-reconciliation-table-wrap">
+                <table className="w-full min-w-[760px] text-xs" data-testid="coa-reconciliation-table">
+                  <thead>
+                    <tr className="text-slate-300 border-b border-white/10">
+                      <th className="p-2 text-right">الكود</th>
+                      <th className="p-2 text-right">الحساب</th>
+                      <th className="p-2 text-right">الرصيد</th>
+                      <th className="p-2 text-right">الرصيد المتوقع</th>
+                      <th className="p-2 text-right">الفرق</th>
+                      <th className="p-2 text-right">الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(reconciliationReport?.rows || []).slice(0, 30).map((row, idx) => (
+                      <tr key={`${row.account_id}-${idx}`} className="border-b border-white/5" data-testid={`coa-reconciliation-row-${idx}`}>
+                        <td className="p-2 font-mono">{row.code}</td>
+                        <td className="p-2">{row.name}</td>
+                        <td className="p-2">{formatCurrency(row.balance || 0)}</td>
+                        <td className="p-2">{formatCurrency(row.expected_balance || 0)}</td>
+                        <td className="p-2">{formatCurrency(row.difference || 0)}</td>
+                        <td className="p-2">
+                          <span
+                            className={`rounded-full px-2 py-0.5 ${row.matched ? 'bg-emerald-500/20 text-emerald-100' : 'bg-rose-500/20 text-rose-100'}`}
+                            data-testid={`coa-reconciliation-status-${idx}`}
+                          >
+                            {row.matched ? 'مطابق' : 'يحتاج مراجعة'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <div className="text-xs text-slate-300" data-testid="coa-reconciliation-collapsed-note">
+              تم طي التدقيق. اضغط "فتح التدقيق" لعرض التفاصيل.
             </div>
           )}
-
-          <div className="mt-3 overflow-x-auto" data-testid="coa-reconciliation-table-wrap">
-            <table className="w-full min-w-[760px] text-xs" data-testid="coa-reconciliation-table">
-              <thead>
-                <tr className="text-slate-300 border-b border-white/10">
-                  <th className="p-2 text-right">الكود</th>
-                  <th className="p-2 text-right">الحساب</th>
-                  <th className="p-2 text-right">الرصيد</th>
-                  <th className="p-2 text-right">الرصيد المتوقع</th>
-                  <th className="p-2 text-right">الفرق</th>
-                  <th className="p-2 text-right">الحالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(reconciliationReport?.rows || []).slice(0, 30).map((row, idx) => (
-                  <tr key={`${row.account_id}-${idx}`} className="border-b border-white/5" data-testid={`coa-reconciliation-row-${idx}`}>
-                    <td className="p-2 font-mono">{row.code}</td>
-                    <td className="p-2">{row.name}</td>
-                    <td className="p-2">{formatCurrency(row.balance || 0)}</td>
-                    <td className="p-2">{formatCurrency(row.expected_balance || 0)}</td>
-                    <td className="p-2">{formatCurrency(row.difference || 0)}</td>
-                    <td className="p-2">
-                      <span
-                        className={`rounded-full px-2 py-0.5 ${row.matched ? 'bg-emerald-500/20 text-emerald-100' : 'bg-rose-500/20 text-rose-100'}`}
-                        data-testid={`coa-reconciliation-status-${idx}`}
-                      >
-                        {row.matched ? 'مطابق' : 'يحتاج مراجعة'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
 
         {loading ? (

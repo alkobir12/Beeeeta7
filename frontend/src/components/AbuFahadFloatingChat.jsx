@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useLocation } from 'react-router-dom';
-import { Brain, Loader2, Send, X } from 'lucide-react';
+import { Brain, Loader2, Paperclip, Send, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../hooks/use-toast';
 import { Button } from './ui/button';
@@ -33,6 +33,9 @@ const AbuFahadFloatingChat = ({
   const [chatQuery, setChatQuery] = useState('');
   const [accounts, setAccounts] = useState([]);
   const [selectedAccountCode, setSelectedAccountCode] = useState('');
+  const [findings, setFindings] = useState([]);
+  const [selectedEvidenceFile, setSelectedEvidenceFile] = useState(null);
+  const [uploadingEvidence, setUploadingEvidence] = useState(false);
 
   const [conversationId, setConversationId] = useState('');
   const [chatHistory, setChatHistory] = useState([
@@ -81,13 +84,64 @@ const AbuFahadFloatingChat = ({
     }
   };
 
+  const fetchFindings = async () => {
+    try {
+      const params = new URLSearchParams({
+        workshop_id: process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync',
+      });
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/finance/alerts?${params.toString()}`);
+      const json = await res.json().catch(() => ({}));
+      const alerts = json?.data?.alerts || [];
+      const mapped = alerts.map((a) => ({
+        finding_id: a.id,
+        title: a.title,
+        account: selectedAccountCode || '',
+        period: 'current',
+        actual_value: a.message || '',
+        expected_range: '',
+        severity: a.severity || 'medium',
+        confidence: 0.9,
+        related_accounts: [],
+        operation_refs: [],
+        message: a.action || a.message || '',
+      }));
+      setFindings(mapped);
+    } catch {
+      setFindings([]);
+    }
+  };
+
   useEffect(() => {
     if (!enabled) return;
     loadChatFromStorage();
     // do not block opening
     fetchAccounts();
+    fetchFindings();
     // eslint-disable-next-line
   }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    fetchFindings();
+    // eslint-disable-next-line
+  }, [selectedAccountCode]);
+
+  const uploadEvidence = async (file, sessionIdForUpload, findingId) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('session_id', sessionIdForUpload);
+    if (findingId) form.append('finding_id', findingId);
+
+    const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/finance-bot/evidence/upload`, {
+      method: 'POST',
+      body: form,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json?.success === false) {
+      throw new Error(json?.detail || json?.error || 'تعذر رفع المرفق');
+    }
+    return json?.data;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,11 +156,22 @@ const AbuFahadFloatingChat = ({
     setChatLoading(true);
 
     try {
+      const currentSessionId = conversationId || (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      let uploadedEvidence = null;
+      if (selectedEvidenceFile) {
+        setUploadingEvidence(true);
+        uploadedEvidence = await uploadEvidence(selectedEvidenceFile, currentSessionId, undefined);
+      }
+
       const payload = {
         message: userText,
+        session_id: currentSessionId,
         workshop_id: process.env.REACT_APP_WORKSHOP_ID,
         account_code: selectedAccountCode || undefined,
-        conversation_id: conversationId || undefined,
+        conversation_id: conversationId || currentSessionId,
+        findings: findings,
+        evidence_id: uploadedEvidence?.evidence_id,
+        evidence_name: uploadedEvidence?.file_name,
       };
 
       const res = await aiAPI.financeBotChat(payload);
@@ -115,11 +180,12 @@ const AbuFahadFloatingChat = ({
         content: res.data?.response || t('abu_fahad.no_response'),
       };
 
-      const newId = res.data?.conversation_id || conversationId;
+      const newId = res.data?.session_id || res.data?.conversation_id || conversationId || currentSessionId;
       const next = [...optimistic, botMsg];
       setChatHistory(next);
       if (newId && newId !== conversationId) setConversationId(newId);
       persistChatToStorage(next, newId);
+      setSelectedEvidenceFile(null);
     } catch (err) {
       const detail = err?.response?.data?.detail || err?.message;
       const errorText = detail
@@ -135,6 +201,7 @@ const AbuFahadFloatingChat = ({
       setChatHistory(next);
       persistChatToStorage(next, conversationId);
     } finally {
+      setUploadingEvidence(false);
       setChatLoading(false);
     }
   };
@@ -149,6 +216,7 @@ const AbuFahadFloatingChat = ({
     setChatHistory(next);
     setConversationId('');
     setSelectedAccountCode('');
+    setSelectedEvidenceFile(null);
     persistChatToStorage(next, '');
   };
 
@@ -238,6 +306,22 @@ const AbuFahadFloatingChat = ({
             </div>
 
             <form onSubmit={handleSubmit} className="mt-3 flex items-center gap-2">
+              <label
+                htmlFor="finance-bot-evidence-input"
+                className="h-9 w-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-200 cursor-pointer"
+                data-testid="finance-bot-evidence-picker-button"
+                title="إرفاق مستند"
+              >
+                {uploadingEvidence ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+              </label>
+              <input
+                id="finance-bot-evidence-input"
+                type="file"
+                className="hidden"
+                onChange={(e) => setSelectedEvidenceFile(e.target.files?.[0] || null)}
+                data-testid="finance-bot-evidence-file-input"
+              />
+
               <input
                 type="text"
                 value={chatQuery}
@@ -247,12 +331,18 @@ const AbuFahadFloatingChat = ({
               />
               <button
                 type="submit"
-                disabled={chatLoading}
+                disabled={chatLoading || uploadingEvidence}
                 className="h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white disabled:opacity-50"
               >
                 {chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
             </form>
+
+            {selectedEvidenceFile ? (
+              <div className="mt-2 text-[11px] text-emerald-300" data-testid="finance-bot-selected-evidence-name">
+                مرفق جاهز للإرسال: {selectedEvidenceFile.name}
+              </div>
+            ) : null}
 
             <div className="mt-2 text-[11px] text-slate-400">{t('abu_fahad.latency_note')}</div>
           </div>

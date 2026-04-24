@@ -236,6 +236,18 @@ export default function ComprehensiveFinancial() {
     enabled: Boolean(workshopId),
   });
 
+  const chartAccountsForRouting = Array.isArray(chartAccountsQuery.data) ? chartAccountsQuery.data : [];
+  const findAccountCodeBy = (predicate) => {
+    const hit = chartAccountsForRouting.find((acc) => {
+      const name = String(acc?.name || acc?.name_ar || '').toLowerCase();
+      return predicate(name, String(acc?.code || '').trim(), String(acc?.type || '').toLowerCase(), acc);
+    });
+    return String(hit?.code || '').trim();
+  };
+  const revenueRootCode =
+    findAccountCodeBy((name, _code, type, acc) => type === 'revenue' && !acc?.parent_id && !acc?.parentId)
+    || findAccountCodeBy((name) => name.includes('الإيراد') || name.includes('ايراد'));
+
   const accountTreeDetailsQuery = useQuery({
     queryKey: ['financial-account-tree-details', workshopId, selectedAccount?.code, startDate, endDate, accountTreePage],
     queryFn: async () => {
@@ -255,11 +267,11 @@ export default function ComprehensiveFinancial() {
   });
 
   const salesOperationsQuery = useQuery({
-    queryKey: ['financial-sales-operations', workshopId, startDate, endDate, salesOpsPage],
+    queryKey: ['financial-sales-operations', workshopId, revenueRootCode, startDate, endDate, salesOpsPage],
     queryFn: async () => {
       const res = await financeAPI.getAccountTreeDetails({
         workshop_id: workshopId,
-        account_code: '4000',
+        account_code: revenueRootCode,
         start_date: startDate,
         end_date: endDate,
         include_descendants: true,
@@ -268,7 +280,7 @@ export default function ComprehensiveFinancial() {
       });
       return unwrapApiData(res, null);
     },
-    enabled: Boolean(workshopId),
+    enabled: Boolean(workshopId && revenueRootCode),
   });
 
   useEffect(() => {
@@ -407,7 +419,6 @@ export default function ComprehensiveFinancial() {
     return trimmed;
   };
 
-  const normalizeAccountCode = (value) => String(value || '').trim().replace(/^acc-/, '');
   const normalizePaymentMethod = (value) => {
     const raw = String(value || '').trim().toLowerCase();
     if (!raw) return '';
@@ -455,14 +466,11 @@ export default function ComprehensiveFinancial() {
 
   const classifyBucket = (code, rawName) => {
     const name = String(rawName || '').toLowerCase();
-    const normalizedCode = String(code || '').trim();
 
     if (
       name.includes('قطع') ||
       name.includes('غيار') ||
-      name.includes('part') ||
-      normalizedCode.startsWith('4002') ||
-      normalizedCode.startsWith('5002')
+      name.includes('part')
     ) {
       return 'parts';
     }
@@ -470,9 +478,7 @@ export default function ComprehensiveFinancial() {
     if (
       name.includes('خدم') ||
       name.includes('صيان') ||
-      name.includes('service') ||
-      normalizedCode.startsWith('4000') ||
-      normalizedCode.startsWith('4001')
+      name.includes('service')
     ) {
       return 'service';
     }
@@ -519,10 +525,8 @@ export default function ComprehensiveFinancial() {
       const amount = parseEntryAmount(value);
       const name = resolveReadableAccountName(code, value?.name);
       const normalizedName = String(name || '').toLowerCase();
-      const normalizedCode = normalizeAccountCode(code);
       if (
-        normalizedCode.startsWith('1101')
-        || normalizedName.includes('النقد')
+        normalizedName.includes('النقد')
         || normalizedName.includes('الصندوق')
         || normalizedName.includes('cash')
       ) {
@@ -537,10 +541,8 @@ export default function ComprehensiveFinancial() {
       const amount = parseEntryAmount(value);
       const name = resolveReadableAccountName(code, value?.name);
       const normalizedName = String(name || '').toLowerCase();
-      const normalizedCode = normalizeAccountCode(code);
       if (
-        normalizedCode.startsWith('1102')
-        || normalizedName.includes('البنك')
+        normalizedName.includes('البنك')
         || normalizedName.includes('bank')
         || normalizedName.includes('بطاقة')
       ) {
@@ -580,8 +582,8 @@ export default function ComprehensiveFinancial() {
         `إجمالي إيراد النقد: ${formatCurrency(cashRevenueTotal)}`,
         `إجمالي إيراد البنك/البطاقات: ${formatCurrency(bankRevenueTotal)}`,
         `تفصيل طرق الدفع - نقد: ${formatCurrency(salesPaymentBreakdown.cash)} • بنك/بطاقة: ${formatCurrency(salesPaymentBreakdown.bank)} • آجل: ${formatCurrency(salesPaymentBreakdown.credit)}`,
-        `رصيد حساب النقد (1101): ${formatCurrency(normalizedCashAccountBalance)}`,
-        `رصيد حساب البنك (1102): ${formatCurrency(normalizedBankAccountBalance)}`,
+        `رصيد حساب النقد: ${formatCurrency(normalizedCashAccountBalance)}`,
+        `رصيد حساب البنك: ${formatCurrency(normalizedBankAccountBalance)}`,
         `فارق النقد التشغيلي (تقريبي): ${formatCurrency(currentCashBalance || 0)}`,
       ],
       testId: 'financial-headline-net-income',
@@ -781,7 +783,7 @@ export default function ComprehensiveFinancial() {
               data-testid="financial-reclassify-payments-button"
             >
               <ShieldCheck size={16} />
-              {isReclassifyingPayments ? 'جاري التصحيح...' : 'تصحيح ربط الدفع 1101/1102'}
+              {isReclassifyingPayments ? 'جاري التصحيح...' : 'تصحيح ربط الدفع للحسابات الحالية'}
             </button>
           </div>
         </div>
@@ -868,7 +870,7 @@ export default function ComprehensiveFinancial() {
               </div>
 
               <div className="mt-2 text-xs text-slate-300" data-testid="financial-operation-trace-explainers">
-                النقد: {operationTraceData?.explainers?.cash || '1101'} • البنك: {operationTraceData?.explainers?.bank || '1102'} • الذمم: {operationTraceData?.explainers?.ar || '1103'}
+                النقد: {operationTraceData?.explainers?.cash || 'حساب النقد'} • البنك: {operationTraceData?.explainers?.bank || 'حساب البنك'} • الذمم: {operationTraceData?.explainers?.ar || 'حساب الذمم'}
               </div>
 
               <div className="mt-4 overflow-x-auto">

@@ -366,27 +366,14 @@ export default function ChartOfAccountsLiquid() {
     return map;
   }, [accountsData]);
 
-  const accountByCode = useMemo(() => {
-    const map = {};
-    Object.values(accountById).forEach((acc) => {
-      if (!acc?.code) return;
-      map[String(acc.code)] = acc;
-    });
-    return map;
-  }, [accountById]);
+  const findAccountByName = (keywords = []) => Object.values(accountById).find((acc) => {
+    const name = String(acc?.name || '').toLowerCase();
+    return keywords.some((k) => name.includes(k));
+  }) || null;
 
-  const accountByLegacyCode = useMemo(() => {
-    const map = {};
-    Object.values(accountById).forEach((acc) => {
-      if (!acc?.legacy_code) return;
-      map[String(acc.legacy_code)] = acc;
-    });
-    return map;
-  }, [accountById]);
-
-  const bankAccountNode = accountByLegacyCode['1102'] || accountByCode['1102'] || null;
-  const cashAccountNode = accountByLegacyCode['1101'] || accountByCode['1101'] || null;
-  const posAccountNode = accountByLegacyCode['1104'] || accountByCode['1104'] || null;
+  const bankAccountNode = findAccountByName(['بنك', 'bank']);
+  const cashAccountNode = findAccountByName(['نقد', 'cash', 'صندوق']);
+  const posAccountNode = findAccountByName(['نقاط بيع', 'pos']);
 
   const bankCodeLabel = bankAccountNode?.code || '---';
   const cashCodeLabel = cashAccountNode?.code || '---';

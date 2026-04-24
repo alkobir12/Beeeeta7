@@ -286,16 +286,6 @@ export default function AIFinancial() {
       const res = await financeAPI.getChartOfAccounts();
       const data = res.data?.data ?? res.data?.accounts ?? res.data;
       const list = Array.isArray(data) ? data : [];
-      const hasReceivable = list.some((acc) => String(acc.code) === '1103');
-      if (!hasReceivable) {
-        list.push({
-          id: '1103',
-          code: '1103',
-          name_ar: 'حساب العملاء (ذمم)',
-          name: 'Accounts Receivable',
-          type: 'asset',
-        });
-      }
       setAccounts(list);
     } catch (e) {
       // non-blocking

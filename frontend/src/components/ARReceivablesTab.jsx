@@ -78,7 +78,7 @@ const ARReceivablesTab = () => {
       const link = document.createElement('a');
       const safeCustomer = String(selectedCustomer || 'all-customers').replace(/[^\u0600-\u06FF\w-]+/g, '-');
       link.href = url;
-      link.download = `ar-1103-${safeCustomer}-${endDate}.xlsx`;
+      link.download = `receivables-ledger-${safeCustomer}-${endDate}.xlsx`;
       document.body.appendChild(link);
       link.click();
       link.remove();

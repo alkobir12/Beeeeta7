@@ -42,15 +42,13 @@ export default function DebtFollowUp() {
       const toBalance = (acc) => Number(acc?.balance ?? acc?.current_balance ?? 0);
 
       const cashAccounts = accountRows.filter((acc) => {
-        const code = String(acc?.code || '');
         const name = normalizeName(acc);
-        return code.startsWith('1101') || name.includes('نقد') || name.includes('صندوق') || name.includes('cash');
+        return name.includes('نقد') || name.includes('صندوق') || name.includes('cash');
       });
 
       const bankAccounts = accountRows.filter((acc) => {
-        const code = String(acc?.code || '');
         const name = normalizeName(acc);
-        return code.startsWith('1102') || name.includes('بنك') || name.includes('bank');
+        return name.includes('بنك') || name.includes('bank');
       });
 
       setLiquidityBalances({
@@ -174,7 +172,7 @@ export default function DebtFollowUp() {
         tone: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
         subtitle: 'من دليل الحسابات',
         details: [
-          'يشمل الحسابات المطابقة لكود 1101 (النقد).',
+          'يشمل جميع الحسابات المصنفة نقدًا.',
           'يُستخدم لمراجعة السيولة النقدية الفعلية قبل أوامر السداد.',
         ],
       },
@@ -185,7 +183,7 @@ export default function DebtFollowUp() {
         tone: 'border-indigo-400/20 bg-indigo-500/10 text-indigo-100',
         subtitle: 'من دليل الحسابات',
         details: [
-          'يشمل الحسابات المطابقة لكود 1102 (البنك).',
+          'يشمل جميع الحسابات المصنفة بنكية.',
           'يساعد على اختيار وسيلة السداد المناسبة (نقد/تحويل).',
         ],
       },

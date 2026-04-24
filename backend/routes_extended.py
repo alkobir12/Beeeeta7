@@ -5677,6 +5677,43 @@ async def accounts_tree(
             if str(acc.get("legacy_code") or "").strip() and str(acc.get("code") or "").strip()
         }
 
+        def _pick_code_by_name(keywords: List[str], acc_type: Optional[str] = None) -> str:
+            for acc in normalized:
+                code = str(acc.get("code") or "").strip()
+                if not code:
+                    continue
+                if acc_type and str(acc.get("type") or "").strip().lower() != acc_type:
+                    continue
+                name = str(acc.get("name") or "").strip().lower()
+                if any(k in name for k in keywords):
+                    return code
+            return ""
+
+        ar_code = _pick_code_by_name(["عميل", "ذمم"], "asset")
+        ap_code = _pick_code_by_name(["مورد", "دائن"], "liability")
+        revenue_code = _pick_code_by_name(["إيراد", "ايراد"], "revenue")
+        expense_code = _pick_code_by_name(["مصروف"], "expense")
+        cost_code = _pick_code_by_name(["تكلفة"], "cost")
+
+        def _map_legacy_code(code: str) -> str:
+            raw = str(code or "").strip()
+            if not raw:
+                return raw
+            mapped = legacy_to_current.get(raw)
+            if mapped:
+                return mapped
+            if raw.startswith("1103") and ar_code:
+                return ar_code
+            if raw.startswith("2101") and ap_code:
+                return ap_code
+            if raw.startswith("400") or raw.startswith("410"):
+                return revenue_code or raw
+            if raw.startswith("500") or raw.startswith("510"):
+                return cost_code or expense_code or raw
+            if raw.startswith("600") or raw.startswith("610"):
+                return expense_code or raw
+            return raw
+
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         if provider == "supabase":
             supa = SupabaseService()
@@ -5694,8 +5731,7 @@ async def accounts_tree(
         for entry in rows:
             for line in entry.get("lines", []) or []:
                 code = _line_account_code(line, id_to_code)
-                if code not in code_to_acc:
-                    code = legacy_to_current.get(code, code)
+                code = _map_legacy_code(code)
                 acc = code_to_acc.get(code)
                 if not acc:
                     continue
@@ -5733,6 +5769,24 @@ async def accounts_tree(
             "purchase": round(sum(a["balance"] for a in visible_accounts if a["type"] in {"cost", "purchase"}), 2),
         }
         summary["net_profit"] = round(summary["revenue"] - (summary["expense"] + summary["purchase"]), 2)
+
+        # توحيد مرجع الربحية مع تقرير الدخل لتجنب اختلاف الصفحات المالية
+        try:
+            from routes_finance import get_income_statement
+
+            income_payload = await get_income_statement(
+                workshop_id=workshop_id,
+                start_date="2000-01-01",
+                end_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            )
+            income_totals = (income_payload.get("data") or {}).get("totals") or {}
+            summary["revenue"] = round(float(income_totals.get("revenue") or 0), 2)
+            summary["expense"] = round(float(income_totals.get("expenses") or 0), 2)
+            summary["purchase"] = 0.0
+            summary["net_profit"] = round(float(income_totals.get("net_income") or 0), 2)
+            summary["financial_source"] = "income_statement"
+        except Exception:
+            pass
 
         visible_ids = {a["id"] for a in visible_accounts}
         by_parent: Dict[str, list] = {}
@@ -5868,6 +5922,43 @@ async def account_transactions(
             if str(acc.get("legacy_code") or "").strip() and str(acc.get("code") or "").strip()
         }
 
+        def _pick_code_by_name(keywords: List[str], acc_type: Optional[str] = None) -> str:
+            for acc in normalized:
+                code = str(acc.get("code") or "").strip()
+                if not code:
+                    continue
+                if acc_type and str(acc.get("type") or "").strip().lower() != acc_type:
+                    continue
+                name = str(acc.get("name") or "").strip().lower()
+                if any(k in name for k in keywords):
+                    return code
+            return ""
+
+        ar_code = _pick_code_by_name(["عميل", "ذمم"], "asset")
+        ap_code = _pick_code_by_name(["مورد", "دائن"], "liability")
+        revenue_code = _pick_code_by_name(["إيراد", "ايراد"], "revenue")
+        expense_code = _pick_code_by_name(["مصروف"], "expense")
+        cost_code = _pick_code_by_name(["تكلفة"], "cost")
+
+        def _map_legacy_code(code: str) -> str:
+            raw = str(code or "").strip()
+            if not raw:
+                return raw
+            mapped = legacy_to_current.get(raw)
+            if mapped:
+                return mapped
+            if raw.startswith("1103") and ar_code:
+                return ar_code
+            if raw.startswith("2101") and ap_code:
+                return ap_code
+            if raw.startswith("400") or raw.startswith("410"):
+                return revenue_code or raw
+            if raw.startswith("500") or raw.startswith("510"):
+                return cost_code or expense_code or raw
+            if raw.startswith("600") or raw.startswith("610"):
+                return expense_code or raw
+            return raw
+
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         if provider == "supabase":
             supa = SupabaseService()
@@ -5890,8 +5981,7 @@ async def account_transactions(
             credit = 0.0
             for line in row.get("lines", []) or []:
                 code = _line_account_code(line, id_to_code)
-                if code not in id_to_code.values():
-                    code = legacy_to_current.get(code, code)
+                code = _map_legacy_code(code)
                 if code == target_code:
                     debit += float(line.get("debit") or 0)
                     credit += float(line.get("credit") or 0)

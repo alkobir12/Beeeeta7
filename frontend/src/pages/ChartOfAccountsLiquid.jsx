@@ -96,6 +96,7 @@ export default function ChartOfAccountsLiquid() {
   const [error, setError] = useState('');
   const [treeMode, setTreeMode] = useState('tree');
   const [summary, setSummary] = useState({ assets: 0, liabilities: 0, net_profit: 0 });
+  const [incomeSnapshot, setIncomeSnapshot] = useState({ revenue: 0, expenses: 0, net_income: 0 });
   const [accountsData, setAccountsData] = useState([]);
   const [expanded, setExpanded] = useState(new Set());
   const [recentAccounts, setRecentAccounts] = useState([]);
@@ -181,8 +182,29 @@ export default function ChartOfAccountsLiquid() {
     }
   };
 
+  const fetchIncomeSnapshot = async () => {
+    try {
+      const params = new URLSearchParams({
+        workshop_id: workshopId,
+        start_date: '2000-01-01',
+        end_date: new Date().toISOString().slice(0, 10),
+      });
+      const res = await fetch(`${API_URL}/finance/reports/income-statement?${params.toString()}`);
+      const json = await res.json().catch(() => ({}));
+      const totals = json?.data?.totals || {};
+      setIncomeSnapshot({
+        revenue: Number(totals.revenue || 0),
+        expenses: Number(totals.expenses || 0),
+        net_income: Number(totals.net_income || 0),
+      });
+    } catch {
+      setIncomeSnapshot({ revenue: 0, expenses: 0, net_income: 0 });
+    }
+  };
+
   useEffect(() => {
     fetchTree();
+    fetchIncomeSnapshot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, typeFilter, hideZero]);
 
@@ -273,6 +295,7 @@ export default function ChartOfAccountsLiquid() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok || json?.success === false) throw new Error(json?.detail || json?.error || 'فشل إعادة الضبط');
       await fetchTree();
+      await fetchIncomeSnapshot();
       alert('تمت إعادة ضبط الحسابات بنجاح');
     } catch (error) {
       alert(error?.message || 'تعذر إعادة ضبط الحسابات');
@@ -290,6 +313,7 @@ export default function ChartOfAccountsLiquid() {
         throw new Error(json?.detail || json?.error || 'تعذر إعادة الترقيم');
       }
       await fetchTree();
+      await fetchIncomeSnapshot();
       await fetchReconciliationReport();
       alert(`تمت إعادة الترقيم بنجاح من 001 (${json?.data?.count || 0} حساب)`);
     } catch (error) {
@@ -318,6 +342,7 @@ export default function ChartOfAccountsLiquid() {
       }
 
       await fetchTree();
+      await fetchIncomeSnapshot();
       await fetchReconciliationReport();
 
       const journalUpdated = json?.data?.migration?.journal?.updated || 0;
@@ -606,14 +631,14 @@ export default function ChartOfAccountsLiquid() {
           </div>
 
           <div className="mt-3 text-xs text-slate-200 rounded-xl bg-white/5 p-2" data-testid="coa-summary-bar">
-            إجمالي الأصول: {formatCurrency(summary.assets)} | إجمالي الخصوم: {formatCurrency(summary.liabilities)} | الإيرادات: {formatCurrency(summary.revenue || 0)} | المصروفات + المشتريات: {formatCurrency((summary.expense || 0) + (summary.purchase || 0))} | الصافي: {formatCurrency(summary.net_profit)}
+            إجمالي الأصول: {formatCurrency(summary.assets)} | إجمالي الخصوم: {formatCurrency(summary.liabilities)} | الإيرادات: {formatCurrency(incomeSnapshot.revenue)} | المصروفات + المشتريات: {formatCurrency(incomeSnapshot.expenses)} | الصافي: {formatCurrency(incomeSnapshot.net_income)}
           </div>
 
           <div className="mt-2 text-xs text-slate-100 rounded-xl border border-white/10 bg-slate-950/40 p-2 flex flex-wrap gap-3" data-testid="coa-cash-bank-pos-summary-bar">
             <span data-testid="coa-bank-balance-summary">البنك ({bankCodeLabel}): {formatCurrency(bankBalance)}</span>
             <span data-testid="coa-cash-balance-summary">النقد ({cashCodeLabel}): {formatCurrency(cashBalance)}</span>
             <span data-testid="coa-pos-balance-summary">نقاط بيع ({posCodeLabel}): {formatCurrency(posBalance)}</span>
-            <span data-testid="coa-revenue-summary">إجمالي الإيراد: {formatCurrency(summary.revenue || 0)}</span>
+            <span data-testid="coa-revenue-summary">إجمالي الإيراد: {formatCurrency(incomeSnapshot.revenue)}</span>
           </div>
         </div>
 

@@ -309,7 +309,7 @@ export default function ChartOfAccountsLiquid() {
         workshop_id: workshopId,
         apply_changes: 'true',
       });
-      const res = await fetch(`${API_URL}/finance/reports/apply-bank-revenue-policy?${params.toString()}`, {
+      const res = await fetch(`${API_URL}/finance/reports/repost-bank-and-fix-imbalance?${params.toString()}`, {
         method: 'POST',
       });
       const json = await res.json().catch(() => ({}));
@@ -320,10 +320,12 @@ export default function ChartOfAccountsLiquid() {
       await fetchTree();
       await fetchReconciliationReport();
 
-      const journalUpdated = json?.data?.journal?.updated || 0;
-      const operationsUpdated = json?.data?.operations?.updated || 0;
-      const posCreated = json?.data?.pos_account?.created ? 'تم إنشاء POS' : 'POS موجود';
-      alert(`تم تطبيق السياسة بنجاح\nقيود محدثة: ${journalUpdated}\nعمليات محدثة: ${operationsUpdated}\n${posCreated}`);
+      const journalUpdated = json?.data?.migration?.journal?.updated || 0;
+      const operationsUpdated = json?.data?.migration?.operations?.updated || 0;
+      const fixedBlanks = json?.data?.repair?.fixed_blank_lines || 0;
+      const balancingLines = json?.data?.repair?.added_balance_lines || 0;
+      const tbDiff = json?.data?.trial_balance_after?.difference ?? 0;
+      alert(`تم تطبيق السياسة والترحيل المحاسبي\nقيود سياسة البنك: ${journalUpdated}\nعمليات محدثة: ${operationsUpdated}\nأسطر فارغة مصححة: ${fixedBlanks}\nأسطر موازنة مضافة: ${balancingLines}\nفرق الميزان بعد المعالجة: ${tbDiff}`);
     } catch (error) {
       alert(error?.message || 'تعذر تطبيق السياسة');
     } finally {

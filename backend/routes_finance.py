@@ -3909,6 +3909,195 @@ async def apply_bank_revenue_policy(
         }
 
 
+@router.post("/reports/repost-bank-and-fix-imbalance")
+async def repost_bank_and_fix_imbalance(
+    workshop_id: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    apply_changes: bool = Query(True),
+):
+    """
+    1) إعادة تطبيق سياسة تحويل العمليات للبنك
+    2) إصلاح القيود ذات الحساب الفارغ (account='') وربطها بالبنك
+    3) موازنة أي قيد غير متوازن بإضافة سطر موازنة على حساب فروقات ترحيل
+    """
+    end_date = end_date or datetime.now().strftime("%Y-%m-%d")
+    start_date = start_date or "2000-01-01"
+
+    try:
+        # 1) إعادة ترحيل العمليات المنقولة للبنك
+        migration_result = await apply_bank_revenue_policy(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            apply_changes=apply_changes,
+        )
+
+        accounts = _fetch_accounts()
+
+        def _find_account_code(name_keywords: List[str], fallback: str = "") -> str:
+            for acc in accounts:
+                name = str(acc.get("name") or acc.get("name_ar") or "").strip().lower()
+                code = str(acc.get("code") or "").strip()
+                if not code:
+                    continue
+                if any(k in name for k in name_keywords):
+                    return code
+            return fallback
+
+        bank_code = _find_account_code(["بنك", "bank"], "1102")
+        bank_name = "البنك"
+
+        suspense_code = _find_account_code(["فروقات", "معلق", "suspense"], "")
+        suspense_name = "حساب فروقات ترحيل"
+
+        # إنشاء حساب فروقات إذا غير موجود
+        created_suspense = False
+        if not suspense_code and apply_changes and supabase:
+            try:
+                numeric_codes = []
+                for acc in accounts:
+                    code = str(acc.get("code") or "").strip()
+                    if code.isdigit():
+                        numeric_codes.append(int(code))
+                next_code = f"{(max(numeric_codes) + 1) if numeric_codes else 900:03d}"
+
+                equity_parent = None
+                for acc in accounts:
+                    name = str(acc.get("name") or acc.get("name_ar") or "").lower()
+                    if "حقوق" in name and "ملكية" in name:
+                        equity_parent = acc.get("id")
+                        break
+
+                suspense_id = f"acc-{uuid.uuid4().hex[:12]}"
+                row = {
+                    "id": suspense_id,
+                    "code": next_code,
+                    "name": suspense_name,
+                    "name_en": "Suspense",
+                    "type": "equity",
+                    "parent_id": equity_parent,
+                    "is_system": False,
+                    "balance": 0.0,
+                }
+                supabase.table("accounts").insert(row).execute()
+                suspense_code = next_code
+                created_suspense = True
+            except Exception:
+                suspense_code = bank_code  # fallback آمن
+
+        if not suspense_code:
+            suspense_code = bank_code
+
+        entries = _fetch_journal_entries(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            limit=50000,
+            include_rakan=True,
+        )
+
+        touched_entries = 0
+        fixed_blank_lines = 0
+        added_balance_lines = 0
+
+        for entry in entries:
+            entry_id = str(entry.get("id") or "").strip()
+            lines = entry.get("lines") or []
+            if not entry_id or not isinstance(lines, list) or not lines:
+                continue
+
+            changed = False
+            new_lines = []
+
+            for ln in lines:
+                if not isinstance(ln, dict):
+                    new_lines.append(ln)
+                    continue
+                acc = str(ln.get("account") or "").strip()
+                if not acc:
+                    patched = {**ln, "account": bank_code, "account_name": bank_name}
+                    new_lines.append(patched)
+                    fixed_blank_lines += 1
+                    changed = True
+                else:
+                    new_lines.append(ln)
+
+            debit_total = sum(_safe_float((ln or {}).get("debit")) for ln in new_lines if isinstance(ln, dict))
+            credit_total = sum(_safe_float((ln or {}).get("credit")) for ln in new_lines if isinstance(ln, dict))
+            diff = round(debit_total - credit_total, 2)
+
+            if abs(diff) > 0.01:
+                if diff > 0:
+                    # debit أكبر => نضيف credit
+                    balancing_line = {
+                        "account": suspense_code,
+                        "account_name": suspense_name,
+                        "debit": 0.0,
+                        "credit": abs(diff),
+                    }
+                else:
+                    balancing_line = {
+                        "account": suspense_code,
+                        "account_name": suspense_name,
+                        "debit": abs(diff),
+                        "credit": 0.0,
+                    }
+                new_lines.append(balancing_line)
+                added_balance_lines += 1
+                changed = True
+
+            if changed:
+                touched_entries += 1
+                if apply_changes:
+                    if supabase:
+                        supabase.table("journal_entries").update({"lines": new_lines}).eq("id", entry_id).execute()
+                    elif db is not None:
+                        await db.journal_entries.update_one({"id": entry_id}, {"$set": {"lines": new_lines}})
+
+        tb = await get_trial_balance(
+            workshop_id=workshop_id,
+            start_date=start_date,
+            end_date=end_date,
+            include_rakan=False,
+        )
+        totals = (tb.get("data") or {}).get("totals") or {}
+        total_debit = _safe_float(totals.get("total_debit"))
+        total_credit = _safe_float(totals.get("total_credit"))
+
+        return {
+            "success": True,
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "applied": apply_changes,
+                "migration": migration_result.get("data") if isinstance(migration_result, dict) else migration_result,
+                "repair": {
+                    "touched_entries": touched_entries,
+                    "fixed_blank_lines": fixed_blank_lines,
+                    "added_balance_lines": added_balance_lines,
+                    "suspense_code": suspense_code,
+                    "suspense_created": created_suspense,
+                    "bank_code_used": bank_code,
+                },
+                "trial_balance_after": {
+                    "total_debit": round(total_debit, 2),
+                    "total_credit": round(total_credit, 2),
+                    "difference": round(total_debit - total_credit, 2),
+                    "matched": abs(total_debit - total_credit) <= 0.01,
+                },
+            },
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "applied": apply_changes,
+            },
+        }
+
+
 @router.post("/reports/reclassify-vehicle-workshop-dues")
 async def reclassify_vehicle_workshop_dues(
     workshop_id: str = Query(...),

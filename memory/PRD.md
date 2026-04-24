@@ -17,6 +17,29 @@
 
 ## What's Been Implemented
 
+### تحديث المدقق المالي (External Auditor Mode) — Session-based + سؤال واحد إجباري (24 Apr 2026)
+- Backend (`routes_finance_bot.py`):
+  - تحويل `finance-bot` إلى نمط تدقيق حيّ يعتمد Findings مع إدارة حالة لكل ملاحظة:
+    - `open` → `probing` → `pending_evidence` → `resolved/escalated`
+  - ترتيب تلقائي حسب الخطورة (الأعلى أولًا) وعدم الانتقال لملاحظة جديدة قبل حسم الحالية.
+  - **Hard Guard** إلزامي: الرد يحتوي سؤالًا واحدًا فقط لكل رسالة (One-question enforcement).
+  - حفظ حالة الجلسة بشكل persistent على Mongo لكل `session_id` (مع fallback memory).
+  - إضافة endpoint جديد لرفع الأدلة:
+    - `POST /api/finance-bot/evidence/upload`
+    - يرجع `evidence_id` ويربط المرفق بالجلسة/الملاحظة.
+
+- Frontend (`AbuFahadFloatingChat.jsx`):
+  - إضافة رفع مرفق مباشر من الواجهة (زر مشبك + input ملف) وربطه تلقائيًا برسالة التدقيق.
+  - إرسال `session_id`, `findings`, `evidence_id`, `evidence_name` إلى `/api/finance-bot/chat`.
+  - جلب Findings مبدئيًا من `GET /api/finance/alerts` وربطها بسياق المدقق.
+  - تحسين ارتفاع لوحة الشات على الشاشات الصغيرة لتقليل قصّ منطقة الإدخال.
+
+### Testing
+- تقرير شامل: `/app/test_reports/iteration_160.json`
+  - Backend: 8/8 PASS
+  - Frontend: جميع عناصر الربط المطلوبة PASS (زر رفع المرفق + input + تكامل الإرسال)
+  - تحقق صريح من: سؤال واحد فقط، state machine، أولوية أعلى خطورة، evidence upload/resolve.
+
 ### تحسينات UX إضافية (24 Apr 2026)
 - دليل الحسابات:
   - جعل قسم التدقيق **قابل للطي/الفتح** بزر واضح.

@@ -241,7 +241,7 @@ const AbuFahadFloatingChat = ({
 
       {/* Chat panel */}
       {isOpen ? (
-        <div className="w-[92vw] max-w-[380px] sm:w-[380px] h-[70vh] sm:h-[520px] rounded-2xl border border-slate-800 bg-slate-950/95 backdrop-blur shadow-2xl overflow-hidden">
+        <div className="w-[92vw] max-w-[380px] sm:w-[380px] h-[78vh] max-h-[620px] sm:h-[520px] rounded-2xl border border-slate-800 bg-slate-950/95 backdrop-blur shadow-2xl overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
@@ -284,7 +284,7 @@ const AbuFahadFloatingChat = ({
           </div>
 
           <div className="px-4 pb-3">
-            <div className="h-[310px] overflow-y-auto rounded-lg bg-slate-900/60 border border-slate-800 p-2 space-y-2 text-xs">
+            <div className="h-[calc(78vh-250px)] min-h-[180px] sm:h-[310px] overflow-y-auto rounded-lg bg-slate-900/60 border border-slate-800 p-2 space-y-2 text-xs">
               {chatHistory.map((msg, idx) => (
                 <div
                   key={idx}

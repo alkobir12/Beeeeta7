@@ -652,15 +652,66 @@ export default function ChartOfAccountsLiquid() {
             </div>
           </div>
 
-          <div className="mt-3 text-xs text-slate-200 rounded-xl bg-white/5 p-2" data-testid="coa-summary-bar">
-            إجمالي الأصول: {formatCurrency(summary.assets)} | إجمالي الخصوم: {formatCurrency(summary.liabilities)} | الإيرادات: {formatCurrency(incomeSnapshot.revenue)} | المصروفات + المشتريات: {formatCurrency(incomeSnapshot.expenses)} | الصافي: {formatCurrency(incomeSnapshot.net_income)}
+          {/* Top summary bar — 5 financial totals as cards */}
+          <div
+            className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2"
+            data-testid="coa-summary-bar"
+          >
+            {[
+              { label: 'إجمالي الأصول', value: summary.assets, tone: 'emerald' },
+              { label: 'إجمالي الخصوم', value: summary.liabilities, tone: 'rose' },
+              { label: 'الإيرادات', value: incomeSnapshot.revenue, tone: 'sky' },
+              { label: 'المصروفات + المشتريات', value: incomeSnapshot.expenses, tone: 'amber' },
+              { label: 'الصافي', value: incomeSnapshot.net_income, tone: (incomeSnapshot.net_income || 0) >= 0 ? 'cyan' : 'rose' },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className={`rounded-xl border px-3 py-2 bg-slate-950/40 ${
+                  {
+                    emerald: 'border-emerald-300/25',
+                    rose: 'border-rose-300/25',
+                    sky: 'border-sky-300/25',
+                    amber: 'border-amber-300/25',
+                    cyan: 'border-cyan-300/25',
+                  }[s.tone] || 'border-white/10'
+                }`}
+                data-testid={`coa-summary-stat-${s.label}`}
+              >
+                <p className="text-[11px] text-slate-400 leading-tight truncate">{s.label}</p>
+                <p className={`mt-0.5 text-sm font-semibold tabular-nums ${
+                  {
+                    emerald: 'text-emerald-100',
+                    rose: 'text-rose-100',
+                    sky: 'text-sky-100',
+                    amber: 'text-amber-100',
+                    cyan: 'text-cyan-100',
+                  }[s.tone] || 'text-slate-100'
+                }`}>{formatCurrency(s.value)}</p>
+              </div>
+            ))}
           </div>
 
-          <div className="mt-2 text-xs text-slate-100 rounded-xl border border-white/10 bg-slate-950/40 p-2 flex flex-wrap gap-3" data-testid="coa-cash-bank-pos-summary-bar">
-            <span data-testid="coa-bank-balance-summary">البنك ({bankCodeLabel}): {formatCurrency(bankBalance)}</span>
-            <span data-testid="coa-cash-balance-summary">النقد ({cashCodeLabel}): {formatCurrency(cashBalance)}</span>
-            <span data-testid="coa-pos-balance-summary">نقاط بيع ({posCodeLabel}): {formatCurrency(posBalance)}</span>
-            <span data-testid="coa-revenue-summary">إجمالي الإيراد: {formatCurrency(incomeSnapshot.revenue)}</span>
+          {/* Bank / Cash / POS / Total Revenue cards */}
+          <div
+            className="mt-2 grid grid-cols-2 lg:grid-cols-4 gap-2"
+            data-testid="coa-cash-bank-pos-summary-bar"
+          >
+            <div className="rounded-xl border border-cyan-300/25 bg-slate-950/40 px-3 py-2" data-testid="coa-bank-balance-summary">
+              <p className="text-[11px] text-slate-400 leading-tight">البنك <span className="text-cyan-300">({bankCodeLabel})</span></p>
+              <p className="mt-0.5 text-sm font-semibold text-cyan-100 tabular-nums">{formatCurrency(bankBalance)}</p>
+            </div>
+            <div className="rounded-xl border border-emerald-300/25 bg-slate-950/40 px-3 py-2" data-testid="coa-cash-balance-summary">
+              <p className="text-[11px] text-slate-400 leading-tight">النقد <span className="text-emerald-300">({cashCodeLabel})</span></p>
+              <p className="mt-0.5 text-sm font-semibold text-emerald-100 tabular-nums">{formatCurrency(cashBalance)}</p>
+            </div>
+            <div className="rounded-xl border border-violet-300/25 bg-slate-950/40 px-3 py-2" data-testid="coa-pos-balance-summary">
+              <p className="text-[11px] text-slate-400 leading-tight">نقاط بيع <span className="text-violet-300">({posCodeLabel})</span></p>
+              <p className="mt-0.5 text-sm font-semibold text-violet-100 tabular-nums">{formatCurrency(posBalance)}</p>
+            </div>
+            <div className="rounded-xl border border-sky-300/25 bg-slate-950/40 px-3 py-2" data-testid="coa-revenue-summary">
+              <p className="text-[11px] text-slate-400 leading-tight">إجمالي الإيراد</p>
+              <p className="mt-0.5 text-sm font-semibold text-sky-100 tabular-nums">{formatCurrency(incomeSnapshot.revenue)}</p>
+            </div>
           </div>
         </div>
 

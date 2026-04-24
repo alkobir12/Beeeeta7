@@ -50,21 +50,48 @@ const ExpandableMetricCard = ({ title, value, subtitle, details = [], expanded, 
   >
     <button type="button" onClick={onToggle} className="w-full text-right" data-testid={`${testId}-toggle`}>
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="flex-1 min-w-0">
           <div className={`h-1.5 w-28 rounded-full bg-gradient-to-r ${accent}`} />
           <p className="mt-3 text-xs text-slate-300" data-testid={`${testId}-title`}>{title}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-50" data-testid={testId}>{value}</p>
-          {subtitle ? <p className="mt-2 text-xs text-slate-400" data-testid={`${testId}-subtitle`}>{subtitle}</p> : null}
+          <p className="mt-2 text-2xl font-bold text-slate-50 tabular-nums" data-testid={testId}>{value}</p>
+          {subtitle && typeof subtitle === 'string' ? (
+            <p className="mt-2 text-xs text-slate-400" data-testid={`${testId}-subtitle`}>{subtitle}</p>
+          ) : null}
+          {subtitle && Array.isArray(subtitle) && subtitle.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1" data-testid={`${testId}-subtitle`}>
+              {subtitle.map((chip, idx) => (
+                <span key={`${testId}-chip-${idx}`} className="text-[11px] text-slate-300 whitespace-nowrap">
+                  <span className="text-slate-400">{chip.label}:</span>{' '}
+                  <span className="text-slate-100 tabular-nums font-medium">{chip.value}</span>
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
-        <span className="mt-1 text-slate-300">{expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
+        <span className="mt-1 text-slate-300 shrink-0">{expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
       </div>
     </button>
 
     {expanded && details.length > 0 ? (
-      <div className="mt-3 border-t border-white/15 pt-3 space-y-1" data-testid={`${testId}-details`}>
-        {details.map((line, idx) => (
-          <p key={`${testId}-line-${idx}`} className="text-xs text-slate-300">• {line}</p>
-        ))}
+      <div className="mt-3 border-t border-white/15 pt-3 space-y-1.5" data-testid={`${testId}-details`}>
+        {details.map((line, idx) => {
+          // Object form: { label, value }
+          if (line && typeof line === 'object' && 'label' in line) {
+            return (
+              <div
+                key={`${testId}-line-${idx}`}
+                className="flex items-center justify-between gap-3 text-xs py-1 border-b border-white/5 last:border-b-0"
+              >
+                <span className="text-slate-400 whitespace-nowrap">{line.label}</span>
+                <span className="text-slate-100 tabular-nums font-medium text-left">{line.value}</span>
+              </div>
+            );
+          }
+          // Legacy string form
+          return (
+            <p key={`${testId}-line-${idx}`} className="text-xs text-slate-300 leading-relaxed">• {line}</p>
+          );
+        })}
       </div>
     ) : null}
   </div>
@@ -574,17 +601,23 @@ export default function ComprehensiveFinancial() {
       key: 'net_income',
       title: 'صافي الدخل',
       value: formatCurrency(incomeTotals.net_income || 0),
-      subtitle: `الهامش: ${profitMargin.toFixed(1)}% • إيراد نقد: ${formatCurrency(cashRevenueTotal)} • إيراد بنك: ${formatCurrency(bankRevenueTotal)}`,
+      subtitle: [
+        { label: 'الهامش', value: `${profitMargin.toFixed(1)}%` },
+        { label: 'إيراد نقد', value: formatCurrency(cashRevenueTotal) },
+        { label: 'إيراد بنك', value: formatCurrency(bankRevenueTotal) },
+      ],
       accent: incomeTotals.net_income >= 0 ? 'from-emerald-500/25 to-teal-400/10' : 'from-rose-500/25 to-pink-400/10',
       details: [
-        `إجمالي الإيرادات: ${formatCurrency(incomeTotals.revenue || 0)}`,
-        `إجمالي المصروفات: ${formatCurrency(incomeTotals.expenses || 0)}`,
-        `إجمالي إيراد النقد: ${formatCurrency(cashRevenueTotal)}`,
-        `إجمالي إيراد البنك/البطاقات: ${formatCurrency(bankRevenueTotal)}`,
-        `تفصيل طرق الدفع - نقد: ${formatCurrency(salesPaymentBreakdown.cash)} • بنك/بطاقة: ${formatCurrency(salesPaymentBreakdown.bank)} • آجل: ${formatCurrency(salesPaymentBreakdown.credit)}`,
-        `رصيد حساب النقد: ${formatCurrency(normalizedCashAccountBalance)}`,
-        `رصيد حساب البنك: ${formatCurrency(normalizedBankAccountBalance)}`,
-        `فارق النقد التشغيلي (تقريبي): ${formatCurrency(currentCashBalance || 0)}`,
+        { label: 'إجمالي الإيرادات', value: formatCurrency(incomeTotals.revenue || 0) },
+        { label: 'إجمالي المصروفات', value: formatCurrency(incomeTotals.expenses || 0) },
+        { label: 'إيراد النقد', value: formatCurrency(cashRevenueTotal) },
+        { label: 'إيراد البنك/البطاقات', value: formatCurrency(bankRevenueTotal) },
+        { label: 'مبيعات نقدية', value: formatCurrency(salesPaymentBreakdown.cash) },
+        { label: 'مبيعات بنك/بطاقة', value: formatCurrency(salesPaymentBreakdown.bank) },
+        { label: 'مبيعات آجل', value: formatCurrency(salesPaymentBreakdown.credit) },
+        { label: 'رصيد حساب النقد', value: formatCurrency(normalizedCashAccountBalance) },
+        { label: 'رصيد حساب البنك', value: formatCurrency(normalizedBankAccountBalance) },
+        { label: 'فارق النقد التشغيلي (تقريبي)', value: formatCurrency(currentCashBalance || 0) },
       ],
       testId: 'financial-headline-net-income',
     },
@@ -592,12 +625,13 @@ export default function ComprehensiveFinancial() {
       key: 'debts',
       title: 'الذمم',
       value: formatCurrency(arSummary.total_ar || 0),
-      subtitle: `عدد العملاء: ${(arSummary.customers || []).length}`,
+      subtitle: [
+        { label: 'عدد العملاء', value: `${(arSummary.customers || []).length}` },
+      ],
       accent: 'from-violet-500/25 to-blue-400/10',
       details: [
-        `ذمم العملاء المدينة: ${formatCurrency(arSummary.total_ar || 0)}`,
-        `مطلوبات الموردين (من الميزانية): ${formatCurrency(bsTotals.liabilities || 0)}`,
-        'التحصيل القادم يرفع الرصيد عند السداد فقط.',
+        { label: 'ذمم العملاء المدينة', value: formatCurrency(arSummary.total_ar || 0) },
+        { label: 'مطلوبات الموردين (من الميزانية)', value: formatCurrency(bsTotals.liabilities || 0) },
       ],
       testId: 'financial-headline-debts',
     },
@@ -608,9 +642,9 @@ export default function ComprehensiveFinancial() {
       subtitle: 'تفصيل المصروفات حسب النشاط',
       accent: 'from-rose-500/25 to-orange-400/10',
       details: [
-        `مصروفات الخدمات: ${formatCurrency(expenseBreakdown.service || 0)}`,
-        `مصروفات القطع: ${formatCurrency(expenseBreakdown.parts || 0)}`,
-        `مصروفات أخرى: ${formatCurrency(expenseBreakdown.other || 0)}`,
+        { label: 'مصروفات الخدمات', value: formatCurrency(expenseBreakdown.service || 0) },
+        { label: 'مصروفات القطع', value: formatCurrency(expenseBreakdown.parts || 0) },
+        { label: 'مصروفات أخرى', value: formatCurrency(expenseBreakdown.other || 0) },
       ],
       testId: 'financial-headline-expenses',
     },
@@ -621,10 +655,10 @@ export default function ComprehensiveFinancial() {
       subtitle: 'ربح/خسارة نشاط القطع',
       accent: partsNet >= 0 ? 'from-cyan-500/25 to-blue-400/10' : 'from-rose-500/25 to-pink-400/10',
       details: [
-        `إيرادات القطع: ${formatCurrency(revenueBreakdown.parts || 0)}`,
-        `تكلفة/مصروفات القطع: ${formatCurrency(expenseBreakdown.parts || 0)}`,
-        `ربح/خسارة الخدمات: ${formatCurrency(serviceNet)}`,
-        partsNet >= 0 ? 'القطع تحقق ربحًا حاليًا.' : 'القطع في منطقة خسارة وتحتاج مراجعة التسعير.',
+        { label: 'إيرادات القطع', value: formatCurrency(revenueBreakdown.parts || 0) },
+        { label: 'تكلفة/مصروفات القطع', value: formatCurrency(expenseBreakdown.parts || 0) },
+        { label: 'ربح/خسارة الخدمات', value: formatCurrency(serviceNet) },
+        { label: 'الحالة', value: partsNet >= 0 ? 'القطع تحقق ربحًا' : 'القطع في منطقة خسارة' },
       ],
       testId: 'financial-headline-parts-profit',
     },

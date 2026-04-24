@@ -16,6 +16,30 @@
 ---
 
 
+### Net Income Card Cleanup + Backend Performance Overhaul (24 Apr 2026)
+- **إصلاح كرت «صافي الدخل»** (`ComprehensiveFinancial.jsx`):
+  - إزالة الحقول المكررة (إيراد النقد / إيراد البنك) التي كانت تعرض نفس القيم مثل تفصيل المبيعات.
+  - إضافة أقسام مُعنونة داخل الكرت: `💰 الإيراد والمصروف` / `💳 تفصيل المبيعات حسب طريقة الدفع` / `🏦 الأرصدة الحالية`.
+  - إصلاح «رصيد حساب البنك/النقد/POS» ليقرأ من `balanceData.sections.assets` الصحيح (كان `bsDetails.assets_by_account` غير موجود → يعطي قيمة خاطئة 6,400).
+  - الآن يعرض الرصيد الفعلي: البنك 16,966، POS 2,000، النقد 0.
+  - إضافة section-headers و highlight لـ «صافي الدخل» داخل الجدول.
+- **تحسين السرعة** (`routes_finance.py` + `routes_extended.py`):
+  - TTL caches داخلية للـ hotspots:
+    - `_fetch_accounts` — 10 ثواني.
+    - `_fetch_journal_entries` — 5 ثواني (مفتاح: workshop_id + date range).
+    - `_fetch_operations_for_reconciliation` — 5 ثواني.
+    - `list_accounts` (routes_extended) — 10 ثواني.
+    - `_account_usage_map` — 30 ثانية.
+  - `accounts/tree` يستدعي الآن `_fetch_journal_entries` المُكاش من routes_finance بدل supabase مباشرة.
+  - تخفيض حد الجلب من 20,000 إلى 5,000 قيد (الواقع 64 قيد فقط).
+  - دالة `invalidate_finance_caches()` تُستدعى تلقائياً بعد create/update/delete لأي قيد يومية.
+- **النتائج** (قبل → بعد):
+  - accounts/tree warm: 3.5s → **0.17s** (20× أسرع)
+  - income-statement: 3.0s → **0.18s** (16× أسرع)
+  - balance-sheet: 1.1s → **0.15s**
+  - trial-balance: 0.5s → **0.15s**
+  - Cold start: 4s (غير مُكاش) يُحسن تلقائياً بعد أول طلب.
+
 ### Duplicate Accounts Cleanup + UI Layout Revamp (24 Apr 2026)
 - **تنظيف الحسابات المكررة**: حذف 32 حساب مكرر/تجريبي من Supabase + ملف aliases (211 → 179 حساباً):
   - مكررات عملاء (9): «G», «H», «أحمد محمد العميل» (5 نسخ), «ماجد العنزي», «و»

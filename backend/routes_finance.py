@@ -212,6 +212,23 @@ def _is_rakan_journal_entry(entry: Dict[str, Any], id_to_code: Dict[str, str]) -
 _ACCOUNT_ALIAS_CACHE: Dict[str, str] = {}
 _ACCOUNT_ALIAS_CACHE_AT: float = 0.0
 
+# In-memory TTL caches for hot endpoints (accounts/tree, reports).
+_ACCOUNTS_CACHE: List[Dict[str, Any]] = []
+_ACCOUNTS_CACHE_AT: float = 0.0
+_ACCOUNTS_CACHE_TTL: float = 10.0  # seconds
+
+_JOURNAL_CACHE: Dict[str, tuple] = {}  # key -> (cached_at, rows)
+_JOURNAL_CACHE_TTL: float = 5.0  # seconds
+
+
+def invalidate_finance_caches():
+    """Invalidate in-memory caches. Called after writes (journal entry create/update/delete)."""
+    global _ACCOUNTS_CACHE_AT, _JOURNAL_CACHE, _ACCOUNT_ALIAS_CACHE_AT, _OPERATIONS_CACHE
+    _ACCOUNTS_CACHE_AT = 0.0
+    _ACCOUNT_ALIAS_CACHE_AT = 0.0
+    _JOURNAL_CACHE = {}
+    _OPERATIONS_CACHE = {}
+
 
 def _fetch_account_code_aliases() -> Dict[str, str]:
     """Sync read of account_code_aliases (account_id -> legacy_code).
@@ -262,6 +279,13 @@ def _fetch_account_code_aliases() -> Dict[str, str]:
 def _fetch_accounts():
     if not supabase:
         raise Exception("Supabase not connected")
+
+    # Try TTL cache first (accounts list changes rarely — 10s TTL is safe)
+    global _ACCOUNTS_CACHE, _ACCOUNTS_CACHE_AT
+    import time
+    now_ts = time.time()
+    if _ACCOUNTS_CACHE and (now_ts - _ACCOUNTS_CACHE_AT) < _ACCOUNTS_CACHE_TTL:
+        return _ACCOUNTS_CACHE
 
     primary_accounts = []
     secondary_accounts = []
@@ -321,6 +345,10 @@ def _fetch_accounts():
             aid = str(acc.get("id") or "").strip()
             if aid and aid in aliases and not acc.get("legacy_code"):
                 acc["legacy_code"] = aliases[aid]
+
+    # Populate cache
+    _ACCOUNTS_CACHE = merged
+    _ACCOUNTS_CACHE_AT = now_ts
 
     return merged
 
@@ -402,22 +430,38 @@ def _fetch_journal_entries(
     if not supabase:
         raise Exception("Supabase not connected")
 
-    query = (
-        supabase.table("journal_entries")
-        .select("*")
-        .eq("workshop_id", workshop_id)
-        .neq("workshop_id", None)
-    )
-    normalized_start = _normalize_date_string(start_date)
-    normalized_end = _normalize_date_string(end_date)
+    # Cache raw Supabase fetch (before rakan filter) keyed on query params.
+    global _JOURNAL_CACHE
+    import time
+    now_ts = time.time()
+    cache_key = f"{workshop_id}|{start_date or ''}|{end_date or ''}|{skip}|{limit}"
+    cached = _JOURNAL_CACHE.get(cache_key)
+    if cached and (now_ts - cached[0]) < _JOURNAL_CACHE_TTL:
+        rows = cached[1]
+    else:
+        query = (
+            supabase.table("journal_entries")
+            .select("*")
+            .eq("workshop_id", workshop_id)
+            .neq("workshop_id", None)
+        )
+        normalized_start = _normalize_date_string(start_date)
+        normalized_end = _normalize_date_string(end_date)
 
-    if normalized_start:
-        query = query.gte("date", normalized_start)
-    if normalized_end:
-        query = query.lte("date", normalized_end)
-    if limit is not None:
-        query = query.range(skip, skip + limit - 1)
-    rows = query.order("date", desc=True).execute().data or []
+        if normalized_start:
+            query = query.gte("date", normalized_start)
+        if normalized_end:
+            query = query.lte("date", normalized_end)
+        if limit is not None:
+            query = query.range(skip, skip + limit - 1)
+        rows = query.order("date", desc=True).execute().data or []
+        _JOURNAL_CACHE[cache_key] = (now_ts, rows)
+        # Opportunistically purge stale entries to keep memory small.
+        if len(_JOURNAL_CACHE) > 32:
+            stale = [k for k, v in _JOURNAL_CACHE.items() if (now_ts - v[0]) >= _JOURNAL_CACHE_TTL]
+            for k in stale:
+                _JOURNAL_CACHE.pop(k, None)
+
     if include_rakan:
         return rows
 
@@ -981,6 +1025,10 @@ def _normalize_account_type(account_type: Optional[str]) -> str:
     return normalized if normalized in allowed else "asset"
 
 
+_OPERATIONS_CACHE: Dict[str, tuple] = {}  # key -> (cached_at, rows)
+_OPERATIONS_CACHE_TTL: float = 5.0
+
+
 def _fetch_operations_for_reconciliation(
     workshop_id: str,
     start_date: Optional[str] = None,
@@ -988,6 +1036,15 @@ def _fetch_operations_for_reconciliation(
 ):
     if not supabase:
         raise Exception("Supabase not connected")
+
+    # TTL cache keyed on filter params.
+    import time
+    global _OPERATIONS_CACHE
+    now_ts = time.time()
+    cache_key = f"{workshop_id}|{start_date or ''}|{end_date or ''}"
+    cached = _OPERATIONS_CACHE.get(cache_key)
+    if cached and (now_ts - cached[0]) < _OPERATIONS_CACHE_TTL:
+        return cached[1]
 
     def _build(scoped: bool, select_expr: str):
         q = supabase.table("operations").select(select_expr)
@@ -1015,9 +1072,17 @@ def _fetch_operations_for_reconciliation(
                 return _build(scoped, "*").execute().data or []
 
     try:
-        return _run(scoped=True)
+        rows = _run(scoped=True)
     except Exception:
-        return _run(scoped=False)
+        rows = _run(scoped=False)
+
+    _OPERATIONS_CACHE[cache_key] = (now_ts, rows)
+    # Purge stale
+    if len(_OPERATIONS_CACHE) > 32:
+        stale = [k for k, v in _OPERATIONS_CACHE.items() if (now_ts - v[0]) >= _OPERATIONS_CACHE_TTL]
+        for k in stale:
+            _OPERATIONS_CACHE.pop(k, None)
+    return rows
 
 
 def _is_rakan_operation_row(row: Dict[str, Any]) -> bool:
@@ -2562,6 +2627,7 @@ async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
             }
             response = supabase.table("journal_entries").insert(full_entry_data).execute()
 
+            invalidate_finance_caches()
             return {
                 "success": True,
                 "message": "تم إنشاء القيد المحاسبي بنجاح",
@@ -2574,6 +2640,7 @@ async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
             print(f"Schema error, trying with basic fields: {schema_error}")
             response = supabase.table("journal_entries").insert(entry_data).execute()
 
+            invalidate_finance_caches()
             return {
                 "success": True,
                 "message": "تم إنشاء القيد المحاسبي بنجاح (بدون transaction_type)",
@@ -2650,6 +2717,7 @@ async def update_journal_entry(
                 .execute()
             )
             
+            invalidate_finance_caches()
             return {
                 "success": True,
                 "message": "تم تحديث القيد المحاسبي بنجاح",
@@ -2669,6 +2737,7 @@ async def update_journal_entry(
                     .execute()
                 )
                 
+                invalidate_finance_caches()
                 return {
                     "success": True,
                     "message": "تم تحديث القيد المحاسبي بنجاح (بدون transaction_type)",
@@ -2724,6 +2793,7 @@ async def delete_journal_entry(entry_id: str, workshop_id: str = Query(...)):
         # حذف القيد
         supabase.table("journal_entries").delete().eq("id", entry_id).execute()
 
+        invalidate_finance_caches()
         return {"success": True, "message": "تم حذف القيد المحاسبي بنجاح"}
 
     except Exception as e:

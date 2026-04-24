@@ -73,17 +73,29 @@ const ExpandableMetricCard = ({ title, value, subtitle, details = [], expanded, 
     </button>
 
     {expanded && details.length > 0 ? (
-      <div className="mt-3 border-t border-white/15 pt-3 space-y-1.5" data-testid={`${testId}-details`}>
+      <div className="mt-3 border-t border-white/15 pt-3 space-y-0.5" data-testid={`${testId}-details`}>
         {details.map((line, idx) => {
-          // Object form: { label, value }
-          if (line && typeof line === 'object' && 'label' in line) {
+          // Section header form: { section }
+          if (line && typeof line === 'object' && 'section' in line) {
             return (
               <div
-                key={`${testId}-line-${idx}`}
-                className="flex items-center justify-between gap-3 text-xs py-1 border-b border-white/5 last:border-b-0"
+                key={`${testId}-section-${idx}`}
+                className="mt-2 first:mt-0 mb-1 text-[11px] font-semibold text-slate-300 uppercase tracking-wider"
               >
+                {line.section}
+              </div>
+            );
+          }
+          // Object form: { label, value, highlight? }
+          if (line && typeof line === 'object' && 'label' in line) {
+            const base = 'flex items-center justify-between gap-3 text-xs py-1.5 border-b border-white/5 last:border-b-0';
+            const valueClass = line.highlight
+              ? 'text-emerald-200 tabular-nums font-bold text-left'
+              : 'text-slate-100 tabular-nums font-medium text-left';
+            return (
+              <div key={`${testId}-line-${idx}`} className={base}>
                 <span className="text-slate-400 whitespace-nowrap">{line.label}</span>
-                <span className="text-slate-100 tabular-nums font-medium text-left">{line.value}</span>
+                <span className={valueClass}>{line.value}</span>
               </div>
             );
           }
@@ -547,37 +559,67 @@ export default function ComprehensiveFinancial() {
     [bsDetails]
   );
 
+  // Read actual current balances from the Balance Sheet `sections.assets` array
+  // (this is the real post-migration balance, e.g. Bank = 16,150).
+  const balanceSheetAssets = useMemo(() => balanceData?.sections?.assets || [], [balanceData]);
+
   const cashAccountBalance = useMemo(() => {
+    // Prefer the real current balance from Balance Sheet sections
+    const fromSections = balanceSheetAssets.reduce((sum, a) => {
+      const name = String(a?.name || '').toLowerCase();
+      if (name === 'النقد' || name === 'nقد' || name === 'cash' || name === 'الصندوق') {
+        return sum + Number(a?.balance || 0);
+      }
+      return sum;
+    }, 0);
+    if (Math.abs(fromSections) > 0.0001) return fromSections;
+    // Legacy fallback via assets_by_account map
     return assetAccountEntries.reduce((sum, [code, value]) => {
       const amount = parseEntryAmount(value);
       const name = resolveReadableAccountName(code, value?.name);
       const normalizedName = String(name || '').toLowerCase();
       if (
-        normalizedName.includes('النقد')
-        || normalizedName.includes('الصندوق')
-        || normalizedName.includes('cash')
+        normalizedName === 'النقد'
+        || normalizedName === 'الصندوق'
+        || normalizedName === 'cash'
       ) {
         return sum + amount;
       }
       return sum;
     }, 0);
-  }, [assetAccountEntries, accountNameMap]);
+  }, [balanceSheetAssets, assetAccountEntries, accountNameMap]);
 
   const bankAccountBalance = useMemo(() => {
+    // Prefer the real current balance from Balance Sheet sections (exact match on البنك)
+    const fromSections = balanceSheetAssets.reduce((sum, a) => {
+      const name = String(a?.name || '').toLowerCase();
+      if (name === 'البنك' || name === 'bank') {
+        return sum + Number(a?.balance || 0);
+      }
+      return sum;
+    }, 0);
+    if (Math.abs(fromSections) > 0.0001) return fromSections;
     return assetAccountEntries.reduce((sum, [code, value]) => {
       const amount = parseEntryAmount(value);
       const name = resolveReadableAccountName(code, value?.name);
       const normalizedName = String(name || '').toLowerCase();
-      if (
-        normalizedName.includes('البنك')
-        || normalizedName.includes('bank')
-        || normalizedName.includes('بطاقة')
-      ) {
+      if (normalizedName === 'البنك' || normalizedName === 'bank') {
         return sum + amount;
       }
       return sum;
     }, 0);
-  }, [assetAccountEntries, accountNameMap]);
+  }, [balanceSheetAssets, assetAccountEntries, accountNameMap]);
+
+  const posAccountBalance = useMemo(() => {
+    const fromSections = balanceSheetAssets.reduce((sum, a) => {
+      const name = String(a?.name || '').toLowerCase();
+      if (name === 'نقاط بيع' || name === 'pos') {
+        return sum + Number(a?.balance || 0);
+      }
+      return sum;
+    }, 0);
+    return fromSections;
+  }, [balanceSheetAssets]);
 
   const salesPaymentBreakdown = useMemo(() => ({
     cash: Number(salesSummary.operations_cash_total ?? salesSummary.total_cash_component ?? 0),
@@ -588,13 +630,13 @@ export default function ComprehensiveFinancial() {
 
   const normalizedCashAccountBalance = useMemo(() => {
     if (Math.abs(cashAccountBalance) > 0.0001) return cashAccountBalance;
-    return Number(salesSummary.operations_cash_total || salesSummary.total_cash_component || 0);
-  }, [cashAccountBalance, salesSummary]);
+    return 0;
+  }, [cashAccountBalance]);
 
   const normalizedBankAccountBalance = useMemo(() => {
     if (Math.abs(bankAccountBalance) > 0.0001) return bankAccountBalance;
-    return Number(salesSummary.operations_bank_total || salesSummary.total_bank_component || 0);
-  }, [bankAccountBalance, salesSummary]);
+    return 0;
+  }, [bankAccountBalance]);
 
   const topCards = [
     {
@@ -603,21 +645,23 @@ export default function ComprehensiveFinancial() {
       value: formatCurrency(incomeTotals.net_income || 0),
       subtitle: [
         { label: 'الهامش', value: `${profitMargin.toFixed(1)}%` },
-        { label: 'إيراد نقد', value: formatCurrency(cashRevenueTotal) },
-        { label: 'إيراد بنك', value: formatCurrency(bankRevenueTotal) },
+        { label: 'الإيرادات', value: formatCurrency(incomeTotals.revenue || 0) },
+        { label: 'المصروفات', value: formatCurrency(incomeTotals.expenses || 0) },
       ],
       accent: incomeTotals.net_income >= 0 ? 'from-emerald-500/25 to-teal-400/10' : 'from-rose-500/25 to-pink-400/10',
       details: [
+        { section: '💰 الإيراد والمصروف' },
         { label: 'إجمالي الإيرادات', value: formatCurrency(incomeTotals.revenue || 0) },
         { label: 'إجمالي المصروفات', value: formatCurrency(incomeTotals.expenses || 0) },
-        { label: 'إيراد النقد', value: formatCurrency(cashRevenueTotal) },
-        { label: 'إيراد البنك/البطاقات', value: formatCurrency(bankRevenueTotal) },
-        { label: 'مبيعات نقدية', value: formatCurrency(salesPaymentBreakdown.cash) },
-        { label: 'مبيعات بنك/بطاقة', value: formatCurrency(salesPaymentBreakdown.bank) },
-        { label: 'مبيعات آجل', value: formatCurrency(salesPaymentBreakdown.credit) },
-        { label: 'رصيد حساب النقد', value: formatCurrency(normalizedCashAccountBalance) },
-        { label: 'رصيد حساب البنك', value: formatCurrency(normalizedBankAccountBalance) },
-        { label: 'فارق النقد التشغيلي (تقريبي)', value: formatCurrency(currentCashBalance || 0) },
+        { label: 'صافي الدخل', value: formatCurrency(incomeTotals.net_income || 0), highlight: true },
+        { section: '💳 تفصيل المبيعات حسب طريقة الدفع' },
+        { label: 'نقدي', value: formatCurrency(salesPaymentBreakdown.cash) },
+        { label: 'بنك / بطاقة', value: formatCurrency(salesPaymentBreakdown.bank) },
+        { label: 'آجل', value: formatCurrency(salesPaymentBreakdown.credit) },
+        { section: '🏦 الأرصدة الحالية' },
+        { label: 'رصيد النقد', value: formatCurrency(normalizedCashAccountBalance) },
+        { label: 'رصيد البنك', value: formatCurrency(normalizedBankAccountBalance) },
+        { label: 'رصيد نقاط البيع', value: formatCurrency(posAccountBalance) },
       ],
       testId: 'financial-headline-net-income',
     },

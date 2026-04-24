@@ -5208,20 +5208,31 @@ async def _remove_account_status_override(account_id: str):
 
 
 async def _account_usage_map() -> Dict[str, str]:
+    import time
+    global _USAGE_MAP_CACHE, _USAGE_MAP_CACHE_AT
+    now_ts = time.time()
+    if _USAGE_MAP_CACHE is not None and (now_ts - _USAGE_MAP_CACHE_AT) < _USAGE_MAP_CACHE_TTL:
+        return _USAGE_MAP_CACHE
     try:
         if db is not None:
             rows = await db.account_usage.find({}, {"_id": 0}).to_list(5000)
-            return {
+            result = {
                 str(row.get("accountId")): str(row.get("lastUsedAt"))
                 for row in rows
                 if row.get("accountId")
             }
+            _USAGE_MAP_CACHE = result
+            _USAGE_MAP_CACHE_AT = now_ts
+            return result
         rows = _mem_read("account_usage")
-        return {
+        result = {
             str(row.get("accountId")): str(row.get("lastUsedAt"))
             for row in rows
             if row.get("accountId")
         }
+        _USAGE_MAP_CACHE = result
+        _USAGE_MAP_CACHE_AT = now_ts
+        return result
     except Exception:
         return {}
 
@@ -5377,9 +5388,30 @@ def _apply_account_filters(
     return True
 
 
+_LIST_ACCOUNTS_CACHE = None
+_LIST_ACCOUNTS_CACHE_AT = 0.0
+_LIST_ACCOUNTS_CACHE_TTL = 10.0  # seconds
+
+_USAGE_MAP_CACHE = None
+_USAGE_MAP_CACHE_AT = 0.0
+_USAGE_MAP_CACHE_TTL = 30.0  # seconds (usage timestamps can be slightly stale)
+
+
+def invalidate_accounts_cache():
+    """Called after any account mutation (create/update/delete) to bust caches."""
+    global _LIST_ACCOUNTS_CACHE_AT, _USAGE_MAP_CACHE_AT
+    _LIST_ACCOUNTS_CACHE_AT = 0.0
+    _USAGE_MAP_CACHE_AT = 0.0
+
+
 @router.get("/accounts")
 async def list_accounts():
-    """Get all accounts in the chart of accounts"""
+    """Get all accounts in the chart of accounts (cached for short TTL)."""
+    import time
+    global _LIST_ACCOUNTS_CACHE, _LIST_ACCOUNTS_CACHE_AT
+    now_ts = time.time()
+    if _LIST_ACCOUNTS_CACHE is not None and (now_ts - _LIST_ACCOUNTS_CACHE_AT) < _LIST_ACCOUNTS_CACHE_TTL:
+        return _LIST_ACCOUNTS_CACHE
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
 
@@ -5402,6 +5434,8 @@ async def list_accounts():
                 legacy_code = code_aliases.get(str(item.get("id")))
                 if legacy_code:
                     item["legacy_code"] = legacy_code
+            _LIST_ACCOUNTS_CACHE = items
+            _LIST_ACCOUNTS_CACHE_AT = now_ts
             return items
 
         # MongoDB fallback
@@ -5715,18 +5749,25 @@ async def accounts_tree(
             return raw
 
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
-        if provider == "supabase":
-            supa = SupabaseService()
-            jres = (
-                supa.client.table("journal_entries")
-                .select("date,lines")
-                .eq("workshop_id", workshop_id)
-                .limit(20000)
-                .execute()
-            )
-            rows = jres.data or []
-        else:
-            rows = await db.journal_entries.find({"workshop_id": workshop_id}, {"_id": 0, "date": 1, "lines": 1}).to_list(length=20000)
+        # Reuse the routes_finance TTL cache for journal entries to avoid
+        # double-fetching (accounts/tree + internal income statement call).
+        rows = []
+        try:
+            from routes_finance import _fetch_journal_entries as _finance_fetch_je
+            rows = _finance_fetch_je(workshop_id, limit=5000, include_rakan=True)
+        except Exception:
+            if provider == "supabase":
+                supa = SupabaseService()
+                jres = (
+                    supa.client.table("journal_entries")
+                    .select("date,lines")
+                    .eq("workshop_id", workshop_id)
+                    .limit(5000)
+                    .execute()
+                )
+                rows = jres.data or []
+            else:
+                rows = await db.journal_entries.find({"workshop_id": workshop_id}, {"_id": 0, "date": 1, "lines": 1}).to_list(length=5000)
 
         for entry in rows:
             for line in entry.get("lines", []) or []:

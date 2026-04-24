@@ -17,6 +17,30 @@
 
 ## What's Been Implemented
 
+### Audit Interactive Loop — Incremental Patch Mode (24 Apr 2026)
+- تم تنفيذ الترقيع الإضافي على نفس بنية المدقق بدون إعادة بناء:
+  - الحفاظ على: findings pipeline + state machine + hard guard + session persistence + evidence linking.
+- Backend (`routes_finance_bot.py`):
+  - إضافة Action Patch على `/api/finance-bot/chat`:
+    - `open_investigation`
+    - `apply_suggested_fix`
+    - `view_evidence`
+    - `escalate`
+  - output أصبح يتضمن: `finding_id`, `state`, `interactive.actions`.
+  - فرض `single_suggestion_preferred` (اقتراح واحد فقط عند apply fix).
+  - عدم إنشاء حالات جديدة خارج: `open/probing/pending_evidence/resolved/escalated`.
+  - `message` أصبح اختياريًا لدعم action-only calls مع بقاء hard guard لسؤال واحد عند probing.
+- Frontend (`AbuFahadFloatingChat.jsx`):
+  - إضافة Action Card داخل رسائل المدقق.
+  - إضافة تشغيل الإجراءات مباشرة من الواجهة (`runInteractiveAction`) مع `target_finding_id`.
+  - الحفاظ على رفع الأدلة وربطها بنفس session/finding.
+
+### Testing
+- تقرير تحقق: `/app/test_reports/iteration_164.json`
+  - Backend: 18/18 PASS
+  - Frontend: PASS (ظهور action buttons مشروط بوجود findings فعلية من المصدر)
+  - Verdict: ✅ Patch mode يعمل بدون كسر التدفق الحالي.
+
 ### إزالة الأكواد القديمة نهائيًا من الصفحات المخصصة + اعتماد الأكواد الجديدة (24 Apr 2026)
 - تم تنظيف الواجهات المالية من أي ظهور مرئي للأكواد legacy (مثل 1101/1102/1103/4000...).
 - `ComprehensiveFinancial.jsx`:

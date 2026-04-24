@@ -384,9 +384,17 @@ export default function ChartOfAccountsLiquid() {
     return map;
   }, [accountById]);
 
-  const bankBalance = Number((accountByLegacyCode['1102'] || accountByCode['1102'])?.balance || 0);
-  const cashBalance = Number((accountByLegacyCode['1101'] || accountByCode['1101'])?.balance || 0);
-  const posBalance = Number((accountByLegacyCode['1104'] || accountByCode['1104'])?.balance || 0);
+  const bankAccountNode = accountByLegacyCode['1102'] || accountByCode['1102'] || null;
+  const cashAccountNode = accountByLegacyCode['1101'] || accountByCode['1101'] || null;
+  const posAccountNode = accountByLegacyCode['1104'] || accountByCode['1104'] || null;
+
+  const bankCodeLabel = bankAccountNode?.code || '---';
+  const cashCodeLabel = cashAccountNode?.code || '---';
+  const posCodeLabel = posAccountNode?.code || '---';
+
+  const bankBalance = Number(bankAccountNode?.balance || 0);
+  const cashBalance = Number(cashAccountNode?.balance || 0);
+  const posBalance = Number(posAccountNode?.balance || 0);
 
   const selectedSheetAccount = sheetAccountId ? accountById[sheetAccountId] : null;
 
@@ -611,13 +619,13 @@ export default function ChartOfAccountsLiquid() {
           </div>
 
           <div className="mt-3 text-xs text-slate-200 rounded-xl bg-white/5 p-2" data-testid="coa-summary-bar">
-            إجمالي الأصول: {formatCurrency(summary.assets)} | إجمالي الخصوم: {formatCurrency(summary.liabilities)} | صافي الربح: {formatCurrency(summary.net_profit)}
+            إجمالي الأصول: {formatCurrency(summary.assets)} | إجمالي الخصوم: {formatCurrency(summary.liabilities)} | الإيرادات: {formatCurrency(summary.revenue || 0)} | المصروفات + المشتريات: {formatCurrency((summary.expense || 0) + (summary.purchase || 0))} | الصافي: {formatCurrency(summary.net_profit)}
           </div>
 
           <div className="mt-2 text-xs text-slate-100 rounded-xl border border-white/10 bg-slate-950/40 p-2 flex flex-wrap gap-3" data-testid="coa-cash-bank-pos-summary-bar">
-            <span data-testid="coa-bank-balance-summary">البنك (1102): {formatCurrency(bankBalance)}</span>
-            <span data-testid="coa-cash-balance-summary">النقد (1101): {formatCurrency(cashBalance)}</span>
-            <span data-testid="coa-pos-balance-summary">نقاط بيع (1104): {formatCurrency(posBalance)}</span>
+            <span data-testid="coa-bank-balance-summary">البنك ({bankCodeLabel}): {formatCurrency(bankBalance)}</span>
+            <span data-testid="coa-cash-balance-summary">النقد ({cashCodeLabel}): {formatCurrency(cashBalance)}</span>
+            <span data-testid="coa-pos-balance-summary">نقاط بيع ({posCodeLabel}): {formatCurrency(posBalance)}</span>
             <span data-testid="coa-revenue-summary">إجمالي الإيراد: {formatCurrency(summary.revenue || 0)}</span>
           </div>
         </div>

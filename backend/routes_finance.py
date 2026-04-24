@@ -256,8 +256,11 @@ def _fetch_accounts():
                 a["name_ar"] = a.get("name")
             merged.append(a)
 
-    add_list(primary_accounts)
-    add_list(secondary_accounts)
+    # عند وجود بيانات أساسية من Supabase، لا ندمج نسخة Mongo القديمة لتفادي ظهور أكواد legacy.
+    if primary_accounts:
+        add_list(primary_accounts)
+    else:
+        add_list(secondary_accounts)
 
     return merged
 
@@ -2100,16 +2103,51 @@ async def get_chart_of_accounts(
             except Exception:
                 pass
 
+        # fallback mapping بالاسم/البادئة لإخفاء الأكواد القديمة من العرض
+        def _find_code_by_name(*needles: str) -> str:
+            for acc in merged_accounts:
+                name = str(acc.get("name") or acc.get("name_ar") or "").strip().lower()
+                code = str(acc.get("code") or "").strip()
+                if not code:
+                    continue
+                if all(n in name for n in needles):
+                    return code
+            return ""
+
+        ar_code_fallback = _find_code_by_name("العملاء")
+        ap_code_fallback = _find_code_by_name("المورد")
+        revenue_code_fallback = _find_code_by_name("الإيراد") or _find_code_by_name("ايراد")
+        expense_code_fallback = _find_code_by_name("المصروف")
+        cost_code_fallback = _find_code_by_name("تكلفة")
+
+        def _map_legacy_prefix(code: str) -> str:
+            if code.startswith("1103") and ar_code_fallback:
+                return ar_code_fallback
+            if code.startswith("2101") and ap_code_fallback:
+                return ap_code_fallback
+            if code.startswith("400") or code.startswith("410"):
+                return revenue_code_fallback or code
+            if code.startswith("600") or code.startswith("610"):
+                return expense_code_fallback or code
+            if code.startswith("500") or code.startswith("510"):
+                return cost_code_fallback or expense_code_fallback or code
+            return code
+
         balances_by_current: Dict[str, Dict[str, float]] = {}
 
         for code, data in accounts_balances.items():
             mapped_code = alias_to_current.get(code, code)
+            mapped_code = _map_legacy_prefix(mapped_code)
             if mapped_code not in merged_by_code:
+                # لا نُظهر أكواد قديمة مجهولة إذا تعذر ربطها بدليل الحسابات الجديد
+                if mapped_code == code and (code.isdigit() and int(code) >= 1000):
+                    continue
+
                 merged_by_code[mapped_code] = {
                     "id": mapped_code,
                     "code": mapped_code,
-                    "name": data.get("name") or code_to_name.get(code) or code,
-                    "name_ar": data.get("name") or code_to_name.get(code) or code,
+                    "name": data.get("name") or code_to_name.get(code) or mapped_code,
+                    "name_ar": data.get("name") or code_to_name.get(code) or mapped_code,
                     "type": code_to_type.get(mapped_code) or code_to_type.get(code) or "other",
                 }
 
@@ -2143,29 +2181,6 @@ async def get_chart_of_accounts(
                     "department": "Rakan Parts" if is_rakan else "Workshop",
                 }
             )
-
-        default_accounts = [
-            {
-                "id": "1103",
-                "code": "1103",
-                "name": "Accounts Receivable",
-                "name_ar": "حساب العملاء (ذمم)",
-                "type": "asset",
-                "balance": 0,
-            },
-            {
-                "id": "1104",
-                "code": "1104",
-                "name": "POS",
-                "name_ar": "نقاط بيع",
-                "type": "asset",
-                "balance": 0,
-            }
-        ]
-        existing_codes = {acc.get("code") for acc in results}
-        for acc in default_accounts:
-            if acc["code"] not in existing_codes:
-                results.append(acc)
 
         results = sorted(results, key=lambda x: str(x.get("code", "")))
 

@@ -1,0 +1,73 @@
+{
+  "summary": "Iteration 162: Verified net_profit formula (revenue - (expense + purchase)) and legacy code suppression. All 12 backend tests PASS. Frontend displays new sequential codes (001-211) instead of legacy codes (>=1000). No tb_unbalanced alerts.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_net_profit_legacy_codes_iter162.py",
+    "/app/test_reports/pytest/pytest_iter162.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes_extended.py: accounts/tree summary correctly includes 'purchase' field and calculates net_profit = revenue - (expense + purchase)",
+    "routes_finance.py: chart-of-accounts endpoint correctly suppresses legacy codes (>=1000) using alias_to_current mapping and _map_legacy_prefix function",
+    "JournalEntries.jsx: resolveCurrentAccountCode function maps legacy codes (1101/1102/1103/2101/4xxx/5xxx/6xxx) to new sequential codes when displaying"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_net_profit_legacy_codes_iter162.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (pages load correctly, summary bar shows correct formula, no legacy codes in UI)"
+  },
+  "test_credentials": "Username: مدير, Password: not required",
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Net profit formula verified: revenue(4112) - (expense(13776.5) + purchase(0)) = -9664.5. 211 accounts with new sequential codes (001-211). Legacy codes (1101/1102/1103/2101/4xxx/5xxx/6xxx) suppressed in chart-of-accounts. No tb_unbalanced alerts.",
+  "test_verdicts": {
+    "1_accounts_tree_returns_success": "PASS - GET /api/accounts/tree returns success=True",
+    "2_accounts_tree_summary_contains_purchase": "PASS - summary contains 'purchase' field = 0",
+    "3_accounts_tree_summary_contains_net_profit": "PASS - summary contains 'net_profit' field = -9664.5",
+    "4_net_profit_formula_correct": "PASS - net_profit = revenue(4112) - (expense(13776.5) + purchase(0)) = -9664.5",
+    "5_chart_of_accounts_returns_success": "PASS - GET /api/finance/chart-of-accounts returns success=True",
+    "6_no_legacy_codes_in_chart_of_accounts": "PASS - 211 accounts, 0 legacy codes (>=1000)",
+    "7_journal_entries_returns_success": "PASS - GET /api/finance/journal-entries returns success=True",
+    "8_journal_entries_account_codes_format": "PASS - Frontend resolves legacy codes to new codes via resolveCurrentAccountCode()",
+    "9_alerts_endpoint_returns_success": "PASS - GET /api/finance/alerts returns success=True",
+    "10_no_tb_unbalanced_alert": "PASS - No tb_unbalanced alert found",
+    "11_trial_balance_returns_success": "PASS - GET /api/finance/reports/trial-balance returns success=True",
+    "12_trial_balance_is_balanced": "PASS - Debit=Credit, difference=0"
+  },
+  "api_verification": {
+    "GET /api/accounts/tree": "PASS - Returns summary with purchase and net_profit = revenue - (expense + purchase)",
+    "GET /api/finance/chart-of-accounts": "PASS - Returns 211 accounts with new codes (001-211), no legacy codes (>=1000)",
+    "GET /api/finance/journal-entries": "PASS - Returns entries, frontend resolves legacy codes to new codes",
+    "GET /api/finance/alerts": "PASS - No tb_unbalanced alert",
+    "GET /api/finance/reports/trial-balance": "PASS - Balanced (difference=0)"
+  },
+  "frontend_verification": {
+    "ChartOfAccountsLiquid": {
+      "page_load": "PASS - Page loads with data-testid='chart-of-accounts-liquid-page'",
+      "summary_bar": "PASS - Shows إجمالي الأصول, إجمالي الخصوم, الإيرادات, المصروفات + المشتريات, الصافي",
+      "cash_bank_pos_summary": "PASS - Shows البنك (004), النقد (003), نقاط بيع (006)",
+      "reconciliation_panel": "PASS - Shows accounts count=211, matched, mismatched",
+      "account_codes": "PASS - Displays new sequential codes (001, 002, 003, 004, 005, 006, 059, 060, 061...)",
+      "error_state": "PASS - No error state displayed"
+    },
+    "JournalEntries": {
+      "page_load": "PASS - Page loads with دفتر اليومية المحاسبية header",
+      "stats_cards": "PASS - Shows 46 total entries, 35 manual, 32,047.50 SAR total",
+      "entry_rows": "PASS - 184 entry rows displayed",
+      "ai_summary": "PASS - Shows لديك 46 قيد محاسبي (35 يدوي)",
+      "error_state": "PASS - No error state displayed"
+    }
+  },
+  "verdict": "✅ جميع الاختبارات ناجحة: الصافي = الإيرادات - (المصروفات + المشتريات)، والأكواد القديمة (>=1000) مخفية في دليل الحسابات والقيود اليومية"
+}

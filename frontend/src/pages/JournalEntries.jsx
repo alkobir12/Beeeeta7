@@ -90,6 +90,41 @@ const sanitizeEntryText = (value = '') => {
     .trim();
 };
 
+const resolveCurrentAccountCode = (rawCode = '', accountName = '', coaAccounts = []) => {
+  const code = String(rawCode || '').trim();
+  if (!code) return '';
+
+  const byName = (needle) => {
+    const hit = (coaAccounts || []).find((a) => String(a?.name_ar || a?.name || '').includes(needle));
+    return hit?.code || '';
+  };
+
+  const cashCode = byName('النقد');
+  const bankCode = byName('البنك');
+  const arCode = byName('العملاء');
+  const apCode = byName('المورد');
+  const posCode = byName('نقاط بيع');
+  const revenueCode = byName('الإيراد') || byName('ايراد');
+  const expenseCode = byName('المصروف');
+
+  if (code === '1101') return cashCode || code;
+  if (code === '1102') return bankCode || code;
+  if (code === '1103') return arCode || code;
+  if (code === '1104') return posCode || code;
+  if (code.startsWith('1103')) return arCode || code;
+  if (code.startsWith('2101')) return apCode || code;
+  if (code.startsWith('400') || code.startsWith('410')) return revenueCode || code;
+  if (code.startsWith('500') || code.startsWith('510') || code.startsWith('600') || code.startsWith('610')) return expenseCode || code;
+
+  // fallback بالاسم إذا الكود قديم/مبهم
+  if (String(accountName || '').includes('بنك')) return bankCode || code;
+  if (String(accountName || '').includes('نقد')) return cashCode || code;
+  if (String(accountName || '').includes('عميل')) return arCode || code;
+  if (String(accountName || '').includes('مورد')) return apCode || code;
+
+  return code;
+};
+
 // Chart of Accounts (loaded from API)
 
 export default function JournalEntries() {
@@ -125,6 +160,13 @@ export default function JournalEntries() {
     fetchChartOfAccounts();
   }, []);
 
+  useEffect(() => {
+    if (coaAccounts.length > 0) {
+      fetchJournalEntries();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coaAccounts.length]);
+
   const fetchJournalEntries = async () => {
     setLoading(true);
     try {
@@ -144,7 +186,7 @@ export default function JournalEntries() {
           total_debit: entry.total,
           total_credit: entry.total,
           lines: entry.lines?.map(line => ({
-            account_code: line.account,
+            account_code: resolveCurrentAccountCode(line.account, line.account_name, coaAccounts),
             account_name: line.account_name,
             debit: line.debit,
             credit: line.credit

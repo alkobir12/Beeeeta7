@@ -5730,8 +5730,9 @@ async def accounts_tree(
             "equity": round(sum(a["balance"] for a in visible_accounts if a["type"] == "equity"), 2),
             "revenue": round(sum(a["balance"] for a in visible_accounts if a["type"] == "revenue"), 2),
             "expense": round(sum(a["balance"] for a in visible_accounts if a["type"] == "expense"), 2),
+            "purchase": round(sum(a["balance"] for a in visible_accounts if a["type"] in {"cost", "purchase"}), 2),
         }
-        summary["net_profit"] = round(summary["revenue"] - summary["expense"], 2)
+        summary["net_profit"] = round(summary["revenue"] - (summary["expense"] + summary["purchase"]), 2)
 
         visible_ids = {a["id"] for a in visible_accounts}
         by_parent: Dict[str, list] = {}

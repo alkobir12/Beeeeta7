@@ -108,23 +108,15 @@ const resolveCurrentAccountCode = (rawCode = '', accountName = '', coaAccounts =
   const revenueCode = byName('الإيراد') || byName('ايراد');
   const expenseCode = byName('المصروف');
 
-  if (code === '1101') return cashCode || '';
-  if (code === '1102') return bankCode || '';
-  if (code === '1103') return arCode || '';
-  if (code === '1104') return posCode || '';
-  if (code.startsWith('1103')) return arCode || '';
-  if (code.startsWith('2101')) return apCode || '';
-  if (code.startsWith('400') || code.startsWith('410')) return revenueCode || '';
-  if (code.startsWith('500') || code.startsWith('510') || code.startsWith('600') || code.startsWith('610')) return expenseCode || '';
-
-  // fallback بالاسم إذا الكود قديم/مبهم
-  if (String(accountName || '').includes('بنك')) return bankCode || '';
-  if (String(accountName || '').includes('نقد')) return cashCode || '';
-  if (String(accountName || '').includes('عميل')) return arCode || '';
-  if (String(accountName || '').includes('مورد')) return apCode || '';
-
-  const looksLegacy = /^(110\d|2101|4\d{3,}|5\d{3,}|6\d{3,})$/.test(code);
-  if (looksLegacy && !hasAccounts) return '';
+  // خريطة الأكواد القديمة → الجديدة
+  const LEGACY_MAP = {
+    '1101': '003', '1102': '004', '1103': '005', '1104': '006',
+    '4000': '025', '4100': '026', '5000': '030', '5100': '031',
+    '6000': '035', '6100': '036', '6101': '037', '3102': '022',
+  };
+  // تحويل الكود القديم إلى الجديد إذا كان موجوداً
+  const newCode = LEGACY_MAP[code] || code;
+  if (newCode !== code) return newCode;
 
   return code;
 };

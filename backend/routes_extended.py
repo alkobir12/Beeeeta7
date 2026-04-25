@@ -1054,28 +1054,57 @@ async def save_coa_tree(payload: Dict[str, Any] = Body(...)):
 # NOTE: This app uses a modern chart of accounts (e.g., 1101 cash, 1102 bank, 1103 customers, 2101 suppliers).
 # Legacy codes (101/113/211/411/514) caused misclassification in reports.
 ACCOUNT_NAME_MAP = {
+    # ─── أكواد جديدة (تسلسلية) ───
+    "003": "النقد",
+    "004": "البنك",
+    "005": "العملاء (ذمم مدينة)",
+    "006": "نقاط بيع",
+    "022": "مسحوبات المالك",
+    "025": "الإيرادات",
+    "026": "إيرادات الخدمات",
+    "030": "تكلفة الخدمات",
+    "031": "تكاليف مباشرة",
+    "035": "المصروفات التشغيلية",
+    "036": "مصروفات عامة وإدارية",
+    "037": "رواتب إدارية",
+    "010": "معدات ميكانيكية",
+    "2101": "الموردون (ذمم دائنة)",
+    "211":  "حساب فروقات ترحيل",
+    # ─── أكواد قديمة (للتوافق مع القيود التاريخية) ───
     "1101": "النقد",
     "1102": "البنك",
     "1103": "العملاء (ذمم مدينة)",
-    "2101": "الموردون (ذمم دائنة)",
+    "1104": "نقاط بيع",
     "4100": "إيرادات الخدمات",
+    "4000": "الإيرادات",
     "6101": "رواتب إدارية",
     "3102": "مسحوبات المالك",
     "1201": "معدات ميكانيكية",
     "6100": "مصروفات عامة وإدارية",
 }
 
+# خريطة تحويل الأكواد القديمة → الجديدة
+LEGACY_TO_NEW_CODE = {
+    "1101": "003", "acc-1101": "003",
+    "1102": "004", "acc-1102": "004",
+    "1103": "005", "acc-1103": "005",
+    "1104": "006", "acc-1104": "006",
+    "4000": "025", "acc-4000": "025",
+    "4100": "026", "acc-4100": "026",
+    "5000": "030", "acc-5000": "030",
+    "5100": "031", "acc-5100": "031",
+    "6000": "035", "acc-6000": "035",
+    "6100": "036", "acc-6100": "036",
+    "6101": "037", "acc-6101": "037",
+    "3102": "022", "acc-3102": "022",
+    "1201": "010", "acc-1201": "010",
+}
+
 # Fallback mapping: if an entry stores account as an internal id like acc-1101, map it to the numeric code.
 ACCOUNT_ID_TO_CODE = {
-    "acc-1101": "1101",
-    "acc-1102": "1102",
-    "acc-1103": "1103",
-    "acc-2101": "2101",
-    "acc-4100": "4100",
-    "acc-6101": "6101",
-    "acc-3102": "3102",
-    "acc-1201": "1201",
-    "acc-6100": "6100",
+    "acc-1101": "003", "acc-1102": "004", "acc-1103": "005", "acc-1104": "006",
+    "acc-2101": "2101", "acc-4100": "026", "acc-4000": "025",
+    "acc-6101": "037", "acc-3102": "022", "acc-1201": "010", "acc-6100": "036",
 }
 
 RAKAN_ACCOUNT_CODE_PREFIX = "5000"
@@ -1085,10 +1114,15 @@ def _normalize_account_code(value: Any) -> str:
     raw = str(value or "").strip()
     if not raw:
         return ""
+    # تحويل acc-XXXX أو acc-legacy
     if raw in ACCOUNT_ID_TO_CODE:
         return ACCOUNT_ID_TO_CODE[raw]
     if raw.startswith("acc-") and raw[4:].isdigit():
-        return raw[4:]
+        code = raw[4:]
+        return LEGACY_TO_NEW_CODE.get(code, code)
+    # تحويل الأكواد القديمة للجديدة
+    if raw in LEGACY_TO_NEW_CODE:
+        return LEGACY_TO_NEW_CODE[raw]
     return raw
 
 
@@ -1281,10 +1315,10 @@ def _build_operation_journal_entry(
 
     is_credit = payment_method == "credit"
 
-    # Choose cash/bank code for non-credit payments
-    cash_code = "1101"
+    # Choose cash/bank code for non-credit payments (أكواد جديدة)
+    cash_code = "003"
     if payment_method in ("transfer", "bank", "card", "pos", "mada", "visa", "mastercard"):
-        cash_code = "1102"
+        cash_code = "004"
 
     chart_account_ref_map = chart_account_ref_map or {}
 
@@ -1354,15 +1388,16 @@ def _build_operation_journal_entry(
             return None
 
         transaction_type = "sale"
-        debit_code = "1103" if is_credit else cash_code
-        # Use selected_code only if it's a real chart account code (not a UUID).
-        # A UUID has 36 chars with dashes; real codes are short (≤ 8 chars).
+        debit_code = "005" if is_credit else cash_code
         _valid_rev_code = (
             selected_code
             if selected_code and len(selected_code) <= 12 and "-" not in selected_code
             else None
         )
-        revenue_code = _valid_rev_code or "4100"
+        # تحويل الكود الصالح إلى الجديد إذا كان legacy
+        if _valid_rev_code:
+            _valid_rev_code = LEGACY_TO_NEW_CODE.get(_valid_rev_code, _valid_rev_code)
+        revenue_code = _valid_rev_code or "026"
         lines = [
             {
                 "account": debit_code,
@@ -1381,11 +1416,21 @@ def _build_operation_journal_entry(
     elif op_type in ("purchase", "expense"):
         transaction_type = "purchase" if op_type == "purchase" else "expense"
 
-        # enforce purchases/expenses into expense accounts (5xxx/6xxx)
+        # enforce purchases/expenses into expense accounts (030-059 new codes, or 5xxx/6xxx legacy)
+        def _is_expense_code(c):
+            if not c: return False
+            # new codes 030-059 range
+            try:
+                n = int(c)
+                if 30 <= n <= 59: return True
+            except (ValueError, TypeError):
+                pass
+            return str(c or "").startswith(("5", "6"))
         if op_type == "purchase":
-            debit_code = selected_code if (selected_code and len(selected_code) <= 12 and "-" not in selected_code and str(selected_code or "").startswith(("5", "6"))) else "6100"
+            debit_code = selected_code if (selected_code and len(selected_code) <= 12 and "-" not in selected_code and _is_expense_code(selected_code)) else "036"
         else:
-            debit_code = selected_code if (selected_code and len(selected_code) <= 12 and "-" not in selected_code and str(selected_code or "").startswith(("5", "6"))) else "6100"
+            debit_code = selected_code if (selected_code and len(selected_code) <= 12 and "-" not in selected_code and _is_expense_code(selected_code)) else "036"
+        if debit_code: debit_code = LEGACY_TO_NEW_CODE.get(debit_code, debit_code)
         credit_code = "2101" if is_credit else cash_code
 
         lines = [
@@ -1410,8 +1455,8 @@ def _build_operation_journal_entry(
             if selected_code and len(selected_code) <= 12 and "-" not in selected_code
             else None
         )
-        debit_code = _valid_dr_code or "4100"
-        credit_code = "1103" if is_credit else cash_code
+        debit_code = _valid_dr_code or "026"
+        credit_code = "005" if is_credit else cash_code
         lines = [
             {
                 "account": debit_code,

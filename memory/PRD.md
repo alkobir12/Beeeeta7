@@ -1,69 +1,7 @@
 # AutoPro Workshop Management System PRD
 
 ## Original Problem Statement
-نظام إدارة ورشة سيارات متكامل يدعم اللغة العربية، مع وحدات محاسبية ومالية شاملة، وبوت واتساب ذكي، ووحدة MoltBot للذكاء الاصطناعي.
-
----
-
-## Core Requirements
-1. **Workshop Management**: Vehicle/customer management, visit tracking, service/parts catalog
-2. **Financial Module**: Operations, journal entries, chart of accounts, financial reports
-3. **MoltBot AI**: Intelligent code editor for FastAPI project analysis and modification
-4. **Smart Guidance**: Step-by-step instructions for elderly users
-5. **PDF/Document**: Invoice, quotation, diagnosis report generation
-6. **WhatsApp Bot**: Customer communication via Infobip API + Auto notifications
-
----
-
-## What's Been Implemented
-
-### Journal Entry UUID Bug Fix (25 Apr 2026)
-- إصلاح `_build_operation_journal_entry` في `routes_extended.py`:
-  - كانت الدالة تستخدم UUID الحساب التجاري كـ `revenue_code` عندما لا يوجد `accountingAccountId`
-  - الإصلاح: فحص طول الكود — إذا كان UUID (36 حرفاً مع `-`) يُتجاهل ويُستخدم الكود الافتراضي `4100`
-  - النتيجة: قيود اليومية الآن تستخدم كود محاسبي صحيح (`4100` إيرادات الخدمات) → income-statement يعترف بالإيراد
-- تقرير اختبار شامل: `/app/test_reports/iteration_166.json` — **32/32 PASS (100%)**
-
-### Sidebar UX Overhaul (25 Apr 2026)
-- جميع مجموعات القائمة الجانبية (المخزون / المالية / المستندات) تبدأ **مطوية** افتراضياً على كل الشاشات
-- عند فتح مجموعة، يتمرر الشريط تلقائياً لإظهار أبنائها كاملاً
-- أيقونة `v` = مطوية (اضغط لفتح) / `^` = مفتوحة (اضغط لطي) — اتجاه واضح
-- المجموعة التي تحتوي الصفحة الحالية تُفتح تلقائياً عند الانتقال إليها
-- حل نهائي لمشكلة "الأبناء تختفي خارج حدود الشريط"
-
-### Rakan Analytics Fix (25 Apr 2026)
-- إصلاح `_is_rakan_operation` في `smart_inventory_service.py` ليفحص `items` داخل العملية
-- إضافة `_rakan_items_total` لاستخراج مبلغ قطع راكان من العمليات المختلطة (ورشة + راكان)
-- تحليلات راكان تعمل الآن: عمليتان | إيراد 153 ر.س ✅
-
-### RakanLinkedPartPicker Cleanup (25 Apr 2026)
-- إزالة عنوان «🧩 اختر قطعة راكان المرتبطة» من المكوّن
-- إزالة رسالة التحذير «⚠️ هذا البند يُسجَّل في تحليلات راكان فقط...»
-- إزالة بلوك «سجل حركة الموردين» من ملف المركبة — يبقى فقط في صفحة الموردين
-- يبقى فقط القائمة المنسدلة لاختيار القطعة + الإدخال اليدوي
-
-### Vehicle File: Auto Rakan Part Picker (25 Apr 2026)
-- مكوّن `RakanLinkedPartPicker` يظهر تلقائياً عند اختيار مورد «راكان»
-- قائمة منسدلة لقطع راكان + إدخال يدوي
-- الاختيار يُحفظ كـ `linkedPart` و`linkedPartManualEntry`
-
-### Rakan Independence + Supplier Movements (Final, 25 Apr 2026)
-- راكان وحدة مستقلة عن الورشة — لا يُنشأ قيد محاسبي لعملياته
-- تحليلات راكان في تبويب «تحليلات قطع راكان» في لوحة تحكم القطع
-- سجل حركات الموردين يُقرأ من `journal_entries` ويظهر في صفحة الموردين فقط
-
-### Net Income Card Cleanup + Backend Performance Overhaul (24 Apr 2026)
-- إصلاح كرت «صافي الدخل» وإزالة الحقول المكررة
-- TTL caches للـ hotspots: accounts/tree → 0.17s، income-statement → 0.18s
-- دالة `invalidate_finance_caches()` تُستدعى بعد أي تعديل على القيود
-
-### Duplicate Accounts Cleanup (24 Apr 2026)
-- حذف 32 حساب مكرر/تجريبي من Supabase (211 → 179 حساباً)
-- توحيد الأسماء المتباينة إملائياً
-
-### Financial Mismatch Fix (24 Apr 2026)
-- توحيد مصدر الأرقام: accounts/tree يقرأ من income-statement مباشرة
-- Delta بين الصفحات = صفر كامل
+نظام إدارة ورشة سيارات متكامل يدعم اللغة العربية، مع وحدات محاسبية ومالية شاملة.
 
 ---
 
@@ -72,28 +10,78 @@
 /app
 ├── backend
 │   ├── server.py
-│   ├── routes_finance.py
-│   ├── routes_extended.py
+│   ├── routes_finance.py          ← legacy→new code migration, updated _infer_account_type
+│   ├── routes_extended.py         ← ACCOUNT_NAME_MAP, LEGACY_TO_NEW_CODE, new codes in JE builder
 │   ├── routes_finance_bot.py
-│   ├── smart_inventory_service.py   ← Rakan analytics fix
+│   ├── smart_inventory_service.py ← Rakan analytics fix (items scan)
 │   └── accounting_auditor.py
 └── frontend
     └── src
-        ├── components
-        │   └── Sidebar.jsx          ← UX overhaul
-        └── pages
-            ├── ChartOfAccountsLiquid.jsx
+        ├── components/Sidebar.jsx  ← UX overhaul (collapse all, scroll to group)
+        └── pages/
+            ├── JournalEntries.jsx  ← LEGACY_MAP for display
             ├── ComprehensiveFinancial.jsx
-            ├── Suppliers.jsx
-            ├── VehicleDetails.jsx   ← RakanLinkedPartPicker
+            ├── VehicleDetails.jsx  ← RakanLinkedPartPicker (clean)
             └── PartsDashboard.jsx
 ```
 
-## Key Technical Concepts
-- Dual Database: Supabase (Primary) + MongoDB (Fallback)
-- In-memory caching for heavy financial queries
-- Rakan = independent business unit — no journal entries, tracked in Parts Analytics only
-- Operations from vehicle visits: Rakan items detected via `items[].itemType=supplier + name=راكان`
+---
+
+## What's Been Implemented
+
+### شامل: تنظيف البيانات + ترحيل الأكواد (25 Apr 2026)
+**ما تم:**
+1. **حذف بيانات الاختبار**: 6 عمليات + 2 قيد يومية تجريبية حُذفت نهائياً
+2. **ترحيل 45 قيد**: جميع سطور قيود اليومية بالأكواد القديمة (1101→003، 1102→004، 1103→005، 1104→006، 4100→026، 4000→025، 6100→036، 6101→037) ترحيلاً فعلياً في Supabase
+3. **endpoint جديد**: `POST /api/finance/reports/migrate-legacy-codes?workshop_id=...&apply_changes=true`
+4. **routes_extended.py**:
+   - `ACCOUNT_NAME_MAP` محدّث بالأكواد الجديدة + القديمة للتوافق
+   - `LEGACY_TO_NEW_CODE` map جديد
+   - `_normalize_account_code` يحوّل legacy تلقائياً
+   - `_build_operation_journal_entry` يستخدم أكواداً جديدة: 003/004/005/026/036
+5. **routes_finance.py**:
+   - `_infer_account_type_from_code` يتعرف على الأكواد الجديدة (001-059) والقديمة (1000-6999)
+   - `AR_ACCOUNT_CODES`, `CASH_ACCOUNT_CODES`, `BANK_ACCOUNT_CODES` محدّثة
+   - `_to_new_code()` helper جديد
+   - جميع دوال القراءة (income-statement, balance-sheet, reclassify) تدعم الأكوادين
+6. **حذف ملفات backup**: AIFinancial_chat_backup, BalanceSheet_backup, CashFlow_backup, IncomeStatement_backup, Invoices_backup, TrialBalance_backup, Settings_broken
+
+**نتائج الاختبار 8/8 (100%):**
+- ✅ لا عمليات اختبار
+- ✅ لا قيود بأكواد قديمة
+- ✅ income-statement: 27,081 ر.س
+- ✅ تحليلات راكان: 153 ر.س
+
+### Journal Entry UUID Bug Fix (25 Apr 2026)
+- `_build_operation_journal_entry`: UUID لا يُستخدم كـ revenue code → يُستخدم 026 بدلاً منه
+- تقرير اختبار: `/app/test_reports/iteration_166.json` — 32/32 PASS
+
+### Sidebar UX Overhaul (25 Apr 2026)
+- جميع المجموعات تبدأ مطوية + scroll تلقائي عند الفتح
+
+### Rakan Analytics Fix (25 Apr 2026)
+- `_is_rakan_operation` يفحص `items` داخل العملية → اكتشاف قطع راكان من ملف المركبة
+
+### RakanLinkedPartPicker Cleanup (25 Apr 2026)
+- إزالة العنوان والتحذير من المكوّن + إزالة سجل الموردين من ملف المركبة
+
+---
+
+## Legacy → New Code Mapping (المرجع)
+| Legacy | جديد | الاسم |
+|--------|------|-------|
+| 1101 | 003 | النقد |
+| 1102 | 004 | البنك |
+| 1103 | 005 | العملاء |
+| 1104 | 006 | نقاط بيع |
+| 4000 | 025 | الإيرادات |
+| 4100 | 026 | إيرادات الخدمات |
+| 5000 | 030 | تكلفة الخدمات |
+| 6000 | 035 | المصروفات التشغيلية |
+| 6100 | 036 | مصروفات عامة وإدارية |
+| 6101 | 037 | رواتب إدارية |
+
+---
 
 ## Prioritized Backlog
 
@@ -104,17 +92,11 @@
 - OCR / التحقق من المستندات المرفوعة في البوت المالي
 
 ### Refactoring
-- تنظيف `server.py` المتضخم ونقل `/suppliers` إلى ملف مستقل
-- تحسين أداء `VehicleDetails` و`ChartOfAccountsLiquid` لتفادي timeouts
+- تنظيف `server.py` ونقل `/suppliers` لملف مستقل
 
 ## Key API Endpoints
 - `GET /api/finance/reports/income-statement`
 - `GET /api/suppliers`
-- `GET /api/finance/operations`
-- `GET /api/accounts`
+- `GET /api/accounts/tree`
 - `GET /api/inventory/rakan-analytics`
-
-## DB Schema (key fields)
-- `accounts`: `{id, code, name, legacy_code, balance}`
-- `journal_entries`: `{id, lines: [{account, debit, credit}], date}`
-- `operations`: `{id, items: [{itemType, name, linkedPart}], supplierArchiveTotal, workshopTotal}`
+- `POST /api/finance/reports/migrate-legacy-codes`

@@ -143,17 +143,48 @@ def _normalize_date_string(value: Optional[str]) -> Optional[str]:
             continue
     return raw
 
+# الأكواد الجديدة + القديمة للتوافق مع السجلات التاريخية
+AR_ACCOUNT_CODES = {"005", "1103", "113"}   # العملاء (ذمم مدينة)
+AP_ACCOUNT_CODES = {"2101", "211"}           # الموردون (ذمم دائنة)
+CASH_ACCOUNT_CODES = {"003", "1101"}         # النقد
+BANK_ACCOUNT_CODES = {"004", "1102", "006", "1104"}  # البنك + نقاط بيع
 
-AR_ACCOUNT_CODES = {"1103", "113"}
-AP_ACCOUNT_CODES = {"2101", "211"}
+# خريطة التحويل من legacy إلى جديد (يُستخدم في القراءة والكتابة)
+_LEGACY_CODE_MAP = {
+    "1101": "003", "1102": "004", "1103": "005", "1104": "006",
+    "4000": "025", "4100": "026",
+    "5000": "030", "5100": "031",
+    "6000": "035", "6100": "036", "6101": "037",
+    "3102": "022", "1201": "010",
+}
+
+def _to_new_code(code: str) -> str:
+    """تحويل الكود القديم إلى الجديد إذا كان موجوداً في الخريطة."""
+    return _LEGACY_CODE_MAP.get(str(code or "").strip(), str(code or "").strip())
 
 
 def _infer_account_type_from_code(code: str) -> str:
+    c = str(code or "").strip()
     try:
-        numeric = int(str(code or "").strip())
-    except Exception:
+        numeric = int(c)
+    except (ValueError, TypeError):
         return "other"
-
+    # أكواد جديدة تسلسلية (001-211)
+    if 1 <= numeric <= 13:
+        return "asset"
+    if 14 <= numeric <= 18:
+        return "liability"
+    if 19 <= numeric <= 24:
+        return "equity"
+    if 25 <= numeric <= 29:
+        return "revenue"
+    if 30 <= numeric <= 59:
+        return "expense"
+    if numeric == 211:
+        return "equity"
+    if 2101 <= numeric <= 2199:
+        return "liability"
+    # أكواد قديمة (legacy)
     if 1000 <= numeric <= 1999:
         return "asset"
     if 2000 <= numeric <= 2999:
@@ -811,7 +842,7 @@ async def get_cash_flow(
                 normalized = _normalize_line(line, id_to_code, code_to_name)
                 if not normalized:
                     continue
-                if normalized["code"] in ("1101", "1102"):
+                if normalized["code"] in ("003", "004", "006", "1101", "1102", "1104"):
                     cash_lines.append(normalized)
                 else:
                     other_lines.append(normalized)
@@ -826,10 +857,10 @@ async def get_cash_flow(
                 # Classify inflows
                 if amount_in > 0:
                     # If counterpart is AR (1103), it's customer collection (settlement)
-                    if any(ol.get("code") == "1103" for ol in other_lines):
+                    if any(ol.get("code") in ("005", "1103") for ol in other_lines):
                         cash_from_customers += amount_in
-                    # If counterpart is revenue (4xxx), it's cash sale
-                    elif any(_is_code_in_range(ol.get("code"), 4000, 4999) for ol in other_lines):
+                    # If counterpart is revenue (025-029 new, or 4xxx legacy)
+                    elif any(_is_code_in_range(ol.get("code"), 25, 29) or _is_code_in_range(ol.get("code"), 4000, 4999) for ol in other_lines):
                         cash_from_customers += amount_in
                     else:
                         cash_from_customers += amount_in
@@ -837,7 +868,7 @@ async def get_cash_flow(
                 # Classify outflows
                 if amount_out > 0:
                     # Supplier payments: AP (2101)
-                    if any(ol.get("code") == "2101" for ol in other_lines):
+                    if any(ol.get("code") in ("2101", "211") for ol in other_lines):
                         cash_to_suppliers += amount_out
                     # Salaries expense (6101) or accrued salaries (2103)
                     elif any(ol.get("code") in ("6101", "2103") for ol in other_lines):
@@ -1239,7 +1270,7 @@ def _build_repair_journal_entry_from_operation(
 
     payment_method = _normalize_payment_method(operation.get("payment_method") or operation.get("paymentMethod") or "cash")
     is_credit = payment_method == "credit"
-    cash_code = "1102" if payment_method == "bank" else "1101"
+    cash_code = "004" if payment_method == "bank" else "003"
     selected_code = (
         operation.get("accounting_account_code")
         or operation.get("accountCode")
@@ -1257,41 +1288,42 @@ def _build_repair_journal_entry_from_operation(
         if account_id:
             selected_code = account_id_to_code.get(account_id)
 
-    selected_code = str(selected_code or "").strip() or None
+    # تحويل الكود المختار من legacy إلى جديد إذا لزم
+    selected_code = _to_new_code(str(selected_code or "").strip()) or None
 
     lines: List[Dict[str, Any]] = []
     transaction_type = op_type
 
     if op_type == "sale":
-        debit_code = "1103" if is_credit else cash_code
-        credit_code = selected_code or "4000"
+        debit_code = "005" if is_credit else cash_code
+        credit_code = selected_code or "026"
         lines = [
             {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
             {"account": credit_code, "account_name": credit_code, "debit": 0, "credit": total},
         ]
     elif op_type == "purchase":
-        debit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
+        debit_code = selected_code if selected_code and _infer_account_type_from_code(selected_code) == "expense" else "036"
         credit_code = "2101" if is_credit else cash_code
         lines = [
             {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
             {"account": credit_code, "account_name": credit_code, "debit": 0, "credit": total},
         ]
     elif op_type == "expense":
-        debit_code = selected_code or "6100"
+        debit_code = selected_code or "036"
         lines = [
             {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
             {"account": cash_code, "account_name": cash_code, "debit": 0, "credit": total},
         ]
     elif op_type == "sale_return":
-        credit_code = "1103" if is_credit else cash_code
-        debit_code = selected_code or "4000"
+        credit_code = "005" if is_credit else cash_code
+        debit_code = selected_code or "026"
         lines = [
             {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
             {"account": credit_code, "account_name": credit_code, "debit": 0, "credit": total},
         ]
     elif op_type == "purchase_return":
         debit_code = "2101" if is_credit else cash_code
-        credit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
+        credit_code = selected_code if selected_code and _infer_account_type_from_code(selected_code) == "expense" else "036"
         lines = [
             {"account": debit_code, "account_name": debit_code, "debit": total, "credit": 0},
             {"account": credit_code, "account_name": credit_code, "debit": 0, "credit": total},
@@ -1467,7 +1499,7 @@ async def get_financial_reconciliation(
                 elif tx_type == "purchase_return":
                     is_target = (code.startswith("5") or code.startswith("6")) and credit > 0
                 elif tx_type == "payment_order":
-                    is_target = code in {"1101", "1102", "1103", "2101"}
+                    is_target = code in {"003", "004", "005", "006", "2101", "1101", "1102", "1103", "2101"}
 
                 if is_target:
                     account_labels_by_type[tx_type].add(f"{name} ({code})")
@@ -1848,12 +1880,12 @@ async def get_account_tree_details(
                         }
                     )
 
-                # مكونات التحصيل/الآجل (مفيد لحسابات الإيراد)
-                if line_code == "1101":
+                # مكونات التحصيل/الآجل (يدعم الأكواد الجديدة والقديمة)
+                if line_code in ("003", "1101"):
                     cash_component += _safe_float(line.get("debit"))
-                if line_code == "1102":
+                if line_code in ("004", "006", "1102", "1104"):
                     bank_component += _safe_float(line.get("debit"))
-                if line_code in {"1103", "113"}:
+                if line_code in {"005", "1103", "113"}:
                     receivable_component += _safe_float(line.get("debit"))
 
             if matched_debit == 0 and matched_credit == 0:
@@ -3605,14 +3637,26 @@ async def get_operation_trace_report(
 
         def account_bucket(code: str) -> str:
             c = str(code or "")
-            if c == "1101":
+            if c in ("003", "1101"):
                 return "cash"
-            if c == "1102":
+            if c in ("004", "006", "1102", "1104"):
                 return "bank"
-            if c == "1103":
+            if c in ("005", "1103"):
                 return "ar"
-            if c == "2101":
+            if c in ("2101", "211"):
                 return "ap"
+            try:
+                n = int(c)
+                if 1 <= n <= 13:
+                    return "assets"
+                if 14 <= n <= 18:
+                    return "ap"
+                if 25 <= n <= 29:
+                    return "revenue"
+                if 30 <= n <= 59:
+                    return "expenses"
+            except (ValueError, TypeError):
+                pass
             if c.startswith("1"):
                 return "assets"
             if c.startswith("4"):
@@ -3737,12 +3781,12 @@ async def reclassify_payment_accounts(
     start_date = start_date or "2000-01-01"
 
     account_id_to_code_local = {
-        "acc-1101": "1101",
-        "acc-1102": "1102",
+        "acc-1101": "003", "acc-1102": "004",
+        "acc-003": "003", "acc-004": "004",
     }
     account_name_local = {
-        "1101": "النقد",
-        "1102": "البنك",
+        "003": "النقد", "004": "البنك",
+        "1101": "النقد", "1102": "البنك",
     }
 
     try:
@@ -3779,7 +3823,7 @@ async def reclassify_payment_accounts(
             method = op_method[ref]
             if method == "credit":
                 continue
-            expected_cash = "1102" if method == "bank" else "1101"
+            expected_cash = "004" if method == "bank" else "003"
 
             lines = entry.get("lines") or []
             if not isinstance(lines, list) or not lines:
@@ -3794,10 +3838,12 @@ async def reclassify_payment_accounts(
 
                 account_val = str(line.get("account") or "").strip()
                 mapped = account_id_to_code_local.get(account_val, account_val)
-                if mapped in {"1101", "1102"} and mapped != expected_cash:
+                # تحويل legacy إلى جديد
+                mapped = _LEGACY_CODE_MAP.get(mapped, mapped)
+                if mapped in {"003", "004"} and mapped != expected_cash:
                     line = {**line}
                     line["account"] = expected_cash
-                    if str(line.get("account_name") or "") in {"1101", "1102", "النقد", "البنك", "acc-1101", "acc-1102", ""}:
+                    if str(line.get("account_name") or "") in {"003", "004", "1101", "1102", "النقد", "البنك", "acc-1101", "acc-1102", ""}:
                         line["account_name"] = account_name_local.get(expected_cash, expected_cash)
                     has_change = True
 
@@ -5036,3 +5082,92 @@ async def audit_accounting_system(
             "message": f"خطأ في التدقيق: {str(e)}"
         }
 
+
+
+@router.post("/reports/migrate-legacy-codes")
+async def migrate_legacy_account_codes(
+    workshop_id: str = Query(...),
+    apply_changes: bool = Query(False),
+):
+    """
+    يحوّل أكواد الحسابات القديمة (1101/1102/1103/4100/6100…) إلى الأكواد التسلسلية الجديدة
+    (003/004/005/026/036…) في جميع سطور قيود اليومية.
+    """
+    LEGACY_MAP = {
+        "1101": "003", "acc-1101": "003",
+        "1102": "004", "acc-1102": "004",
+        "1103": "005", "acc-1103": "005",
+        "1104": "006", "acc-1104": "006",
+        "4000": "025", "acc-4000": "025",
+        "4100": "026", "acc-4100": "026",
+        "5000": "030", "acc-5000": "030",
+        "5100": "031", "acc-5100": "031",
+        "6000": "035", "acc-6000": "035",
+        "6100": "036", "acc-6100": "036",
+        "6101": "037", "acc-6101": "037",
+        "3102": "022", "acc-3102": "022",
+        "1201": "010", "acc-1201": "010",
+    }
+    NAME_MAP = {
+        "003": "النقد", "004": "البنك", "005": "العملاء",
+        "006": "نقاط بيع", "025": "الإيرادات", "026": "إيرادات الخدمات",
+        "030": "تكلفة الخدمات", "031": "تكاليف مباشرة",
+        "035": "المصروفات التشغيلية", "036": "مصروفات عامة وإدارية",
+        "037": "رواتب إدارية", "022": "مسحوبات المالك",
+        "010": "معدات ميكانيكية", "2101": "الموردون",
+    }
+
+    # مسح الـ cache أولاً للحصول على أحدث البيانات
+    invalidate_finance_caches()
+    entries = _fetch_journal_entries(
+        workshop_id, "2000-01-01",
+        datetime.now().strftime("%Y-%m-%d"),
+        limit=5000,
+        include_rakan=True,
+    )
+    candidates = []
+    for entry in entries:
+        new_lines = []
+        changed = False
+        for line in (entry.get("lines") or []):
+            acc = str(line.get("account") or "").strip()
+            new_acc = LEGACY_MAP.get(acc, acc)
+            if new_acc != acc:
+                changed = True
+                new_line = dict(line)
+                new_line["account"] = new_acc
+                new_line["account_name"] = NAME_MAP.get(new_acc, new_line.get("account_name", new_acc))
+                new_lines.append(new_line)
+            else:
+                new_lines.append(line)
+        if changed:
+            candidates.append({"id": entry.get("id"), "lines": new_lines})
+
+    updated = 0
+    if apply_changes:
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        for c in candidates:
+            eid = c["id"]
+            try:
+                if provider == "supabase":
+                    from supabase_service import SupabaseService as _SB
+                    supa = _SB()
+                    supa.client.table("journal_entries").update(
+                        {"lines": c["lines"]}
+                    ).eq("id", eid).execute()
+                elif db:
+                    await db.journal_entries.update_one(
+                        {"id": eid}, {"$set": {"lines": c["lines"]}}
+                    )
+                updated += 1
+            except Exception as e:
+                print(f"migrate_legacy_codes: failed {eid}: {e}")
+        invalidate_finance_caches()
+
+    return {
+        "success": True,
+        "candidates": len(candidates),
+        "updated": updated if apply_changes else 0,
+        "apply_changes": apply_changes,
+        "sample": [{"id": c["id"]} for c in candidates[:5]],
+    }

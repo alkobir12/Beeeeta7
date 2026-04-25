@@ -1355,7 +1355,14 @@ def _build_operation_journal_entry(
 
         transaction_type = "sale"
         debit_code = "1103" if is_credit else cash_code
-        revenue_code = selected_code or "4100"
+        # Use selected_code only if it's a real chart account code (not a UUID).
+        # A UUID has 36 chars with dashes; real codes are short (≤ 8 chars).
+        _valid_rev_code = (
+            selected_code
+            if selected_code and len(selected_code) <= 12 and "-" not in selected_code
+            else None
+        )
+        revenue_code = _valid_rev_code or "4100"
         lines = [
             {
                 "account": debit_code,
@@ -1376,9 +1383,9 @@ def _build_operation_journal_entry(
 
         # enforce purchases/expenses into expense accounts (5xxx/6xxx)
         if op_type == "purchase":
-            debit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
+            debit_code = selected_code if (selected_code and len(selected_code) <= 12 and "-" not in selected_code and str(selected_code or "").startswith(("5", "6"))) else "6100"
         else:
-            debit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
+            debit_code = selected_code if (selected_code and len(selected_code) <= 12 and "-" not in selected_code and str(selected_code or "").startswith(("5", "6"))) else "6100"
         credit_code = "2101" if is_credit else cash_code
 
         lines = [
@@ -1398,7 +1405,12 @@ def _build_operation_journal_entry(
 
     elif op_type == "sale_return":
         transaction_type = "sale_return"
-        debit_code = selected_code or "4100"
+        _valid_dr_code = (
+            selected_code
+            if selected_code and len(selected_code) <= 12 and "-" not in selected_code
+            else None
+        )
+        debit_code = _valid_dr_code or "4100"
         credit_code = "1103" if is_credit else cash_code
         lines = [
             {

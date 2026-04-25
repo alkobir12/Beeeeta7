@@ -1,0 +1,186 @@
+{
+  "timestamp": "2026-04-25T20:00:49.461867",
+  "total": 32,
+  "passed": 32,
+  "failed": 0,
+  "before": {
+    "revenue": 27081.0,
+    "net": 14011.5,
+    "rakan_revenue": 493.0,
+    "rakan_ops": 4,
+    "journal_entries": 64
+  },
+  "after": {
+    "revenue": 27646.0,
+    "net": 14576.5,
+    "rakan_revenue": 663.0,
+    "rakan_ops": 5,
+    "journal_entries": 65
+  },
+  "workshop_op_id": "544578ee-bed4-43f2-9669-87d7b9f2a183",
+  "rakan_op_id": "d1ab3a9a-cbf2-4701-bd1b-209ad8ae0096",
+  "workshop_journal_entry_found": true,
+  "rakan_journal_entry_found": false,
+  "details": [
+    {
+      "label": "إنشاء عملية الورشة HTTP 200/201",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "label": "الإجمالي = 565 ر.س",
+      "ok": true,
+      "detail": "total=565.0"
+    },
+    {
+      "label": "طريقة الدفع = bank",
+      "ok": true,
+      "detail": "pm=bank"
+    },
+    {
+      "label": "النطاق = workshop",
+      "ok": true,
+      "detail": "scope=workshop"
+    },
+    {
+      "label": "يحتوي على 3 بنود",
+      "ok": true,
+      "detail": "items=3"
+    },
+    {
+      "label": "إنشاء عملية راكان HTTP 200/201",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "label": "إجمالي راكان = 170 ر.س",
+      "ok": true,
+      "detail": "total=170.0"
+    },
+    {
+      "label": "عدد القيود ارتفع بعد إنشاء العمليات",
+      "ok": true,
+      "detail": "قبل=64  بعد=65  جديد=1"
+    },
+    {
+      "label": "قيد محاسبي أُنشئ لعملية الورشة",
+      "ok": true,
+      "detail": "ref=موجود"
+    },
+    {
+      "label": "القيد متوازن (مدين = دائن)",
+      "ok": true,
+      "detail": "debit=565.00 credit=565.00"
+    },
+    {
+      "label": "القيد يحتوي ≥ 2 سطور",
+      "ok": true,
+      "detail": "سطور=2"
+    },
+    {
+      "label": "القيد يتضمن حساب البنك 004/1102",
+      "ok": true,
+      "detail": "حسابات=['1102', '4100']"
+    },
+    {
+      "label": "لا قيد لراكان (وحدة مستقلة)",
+      "ok": true,
+      "detail": "صحيح — راكان لا يدخل في دفتر اليومية"
+    },
+    {
+      "label": "إيراد الورشة ارتفع بعد عملية الورشة",
+      "ok": true,
+      "detail": "Δ=+565.00 ر.س"
+    },
+    {
+      "label": "عمليات راكان ارتفعت",
+      "ok": true,
+      "detail": "4 → 5"
+    },
+    {
+      "label": "إيراد راكان ارتفع بمقدار ~170 ر.س",
+      "ok": true,
+      "detail": "Δ=170.00 ر.س"
+    },
+    {
+      "label": "دليل الحسابات: الأصول > 0",
+      "ok": true,
+      "detail": "20830.00 ر.س"
+    },
+    {
+      "label": "دليل الحسابات: الإيراد > 0",
+      "ok": true,
+      "detail": "27646.00 ر.س"
+    },
+    {
+      "label": "دليل الحسابات: صافي محسوب",
+      "ok": true,
+      "detail": "14576.50 ر.س"
+    },
+    {
+      "label": "حسابات الأصول موجودة",
+      "ok": true,
+      "detail": "عدد=93"
+    },
+    {
+      "label": "حسابات الخصوم موجودة",
+      "ok": true,
+      "detail": "عدد=49"
+    },
+    {
+      "label": "حسابات الإيراد موجودة",
+      "ok": true,
+      "detail": "عدد=8"
+    },
+    {
+      "label": "حسابات المصروف موجودة",
+      "ok": true,
+      "detail": "عدد=25"
+    },
+    {
+      "label": "حسابات عملاء موجودة",
+      "ok": true,
+      "detail": "عدد=80"
+    },
+    {
+      "label": "حسابات موردين موجودة",
+      "ok": true,
+      "detail": "عدد=44"
+    },
+    {
+      "label": "حسابات راكان الفرعية موجودة",
+      "ok": true,
+      "detail": "عدد=9"
+    },
+    {
+      "label": "حساب البنك (004/1102) موجود في الدليل",
+      "ok": true,
+      "detail": "code=004"
+    },
+    {
+      "label": "operations_count > 0",
+      "ok": true,
+      "detail": "count=5"
+    },
+    {
+      "label": "revenue > 0",
+      "ok": true,
+      "detail": "rev=663.00 ر.س"
+    },
+    {
+      "label": "sold_qty >= 0",
+      "ok": true,
+      "detail": "qty=1"
+    },
+    {
+      "label": "مقارنة الفترات موجودة",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "توصيف/رؤية نصية موجودة",
+      "ok": true,
+      "detail": "معدل البيع اليومي منخفض نسبيًا؛ قد تحتاج لتجديد ال"
+    }
+  ]
+}

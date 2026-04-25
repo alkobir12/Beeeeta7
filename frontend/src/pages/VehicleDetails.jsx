@@ -140,9 +140,6 @@ const RakanLinkedPartPicker = ({ item, onChange, partsCatalog = [], rowId, visit
       }}
       data-testid={`${baseTestId}-wrapper`}
     >
-      <div className="text-[11px] font-semibold" style={{ color: 'rgba(190,242,212,0.95)' }}>
-        🧩 اختر قطعة راكان المرتبطة
-      </div>
       <select
         value={showManual ? '__manual__' : linkedValue}
         onChange={(e) => {
@@ -191,10 +188,6 @@ const RakanLinkedPartPicker = ({ item, onChange, partsCatalog = [], rowId, visit
         />
       )}
 
-      <div className="text-[10px]" style={{ color: 'rgba(148,163,184,0.85)' }}>
-        ⚠️ هذا البند يُسجَّل في تحليلات راكان فقط — لا يدخل في دفتر اليومية.
-        تجنّب تكرار نفس القطعة عبر نقطة البيع أو شاشة العمليات.
-      </div>
     </div>
   );
 };
@@ -3165,56 +3158,7 @@ const VehicleDetails = () => {
           >
             <VehicleFinancialSummary summary={financeSummary || {}} t={t} onShowSource={openFinancialSource} />
 
-            <div
-              className="liquid-surface"
-              style={{
-                borderRadius: 16,
-                padding: 12,
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(148,163,184,0.14)',
-              }}
-              data-testid="vehicle-supplier-archive-block"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-xs font-bold" style={{ color: 'rgba(248,250,252,0.95)' }} data-testid="vehicle-supplier-archive-title">
-                  سجل حركة الموردين (أرشيف فقط)
-                </h4>
-                <span className="text-[11px]" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="vehicle-supplier-archive-count">
-                  عدد الحركات: {supplierArchiveRows.length}
-                </span>
-              </div>
-
-              {supplierArchiveRows.length === 0 ? (
-                <div className="text-xs" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="vehicle-supplier-archive-empty">
-                  لا توجد حركات موردين مسجلة بعد.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs" data-testid="vehicle-supplier-archive-table">
-                    <thead>
-                      <tr className="border-b" style={{ borderColor: 'rgba(148,163,184,0.18)', color: 'rgba(226,232,240,0.72)' }}>
-                        <th className="py-2 px-2 text-right">التاريخ</th>
-                        <th className="py-2 px-2 text-right">الزيارة</th>
-                        <th className="py-2 px-2 text-right">المورد</th>
-                        <th className="py-2 px-2 text-right">النوع</th>
-                        <th className="py-2 px-2 text-right">المبلغ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {supplierArchiveRows.slice(0, 50).map((row, idx) => (
-                        <tr key={`${row.visitId}-${idx}`} className="border-b" style={{ borderColor: 'rgba(148,163,184,0.10)', color: 'rgba(248,250,252,0.9)' }} data-testid={`vehicle-supplier-archive-row-${idx}`}>
-                          <td className="py-2 px-2">{row.date ? new Date(row.date).toLocaleDateString('ar-SA') : '-'}</td>
-                          <td className="py-2 px-2">{row.visitId || '-'}</td>
-                          <td className="py-2 px-2">{row.supplier}</td>
-                          <td className="py-2 px-2">{row.movementType}</td>
-                          <td className="py-2 px-2">{formatCurrency(row.amount)} ر.س</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+            {/* supplier archive block removed - visible only in /suppliers page */}
           </div>
         );
 

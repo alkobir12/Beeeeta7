@@ -1320,13 +1320,42 @@ def _build_operation_journal_entry(
     lines = []
     transaction_type = None
 
+    # ✅ Rakan business-unit accounting: ALL Rakan ops (sale/purchase) flow through
+    # account 044 (قطع غيار راكان) so its net = profit/loss of the Rakan unit.
+    RAKAN_PNL_CODE = "044"
+
+    # Detect parts sale (vs service sale) by inspecting items.
+    items_for_check = op.get("items") or []
+    has_part_item = any(
+        str(it.get("itemType") or it.get("item_type") or "").lower() == "part"
+        for it in items_for_check
+        if isinstance(it, dict)
+    )
+    has_service_item = any(
+        str(it.get("itemType") or it.get("item_type") or "").lower() == "service"
+        for it in items_for_check
+        if isinstance(it, dict)
+    )
+
     if op_type in ("sale", "service"):
         total = workshop_total if workshop_total > 0 else total
         if total <= 0:
             return None
+
+        # 🚫 Non-Rakan parts sale (no service mixed) → archive only, no journal entry.
+        # The operation row + supplier file movement still record the activity.
+        if (
+            not is_rakan_operation
+            and op_type == "sale"
+            and has_part_item
+            and not has_service_item
+        ):
+            return None
+
         transaction_type = "sale"
         debit_code = "1103" if is_credit else cash_code
-        revenue_code = selected_code or "4100"
+        # Rakan sale: credit 044 (offsets prior cost). Otherwise: selected revenue code or default 4100.
+        revenue_code = RAKAN_PNL_CODE if is_rakan_operation else (selected_code or "4100")
         lines = [
             {
                 "account": debit_code,
@@ -1350,6 +1379,9 @@ def _build_operation_journal_entry(
             debit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
         else:
             debit_code = selected_code if str(selected_code or "").startswith(("5", "6")) else "6100"
+        # Rakan purchase: debit 044 (raises the cost side of the Rakan unit).
+        if is_rakan_operation:
+            debit_code = RAKAN_PNL_CODE
         credit_code = "2101" if is_credit else cash_code
 
         lines = [

@@ -1736,10 +1736,135 @@ async def _build_partner_financial_map(
                     },
                 )
 
+    # 🔁 Augment supplier movements from journal entries.
+    # Operations table doesn't always carry a clean partner_id link, but the
+    # general ledger does (each supplier has its own sub-account "مورد - <name>").
+    # We scan all journal lines that reference such a supplier sub-account and
+    # turn them into movement rows on the matching supplier file.
+    if p_type == "supplier":
+        try:
+            await _augment_supplier_movements_from_journal(by_id, by_name, workshop_id)
+        except Exception as exc:
+            print(f"_augment_supplier_movements_from_journal failed: {exc}")
+
     for entity_id, summary in by_id.items():
         by_id[entity_id] = _round_partner_summary(summary)
 
     return by_id
+
+
+async def _augment_supplier_movements_from_journal(
+    by_id: Dict[str, Dict[str, Any]],
+    by_name: Dict[str, str],
+    workshop_id: Optional[str],
+) -> None:
+    """Read journal_entries and append matching lines to each supplier's movements list.
+
+    Match strategy (broad substring match by normalized supplier name):
+      - For each line, check the account name (and/or fallback `name`/`acc_name`).
+      - For each registered supplier, if its normalized name appears in the account
+        name we attach the line as a movement to that supplier.
+      - This catches both dedicated sub-accounts ("مورد - <name>") and themed
+        expense accounts ("مصروفات شخصيه راكان", "مصروفات بنزين راكان"…).
+    """
+    if not (supabase_service.client and not supabase_service.mock_mode):
+        return
+    if not by_name:
+        return
+
+    # Reuse the finance routes journal entry cache to avoid an extra Supabase
+    # roundtrip on every Suppliers page load.
+    entries: List[Dict[str, Any]] = []
+    try:
+        from routes_finance import _fetch_journal_entries as _finance_fetch_je
+        entries = _finance_fetch_je(workshop_id or "", limit=5000, include_rakan=True)
+    except Exception:
+        try:
+            q = supabase_service.client.table("journal_entries").select("id,date,description,lines,source").limit(5000)
+            if workshop_id:
+                q = q.eq("workshop_id", workshop_id)
+            res = q.execute()
+            entries = res.data or []
+        except Exception as exc:
+            print(f"journal_entries fetch failed: {exc}")
+            return
+
+    # Pre-build (normalized_supplier_name, supplier_id) sorted by name length desc
+    # so longer names match first ("الزايدي ليات" before "الزايدي").
+    supplier_targets = sorted(
+        ((name_norm, sid) for name_norm, sid in by_name.items() if name_norm),
+        key=lambda t: len(t[0]),
+        reverse=True,
+    )
+
+    seen_movement_keys: set = set()
+
+    for entry in entries:
+        entry_id = str(entry.get("id") or "")
+        entry_date = str(entry.get("date") or "")
+        entry_desc = str(entry.get("description") or "")
+        for idx, line in enumerate(entry.get("lines") or []):
+            if not isinstance(line, dict):
+                continue
+            acc_name_raw = str(line.get("account_name") or line.get("name") or "").strip()
+            if not acc_name_raw:
+                continue
+            acc_name_norm = _normalize_partner_name(acc_name_raw)
+            if not acc_name_norm:
+                continue
+
+            # Find first matching supplier by substring on normalized account name.
+            target_id = None
+            for sup_name, sid in supplier_targets:
+                if sup_name in acc_name_norm:
+                    target_id = sid
+                    break
+            if not target_id or target_id not in by_id:
+                continue
+
+            debit = _safe_float(line.get("debit"))
+            credit = _safe_float(line.get("credit"))
+            amount = round(debit if debit > 0 else credit, 2)
+            if amount <= 0:
+                continue
+
+            direction = "debit" if debit > 0 else "credit"
+            label = "سداد للمورد" if direction == "debit" else "مشتريات / مستحق"
+            flow = "out" if direction == "debit" else "in"
+
+            mv_id = f"je-{entry_id}-{idx}"
+            mv_key = f"{target_id}:{mv_id}"
+            if mv_key in seen_movement_keys:
+                continue
+            seen_movement_keys.add(mv_key)
+
+            _append_partner_movement(
+                by_id[target_id],
+                {
+                    "id": mv_id,
+                    "direction": direction,
+                    "label": label,
+                    "amount": amount,
+                    "date": entry_date,
+                    "flow": flow,
+                    "flowLabel": "خارج" if flow == "out" else "داخل",
+                    "visitId": "",
+                    "vehicleId": "",
+                    "source": "journal_entry",
+                    "operationId": "",
+                    "note": entry_desc or acc_name_raw,
+                    "accountName": acc_name_raw,
+                },
+            )
+
+            if direction == "credit":
+                by_id[target_id]["creditBalance"] += amount
+                by_id[target_id]["overdueBalance"] += amount
+                by_id[target_id]["ajelBalance"] += amount
+                by_id[target_id]["paymentPlanCount"] += 1
+            else:
+                by_id[target_id]["debitBalance"] += amount
+                by_id[target_id]["settledAmount"] += amount
 
 
 def _normalize_account_row(raw: Dict[str, Any]) -> Dict[str, Any]:

@@ -1,82 +1,88 @@
 <analysis>### handover summary
 
 **original_problem_statement:**
-The user is maintaining an ERP for an auto repair workshop. Recent extensive requests involve deep financial restructuring: re-coding all accounts to a 001, 002, 003 sequence, ensuring strict double-entry balancing, overhauling the AI Finance Auditor (External Auditor bot with strict state machine and evidence uploads), and manually adjusting financial balances to match real-world cash/bank/POS distributions.
+The user is maintaining an ERP for an auto repair workshop. The system requires accurate financial balancing, clean data (removing duplicate/test accounts), and optimized reporting dashboards. Additionally, the system must handle a specific supplier, راكان (Rakan), as an independent business unit—meaning Rakan's part sales should appear in a dedicated Parts Analytics dashboard and NOT in the workshop's main journal entries. When adding Rakan as a supplier in a vehicle's repair file, the UI must prompt the user to link a specific part from the inventory to prevent duplicate entries between POS and operations. PRODUCT REQUIREMENTS include strict double-entry balancing, an AI Finance Auditor, and independent tracking for the parts department.
 
 **User's preferred language**: Arabic (العربية)
-(You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only)
+(INSTRUCT next agent to respond in the user's preferred language only: Arabic)
 
 **what currently exists?** 
-A React SPA + FastAPI backend ERP. It features a complete financial module (Chart of Accounts, Journal Entries, Comprehensive Dashboard, and an AI Finance Bot). All legacy account codes (1101, 1102, etc.) were recently migrated to sequential codes (001, 002, etc.). The AI Finance Bot acts as an External Auditor with a strict state machine, interactive action cards, and an evidence upload system.
+A React SPA + FastAPI backend ERP. It features a complete financial module with a Chart of Accounts (using sequential codes 001, 002, etc.), Journal Entries, and a Comprehensive Dashboard. It includes an AI Finance Auditor bot. It also features a Suppliers tracking page, and a Vehicle Details page to manage repair operations and parts. Supplier راكان is decoupled from main accounting and routed to a separate parts module.
 
 **Last working item**: 
-    - Last item agent was working: Creating adjustment journal entries to force the system's financial balances to exactly match the user's real-world numbers (Bank = 16150, Cash = 0, POS = 2000).
-    - Status: IN PROGRESS
-    - Agent Testing Done: N
-    - Which testing method agent to use? Both (backend bash to verify exact balances, and frontend testing agent for UI verification).
+    - Last item agent was working: Adding a  component in . This UI component automatically appears when the supplier راكان is selected in a vehicle's operation row, forcing the user to select the specific part to avoid duplicate tracking.
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: Y (Code was implemented and linted, but the frontend screenshot verification timed out).
+    - Which testing method agent to use? Frontend testing agent or screenshot tool.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Adjusting Account Balances to match Reality (Bank=16150, Cash=0, POS=2000) (P0)
-     - Attempted fixes: Agent fetched the current balances (Bank is 7356.5, Cash is 0, POS is 0) and was about to write the logic/script to draft journal entries to adjust these to the target values without breaking the overall net profit.
-     - Next debug checklist: 
-       - Identify the exact new codes for Bank (004) and POS (006).
-       - Create an adjustment journal entry (or multiple) via  or a custom python script.
-       - Ensure the offset account used for the adjustment is appropriate (e.g., an owner's equity or reconciliation discrepancy account) so that Net Profit remains correct and the Trial Balance remains balanced.
-     - Why fix this issue and what will be achieved with the fix? User explicitly requested the application to mirror their real-world cash/bank/POS balances to reflect actual accounting status.
-     - Status: IN PROGRESS
-     - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? Both
+  - Issue 1: UI Performance and Screenshot Timeouts (P1)
+     - Attempted fixes: Agent restarted the frontend and backend services multiple times due to  and  during screenshot captures of  and .
+     - Next debug checklist: Check  and  for heavy re-renders or unoptimized API calls causing the browser to hang during automated testing.
+     - Why fix this issue and what will be achieved with the fix? Ensures the app remains responsive for users and allows automated screenshot testing to succeed.
+     - Status: NOT STARTED
+     - Is recurring issue? Y
+     - Should Test frontend/backend/both after fix? Frontend
      - Blocked on other issue: None
 
 **In progress Task List**:
   - None
 
 **Upcoming and Future Tasks**
-  - **P1:** Complete the Auto-Linking + Contradiction Engine + Escalation Workflow for the AI Finance Bot (as proposed by the agent and implicitly accepted by the user).
+  - **P1:** Complete the Auto-Linking + Contradiction Engine + Escalation Workflow for the AI Finance Bot.
   - **P2:** Add OCR/document verification for uploaded evidence in the Finance Bot.
 
 **Completed work in this session**
-- Fixed financial duplication between cash/bank logic.
-- Overhauled Chart of Accounts: Renumbered actual account codes to 001, 002, etc., and hid legacy codes completely.
-- Chart of Accounts UI: Made rows fully clickable for expanding/collapsing, added collapsible reconciliation report.
-- AI Finance Bot: Implemented External Auditor mode with a strict state machine (open, probing, pending_evidence, resolved, escalated), Single Question Hard Guard, and interactive Action Cards (, ).
-- Added Evidence Upload feature for the Finance Bot.
-- Adjusted Net Profit formula to .
-- Fixed mismatch between  summary and .
-- Created  to correct trial balance discrepancies.
+- Applied manual journal entry () to fix Bank (16,150) and POS (2,000) balances against the reconciliation account (211).
+- Fixed  alias mapping logic using an in-memory cache to prevent backward compatibility crashes.
+- Deleted 32 duplicate/test accounts from the database and updated the chart of accounts tree.
+- Restructured the Net Income (صافي الدخل) card in  to remove duplicated fields and logically group the data.
+- Added caching to backend financial reports (, , ) drastically reducing load times from ~4s to ~0.15s.
+- Fixed the Supplier Movements history () to correctly pull and display transaction history from journal entries instead of showing 0 movements.
+- Decoupled supplier راكان (Rakan) from workshop journal entries, ensuring it acts as an independent unit reporting only to the Parts Analytics dashboard.
+- Implemented  in  to selectively show part linking when Rakan is chosen.
 
 **Earlier issues found/mentioned but not fixed**
-   - None.
+   - Issue 1:  table missing in Supabase cache (PGRST205 error). 
+     - Debug checklist: The backend  attempted to query  but failed. Ensure the correct table name is used (e.g.,  or a generic  table) when fetching supplier data if a dedicated  table doesn't exist.
+     - Why to solve this issue and what will be achieved with this? Prevents backend 500 errors if that specific code path is triggered again.
+     - Should Test frontend/backend/both after fix: Backend
+     - Is recurring issue? N
 
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: Financial accounts duplication/mismatch.
-  - Recurrence count: 1 (Addressed successfully in this session, but user is refining exact manual distributions now).
-  - Status: RESOLVED
+  - Recurrence count: 1 
+  - Status: RESOLVED (32 duplicates removed, balances matched).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- React SPA with TailwindCSS.
-- FastAPI backend with MongoDB / Supabase.
-- Strict State Machine logic for AI Bot (probing, pending_evidence, etc.).
-- Account Code Mapping: Legacy codes (1101, 1102) mapped to sequential codes (001, 002).
+- React SPA + FastAPI backend.
+- Dual Database Fallback: Supabase (Primary) and MongoDB (Fallback/Legacy).
+- In-memory caching for heavy financial queries (, ).
+- Special Business Logic: Specific strings like راكان and RAKAN_PARTS trigger distinct data routing (bypassing standard accounting ledgers).
 
 **key DB schema**
   - : 
   - : 
+  - : Used for mapping old legacy codes to the new sequential system.
 
 **changes in tech stack**
-  - None strictly.
+  - None.
 
 **All files of reference**
-  -  (Handles COA and Journal Entries)
-  -  (Handles Auditor AI logic & state)
-  -  (Chat UI & Action Cards)
+  -  (Updated operations logic and account caching)
+  -  (Updated income statement and added heavy caching)
+  -  (Fixed supplier movements parsing)
+  -  (Cleaned up Net Income card)
+  -  (Added RakanLinkedPartPicker)
+  -  (Updated to display movements correctly)
 
 **Areas that need refactoring**:
-- Legacy code fallbacks: The transition from legacy codes (1101, 1102) to new sequential codes (001, 002, 003...) required stripping hardcoded codes from the frontend. Be careful not to reintroduce hardcoded legacy strings in frontend components.
+-  is bloated and contains stray endpoints (like ) that should ideally be moved to  or a dedicated .
+- Frontend API calls on heavy pages (, ) are causing browser timeouts during automated runs. Needs pagination or optimized rendering.
 
 **key api endpoints**
 - 
@@ -86,43 +92,42 @@ A React SPA + FastAPI backend ERP. It features a complete financial module (Char
 
 **Critical Info for New Agent**
 - **LANGUAGE:** You MUST strictly communicate with the user in **Arabic**.
-- **ACCOUNT CODES:** Legacy codes (1101, 1102, 1103) were entirely replaced by , , ... The backend maps them using  in the DB. **DO NOT** use hardcoded '1101', '1102' in frontend components anymore. (Bank is currently 004, Cash is 003, POS is 006 - always verify via backend script before assuming).
-- **FINANCE BOT:** Must adhere strictly to the Single Question Hard Guard and state machine logic. Do not break the additive  JSON structures applied to the findings.
+- **RAKAN LOGIC:** Operations tied to the supplier راكان are considered an independent business unit (RAKAN_PARTS_OPERATION). They MUST NOT generate standard journal entries that affect the main workshop's net profit. They are tracked purely in the Parts Analytics module.
+- **CACHING:** Backend routes now use in-memory caching (, ) to speed up financial dashboards. Be mindful of cache invalidation if you modify journal entries or accounts.
 
 **documents and test reports created in this job**
-  - 
+  -  (Updated with recent fixes)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. User: Asked for full logic of Auditor to see missing parts. Also requested removal of all old account codes from custom pages.
-2. User: Provided JSON config for Audit Interactive Loop (Action cards, state machine) to be applied via incremental patch without rebuilding.
-3. User: Mismatch between financial pages. Audit as expert. (Agent fixed  vs  summary).
-4. **[PENDING HUMAN MESSAGE]**: Realistic financial situation is not matching. Bank: 16150, Cash: 0, POS: 2000. Ajel: matches. Net amount is correct but distribution is wrong. Fix entries or add new ones if necessary.
+1. User: Asked to clean up duplicate accounts and fix messy/duplicate fields in the Net Income card.
+2. Agent: Asked for confirmation to delete 32 identified duplicate/test accounts.
+3. User: Confirmed.
+4. Agent: Deleted accounts and restructured Net Income card.
+5. User: Reported duplicated fields in the Net Income card (e.g., مبيعات بنك/بطاقة) and requested better loading speeds.
+6. Agent: Fixed the card structure and added backend caching to reduce load times.
+7. User: Stated that operations for supplier راكان should go to Rakan's parts revenue, while other suppliers should just have their movements archived/logged on the suppliers page.
+8. Agent: Fixed  movements logic to read from journals, and ensured Rakan operations don't hit the main ledger.
+9. User: Confirmed Rakan should remain completely independent and its analytics are already handled in the Parts Dashboard. Also requested that selecting راكان in the vehicle file should automatically reveal a field to link a specific part (to avoid POS duplication).
+10. Agent: Implemented  in  and finished the task.
+*(No pending human messages, but the user needs to verify the Rakan part picker UI).*
 
 **Project Health Check:**
-- **Broken**: The current cash/bank/pos distribution does not match the user's real-world business numbers. Requires immediate manual journal adjustments via backend script.
+- **Broken**: Occasional frontend timeouts when rendering large lists (e.g., , ), making screenshot testing unreliable.
 
 **3rd Party Integrations**
 - Supabase (Database) — requires User API Key
 - MongoDB (Database) — requires User API Key
-- Claude / OpenAI (Emergent LLM Key Applicability) - Used for the Finance Auditor Bot.
+- Claude / OpenAI (Emergent LLM Key Applicability) - Used for Finance Auditor Bot.
 
 **Testing status**
-  - Testing agent used after significant changes: YES (extensively up to iteration 165)
+  - Testing agent used after significant changes: NO (Main agent self-tested via bash scripts and screenshots).
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: 
-  - Known regressions: None currently, but trial balances must be carefully watched when adjusting entries.
+  - Test files created: None this session.
+  - Known regressions: None functional, but frontend performance under load is flaky.
 
 **Credentials to test flow:**
 - Username: 
 - Password: Not required (bypassed locally/preview)
 
 **What agent forgot to execute**
-- The agent successfully grabbed the current balances from the backend to analyze the delta, but was interrupted before it could write and apply the Journal Entry correction to fix the Bank/POS/Cash balances.
-
-**Debugging checklist for current issue**
-    Issue: Adjusting Account Balances to Reality (Bank=16150, POS=2000, Cash=0).
-
-    Backend files to check: 
-    - Run a bash python script to fetch exact  for Bank, POS, and Cash.
-    - Call the  function or insert directly into Supabase/MongoDB to apply the offset values (e.g., increasing Bank by ~8793.5, increasing POS by 2000, and balancing via a suitable equity/reconciliation account). 
-    - Ensure  and trial balance show no tb_unbalanced alerts after the adjustment.</analysis>
+- The agent implemented the  in  but the screenshot verification timed out (). The agent finished the job without visually confirming the component renders correctly when راكان is selected in the dropdown. The next agent should verify this UI behavior.</analysis>

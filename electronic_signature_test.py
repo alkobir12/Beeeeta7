@@ -17,7 +17,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-BACKEND_URL = "https://finance-auditor-bot.preview.emergentagent.com/api"
+BACKEND_URL = "https://accounting-auditor-1.preview.emergentagent.com/api"
 
 class ApprovalSystemTester:
     def __init__(self):

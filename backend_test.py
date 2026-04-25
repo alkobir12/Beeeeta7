@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 
 # Backend URL from environment
-BACKEND_URL = "https://finance-auditor-bot.preview.emergentagent.com/api"
+BACKEND_URL = "https://accounting-auditor-1.preview.emergentagent.com/api"
 
 def test_alkabeer_bot_editor_endpoints():
     """Test the specific AlKabeer Bot editor endpoints mentioned in the review request"""

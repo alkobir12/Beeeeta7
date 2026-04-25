@@ -17,7 +17,7 @@ import json
 import uuid
 from datetime import datetime, timedelta
 
-BASE_URL = "https://finance-auditor-bot.preview.emergentagent.com"
+BASE_URL = "https://accounting-auditor-1.preview.emergentagent.com"
 WORKSHOP_ID = "finmodule-sync"
 
 

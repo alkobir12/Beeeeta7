@@ -7,7 +7,7 @@ Final test with valid business account
 import requests
 import json
 
-API_URL = "https://finance-auditor-bot.preview.emergentagent.com"
+API_URL = "https://accounting-auditor-1.preview.emergentagent.com"
 
 def test_with_valid_business_account():
     """اختبار مع business account صحيح"""

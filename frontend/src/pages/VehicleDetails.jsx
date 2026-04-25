@@ -106,6 +106,99 @@ const normalizePartyCatalog = (rows = [], entityPrefix = 'entity') => {
   return normalized;
 };
 
+const RAKAN_SUPPLIER_NAMES = new Set(['راكان', 'rakan', 'Rakan', 'RAKAN']);
+
+const isRakanSupplierName = (value) => {
+  const v = String(value || '').trim();
+  if (!v) return false;
+  if (RAKAN_SUPPLIER_NAMES.has(v)) return true;
+  return v.includes('راكان') || v.toLowerCase().includes('rakan');
+};
+
+const RakanLinkedPartPicker = ({ item, onChange, partsCatalog = [], rowId, visitId, variant = 'row' }) => {
+  if (!isRakanSupplierName(item.name)) return null;
+
+  // Limit dropdown to parts whose supplier is Rakan-tagged (fall back to entire
+  // catalog if none are tagged so the user is never blocked).
+  const rakanOnly = partsCatalog.filter((p) => {
+    const sup = String(p?.supplier || p?.supplierName || p?.supplier_name || '').trim();
+    return isRakanSupplierName(sup);
+  });
+  const options = rakanOnly.length > 0 ? rakanOnly : partsCatalog;
+
+  const linkedValue = String(item.linkedPart || '').trim();
+  const matched = options.find((p) => (p.name || '').trim() === linkedValue);
+  const showManual = Boolean(item.linkedPartManualEntry || (linkedValue && !matched));
+  const baseTestId = `visit-item-rakan-part-${variant}-${visitId}-${rowId}`;
+
+  return (
+    <div
+      className="space-y-2 mt-2 p-2 rounded-lg"
+      style={{
+        background: 'rgba(34,197,94,0.06)',
+        border: '1px solid rgba(34,197,94,0.22)',
+      }}
+      data-testid={`${baseTestId}-wrapper`}
+    >
+      <div className="text-[11px] font-semibold" style={{ color: 'rgba(190,242,212,0.95)' }}>
+        🧩 اختر قطعة راكان المرتبطة
+      </div>
+      <select
+        value={showManual ? '__manual__' : linkedValue}
+        onChange={(e) => {
+          const val = e.target.value;
+          if (val === '__manual__') {
+            onChange('linkedPartManualEntry', true);
+            onChange('linkedPart', '');
+            return;
+          }
+          onChange('linkedPartManualEntry', false);
+          onChange('linkedPart', val);
+        }}
+        className="w-full text-xs sm:text-sm rounded-lg p-2"
+        style={{
+          background: 'rgba(255,255,255,0.06)',
+          border: '1px solid rgba(34,197,94,0.30)',
+          color: 'rgba(248,250,252,0.92)',
+        }}
+        data-testid={`${baseTestId}-select`}
+      >
+        <option value="">اختر قطعة من مخزون راكان</option>
+        {options.map((p) => (
+          <option key={p.id || p.name} value={p.name}>
+            {p.name}
+          </option>
+        ))}
+        <option value="__manual__">إدخال يدوي</option>
+      </select>
+
+      {showManual && (
+        <input
+          type="text"
+          value={item.linkedPart || ''}
+          onChange={(e) => {
+            onChange('linkedPartManualEntry', true);
+            onChange('linkedPart', e.target.value);
+          }}
+          className="w-full text-xs sm:text-sm rounded-lg p-2"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(34,197,94,0.30)',
+            color: 'rgba(248,250,252,0.92)',
+          }}
+          placeholder="اكتب اسم قطعة راكان يدوياً"
+          data-testid={`${baseTestId}-manual`}
+        />
+      )}
+
+      <div className="text-[10px]" style={{ color: 'rgba(148,163,184,0.85)' }}>
+        ⚠️ هذا البند يُسجَّل في تحليلات راكان فقط — لا يدخل في دفتر اليومية.
+        تجنّب تكرار نفس القطعة عبر نقطة البيع أو شاشة العمليات.
+      </div>
+    </div>
+  );
+};
+
 const VisitItemRow = ({
   item,
   isEditing,
@@ -232,6 +325,17 @@ const VisitItemRow = ({
                 }}
                 placeholder={`اكتب اسم ${partyLabel} يدويًا`}
                 data-testid={`visit-item-party-manual-${visitId}-${rowId}`}
+              />
+            )}
+
+            {item.itemType === 'supplier' && (
+              <RakanLinkedPartPicker
+                item={item}
+                onChange={onChange}
+                partsCatalog={partsCatalog}
+                rowId={rowId}
+                visitId={visitId}
+                variant="row"
               />
             )}
           </div>
@@ -517,6 +621,17 @@ const VisitItemCard = ({
                       }}
                       placeholder={`اكتب اسم ${partyLabel} يدويًا`}
                       data-testid={`visit-item-party-manual-card-${visitId}-${rowId}`}
+                    />
+                  )}
+
+                  {item.itemType === 'supplier' && (
+                    <RakanLinkedPartPicker
+                      item={item}
+                      onChange={onChange}
+                      partsCatalog={partsCatalog}
+                      rowId={rowId}
+                      visitId={visitId}
+                      variant="card"
                     />
                   )}
                 </div>

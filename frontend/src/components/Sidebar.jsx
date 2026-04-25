@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -9,7 +9,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
-  ChevronLeft,
+  ChevronUp,
   Car,
   Printer,
   X,
@@ -47,6 +47,7 @@ const Sidebar = ({
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const navRef = useRef(null);
   const [collapsedGroups, setCollapsedGroups] = useState({});
   const [activeCollapsedGroup, setActiveCollapsedGroup] = useState('');
   const [workshopName, setWorkshopName] = useState('');
@@ -147,18 +148,35 @@ const Sidebar = ({
       setActiveCollapsedGroup((prev) => (prev === label ? '' : label));
       return;
     }
+    const scrollToGroup = () => {
+      setTimeout(() => {
+        try {
+          const btn = navRef.current?.querySelector(`[data-group-label]`);
+          const allBtns = navRef.current?.querySelectorAll(`[data-group-label]`);
+          let target = null;
+          allBtns?.forEach(b => {
+            if (b.getAttribute('data-group-label') === label) target = b;
+          });
+          target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (_) {}
+      }, 80);
+    };
     if (window.innerWidth < 1024) {
       setCollapsedGroups((prev) => {
         const next = {};
-        groupLabels.forEach((groupLabel) => {
-          next[groupLabel] = true;
-        });
+        groupLabels.forEach((groupLabel) => { next[groupLabel] = true; });
+        const opening = prev[label] !== false;
         next[label] = !prev[label];
+        if (opening) scrollToGroup();
         return next;
       });
       return;
     }
-    setCollapsedGroups(prev => ({ ...prev, [label]: !prev[label] }));
+    setCollapsedGroups(prev => {
+      const wasCollapsed = prev[label] !== false;
+      if (wasCollapsed) scrollToGroup();
+      return { ...prev, [label]: !prev[label] };
+    });
   };
 
   const handleNavigate = (path) => {
@@ -199,33 +217,33 @@ const Sidebar = ({
   }, []);
 
   useEffect(() => {
-    if (window.innerWidth >= 1024) return;
+    // Collapse all groups by default on ALL viewports, then open the active one
     setCollapsedGroups((prev) => {
-      if (Object.keys(prev).length) return prev;
+      if (Object.keys(prev).length) return prev;  // already initialised
       const next = {};
-      groupLabels.forEach((label) => {
-        next[label] = true;
-      });
+      groupLabels.forEach((label) => { next[label] = true; });
+      // auto-open the group that contains the current route
+      const activeGroup = MENU_ITEMS.find(
+        (item) => item.group && item.children?.some((child) => child.path === location.pathname)
+      );
+      if (activeGroup?.label) next[activeGroup.label] = false;
       return next;
     });
-  }, [groupLabels]);
+  }, [groupLabels]);  // intentionally omit location.pathname so it only runs once
 
   useEffect(() => {
-    if (window.innerWidth >= 1024) return;
+    // When route changes, open the matching group (any viewport)
     const activeGroup = MENU_ITEMS.find(
       (item) => item.group && item.children?.some((child) => child.path === location.pathname)
     );
     if (!activeGroup?.label) return;
     setCollapsedGroups((prev) => {
-      if (prev[activeGroup.label] === false && Object.keys(prev).length) return prev;
-      const next = {};
-      groupLabels.forEach((label) => {
-        next[label] = true;
-      });
+      if (prev[activeGroup.label] === false) return prev;  // already open
+      const next = { ...prev };
       next[activeGroup.label] = false;
       return next;
     });
-  }, [location.pathname, groupLabels, MENU_ITEMS]);
+  }, [location.pathname]);
 
   const renderMenuItem = (item, index) => {
     if (!item.enabled) return null;
@@ -254,6 +272,7 @@ const Sidebar = ({
             onClick={() => toggleGroup(item.label)}
             className={`sidebar-item w-full justify-between ${hasActiveChild ? 'sidebar-item-active active' : ''} ${isCollapsed ? '!justify-center !px-0' : ''}`}
             data-testid={`sidebar-group-${String(item.label).replace(/\s+/g, '-')}`}
+            data-group-label={item.label}
             title={item.label}
           >
             {isCollapsed ? (
@@ -264,13 +283,21 @@ const Sidebar = ({
                   <Icon size={18} className={hasActiveChild ? 'text-white' : 'text-slate-400'} />
                   <span className="truncate">{item.label}</span>
                 </span>
-                {groupCollapsed ? <ChevronLeft size={14} /> : <ChevronDown size={14} />}
+                <span
+                  className="flex-shrink-0 transition-transform duration-200"
+                  style={{ transform: groupCollapsed ? 'rotate(0deg)' : 'rotate(0deg)' }}
+                >
+                  {groupCollapsed
+                    ? <ChevronDown size={14} className="text-slate-400" />
+                    : <ChevronUp size={14} className="text-sky-300" />
+                  }
+                </span>
               </>
             )}
           </button>
 
           {!isCollapsed && !groupCollapsed && (
-            <div className="ms-9 mt-1 space-y-1">
+            <div className="mt-1 space-y-0.5" style={{ paddingRight: '0.5rem', paddingLeft: '0.25rem' }}>
               {visibleChildren.map((child, childIndex) => {
                 const isActive = location.pathname === child.path;
                 const childCanAccess = !child.permission || hasPermission(session, child.permission.module, child.permission.action);
@@ -279,10 +306,11 @@ const Sidebar = ({
                     key={childIndex}
                     onClick={() => { if (childCanAccess) handleNavigate(child.path); }}
                     className={`sidebar-item w-full text-sm ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-300'} ${childCanAccess ? '' : 'opacity-60 cursor-not-allowed'}`}
+                    style={{ borderRight: isActive ? '3px solid rgba(56,189,248,0.7)' : '3px solid transparent', borderRadius: '12px' }}
                     data-testid={`sidebar-item-${child.path.replace(/\//g, '-')}`}
                     title={child.label}
                   >
-                    <span>{child.label}</span>
+                    <span className="truncate">{child.label}</span>
                     {!childCanAccess && <Lock size={12} className="mr-auto text-amber-300" />}
                   </button>
                 );
@@ -291,7 +319,11 @@ const Sidebar = ({
           )}
 
           {isCollapsed && hasFloatingMenu && (
-            <div className="absolute left-[calc(100%+12px)] top-0 z-50 w-64 rounded-[24px] border border-white/10 bg-slate-950/95 p-3 shadow-2xl shadow-black/40 backdrop-blur-2xl" data-testid={`sidebar-collapsed-group-panel-${index}`}>
+            <div
+              className="absolute top-0 z-[9999] w-64 rounded-[20px] border border-white/12 bg-slate-950/97 p-3 shadow-2xl shadow-black/50 backdrop-blur-2xl"
+              style={{ left: 'calc(100% + 10px)' }}
+              data-testid={`sidebar-collapsed-group-panel-${index}`}
+            >
               <div className="mb-2 flex items-center gap-2 px-2 text-slate-100">
                 <Icon size={16} className="text-sky-300" />
                 <span className="text-sm font-semibold">{item.label}</span>
@@ -392,7 +424,7 @@ const Sidebar = ({
           </button>
         </div>
 
-        <nav className={`overflow-y-auto flex-1 min-h-0 ${isCollapsed ? 'px-2 pt-3' : 'px-3 pt-3'}`}>
+        <nav ref={navRef} className={`overflow-y-auto flex-1 min-h-0 ${isCollapsed ? 'px-2 pt-3' : 'px-3 pt-3'}`}>
           <div className="space-y-1.5 pb-4">
             {MENU_ITEMS.map((item, index) => renderMenuItem(item, index))}
           </div>

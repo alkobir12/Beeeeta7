@@ -155,7 +155,8 @@ class SmartInventoryService:
                 account_code_in_notes = notes_text.split("ACCOUNT_CODE:", 1)[1].split()[0].split("|")[0].strip()
             except Exception:
                 account_code_in_notes = ""
-        return (
+
+        if (
             account_id in rakan_biz_ids
             or scope == "rakan_parts"
             or source == "rakan_parts_pos"
@@ -163,7 +164,31 @@ class SmartInventoryService:
             or "[rakan_parts]" in notes
             or self._is_rakan_account_code(accounting_ref)
             or self._is_rakan_account_code(account_code_in_notes)
-        )
+        ):
+            return True
+
+        # Also detect Rakan via visit items (supplier items whose name contains راكان)
+        for item in (operation.get("items") or []):
+            if item.get("itemType") in ("supplier", "part"):
+                item_name = self._normalize_text(str(item.get("name") or ""))
+                if "راكان" in item_name or "rakan" in item_name:
+                    return True
+        return False
+
+    def _rakan_items_total(self, operation: Dict[str, Any]) -> float:
+        """Return the sum of Rakan supplier items from a mixed visit operation."""
+        total = 0.0
+        for item in (operation.get("items") or []):
+            if item.get("itemType") in ("supplier", "part"):
+                item_name = self._normalize_text(str(item.get("name") or ""))
+                if "راكان" in item_name or "rakan" in item_name:
+                    total += self._safe_float(item.get("total") or item.get("price") or 0)
+        # fall back to supplierArchiveTotal stored on the operation
+        if total <= 0:
+            total = self._safe_float(
+                operation.get("supplierArchiveTotal") or operation.get("supplier_archive_total") or 0
+            )
+        return total
 
     @staticmethod
     def _clean_note_reason(value: Any) -> str:
@@ -1884,6 +1909,20 @@ class SmartInventoryService:
             is_rakan = self._is_rakan_operation(op, rakan_biz_ids) or accounting_ref in rakan_chart_ids
             if not is_rakan:
                 continue
+
+            # For mixed visit-operations (workshop + Rakan items), use only the
+            # Rakan-specific item amounts so we don't inflate with workshop revenue.
+            scope = self._normalize_text(op.get("scope"))
+            source = self._normalize_text(op.get("source"))
+            is_pure_rakan = (
+                scope == "rakan_parts"
+                or source == "rakan_parts_pos"
+                or "[rakan_parts]" in self._normalize_text(op.get("notes"))
+            )
+            if not is_pure_rakan:
+                rakan_amt = self._rakan_items_total(op)
+                if rakan_amt > 0:
+                    op = {**op, "total": rakan_amt, "type": "sale", "scope": "rakan_parts"}
             if op_date >= current_start:
                 current_ops.append(op)
             elif previous_start <= op_date < current_start:

@@ -115,10 +115,19 @@ const isRakanSupplierName = (value) => {
   return v.includes('راكان') || v.toLowerCase().includes('rakan');
 };
 
-// ─── مكوّن اختيار قطعة لموردي الورشة (غير راكان) → حساب 042 ───────────────
+const ABU_KHALED_NAMES = new Set(['أبو خالد الكبير', 'ابو خالد الكبير', 'أبو خالد', 'ابو خالد']);
+
+const isAbuKhaledSupplier = (value) => {
+  const v = String(value || '').trim();
+  if (!v) return false;
+  if (ABU_KHALED_NAMES.has(v)) return true;
+  return v.includes('أبو خالد الكبير') || v.includes('ابو خالد الكبير');
+};
+
+// ─── مكوّن اختيار قطعة لمورد أبو خالد الكبير → حساب 042 ────────────────────
 const WorkshopSupplierPartPicker = ({ item, onChange, partsCatalog = [], rowId, visitId, variant = 'row' }) => {
-  // يظهر فقط لموردي الورشة (غير راكان)
-  if (!item.name || isRakanSupplierName(item.name)) return null;
+  // يظهر فقط لمورد "أبو خالد الكبير"
+  if (!isAbuKhaledSupplier(item.name)) return null;
 
   const linkedValue = String(item.linkedPart || '').trim();
   const matched = partsCatalog.find((p) => (p.name || '').trim() === linkedValue);

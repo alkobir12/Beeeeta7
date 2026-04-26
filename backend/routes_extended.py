@@ -1062,13 +1062,16 @@ ACCOUNT_NAME_MAP = {
     "022": "مسحوبات المالك",
     "025": "الإيرادات",
     "026": "إيرادات الخدمات",
+    "027": "إيرادات خدمات ميكانيكية",
+    "028": "إيرادات إصلاح محركات",
+    "029": "إيرادات فرامل وتعليق",
     "030": "تكلفة الخدمات",
-    "042": "ايراد قطع الورشه",
     "031": "تكاليف مباشرة",
     "035": "المصروفات التشغيلية",
     "036": "مصروفات عامة وإدارية",
     "037": "رواتب إدارية",
     "010": "معدات ميكانيكية",
+    "042": "ايراد قطع الورشه",
     "2101": "الموردون (ذمم دائنة)",
     "211":  "حساب فروقات ترحيل",
     # ─── أكواد قديمة (للتوافق مع القيود التاريخية) ───
@@ -1083,6 +1086,28 @@ ACCOUNT_NAME_MAP = {
     "1201": "معدات ميكانيكية",
     "6100": "مصروفات عامة وإدارية",
 }
+
+
+# الكلمات الدالة على نوع الإيراد
+_TOWDHEEB_KEYWORDS = ["توضيب", "تلميع مكينة", "غسيل مكينة", "تنظيف مكينة"]
+
+
+def _infer_revenue_code(op: Dict[str, Any]) -> str:
+    """
+    يستنتج كود حساب الإيراد الصحيح من بنود العملية:
+    - توضيب → 028 (إيرادات إصلاح محركات)
+    - غير ذلك → 027 (إيرادات خدمات ميكانيكية)
+    """
+    items = op.get("items") or []
+    all_text = " ".join(
+        [str(op.get("notes") or ""), str(op.get("description") or "")]
+        + [str(it.get("name") or "") for it in items
+           if str(it.get("itemType") or "").lower() not in ("supplier",)]
+    )
+    for kw in _TOWDHEEB_KEYWORDS:
+        if kw in all_text:
+            return "028"
+    return "027"
 
 # خريطة تحويل الأكواد القديمة → الجديدة
 LEGACY_TO_NEW_CODE = {
@@ -1415,7 +1440,7 @@ def _build_operation_journal_entry(
         )
         if _valid_rev_code:
             _valid_rev_code = LEGACY_TO_NEW_CODE.get(_valid_rev_code, _valid_rev_code)
-        revenue_code = _valid_rev_code or "026"
+        revenue_code = _valid_rev_code or _infer_revenue_code(op)
 
         # المبلغ الإجمالي للقيد = workshop services + workshop supplier parts (042)
         # workshop_total (متاح من الحسابات السابقة) = الخدمات فقط (بدون موردين)

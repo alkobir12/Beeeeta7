@@ -144,10 +144,36 @@ const AbuFahadFloatingChat = ({
   };
 
   const actionLabelMap = {
-    open_investigation: 'فتح التحقيق',
-    apply_suggested_fix: 'تطبيق المعالجة المقترحة',
-    view_evidence: 'عرض الأدلة',
-    escalate: 'تصعيد',
+    open_investigation:   '🔍 فتح التحقيق',
+    apply_suggested_fix:  '✅ تطبيق المعالجة',
+    view_evidence:        '📎 عرض الأدلة',
+    escalate:             '⚠️ تصعيد للمحاسب',
+  };
+
+  const stateLabels = {
+    open:             'مفتوحة',
+    probing:          'قيد التحقيق',
+    pending_evidence: 'بانتظار مستند',
+    resolved:         'محلولة',
+    escalated:        'مصعّدة',
+  };
+
+  const stateBadgeColor = {
+    open:             'bg-slate-600/60 text-slate-200',
+    probing:          'bg-blue-600/40 text-blue-200',
+    pending_evidence: 'bg-amber-600/40 text-amber-200',
+    resolved:         'bg-emerald-600/40 text-emerald-200',
+    escalated:        'bg-red-600/40 text-red-200',
+  };
+
+  // أزرار سياقية بناءً على الحالة الحالية
+  const contextualActions = (state) => {
+    if (state === 'open')             return ['open_investigation'];
+    if (state === 'probing')          return ['apply_suggested_fix', 'view_evidence', 'escalate'];
+    if (state === 'pending_evidence') return ['apply_suggested_fix', 'view_evidence', 'escalate'];
+    if (state === 'resolved')         return [];
+    if (state === 'escalated')        return [];
+    return ['open_investigation'];
   };
 
   const runInteractiveAction = async (action, assistantMsg) => {
@@ -364,8 +390,15 @@ const AbuFahadFloatingChat = ({
                     <div className="prose prose-invert prose-sm max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                       {msg?.state ? (
-                        <div className="mt-1 text-[10px] text-slate-400" data-testid={`finance-bot-msg-state-${idx}`}>
-                          الحالة: {msg.state}
+                        <div className="mt-1.5 flex items-center gap-2" data-testid={`finance-bot-msg-state-${idx}`}>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${stateBadgeColor[msg.state] || 'bg-slate-600/60 text-slate-200'}`}>
+                            {stateLabels[msg.state] || msg.state}
+                          </span>
+                          {msg.state === 'pending_evidence' && (
+                            <span className="text-[10px] text-amber-300 animate-pulse">
+                              ← أرفق مستنداً عبر زر المشبك
+                            </span>
+                          )}
                         </div>
                       ) : null}
 
@@ -407,21 +440,30 @@ const AbuFahadFloatingChat = ({
                         </a>
                       )}
 
-                      {msg?.interactive?.enabled && Array.isArray(msg?.interactive?.actions) ? (
-                        <div className="mt-2 flex flex-wrap gap-1" data-testid={`finance-bot-action-card-${idx}`}>
-                          {msg.interactive.actions.map((action) => (
-                            <button
-                              key={`${idx}-${action}`}
-                              type="button"
-                              onClick={() => runInteractiveAction(action, msg)}
-                              className="rounded-md border border-slate-600 bg-slate-700/40 px-2 py-1 text-[10px] text-slate-100 hover:bg-slate-700"
-                              data-testid={`finance-bot-action-${action}-${idx}`}
-                            >
-                              {actionLabelMap[action] || action}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
+                      {/* ─── أزرار الإجراء السياقية ─── */}
+                      {(() => {
+                        const actions = contextualActions(msg?.state);
+                        if (!actions.length) return null;
+                        // فقط آخر رسالة bot تحمل الأزرار
+                        const isLast = chatHistory.slice(idx + 1).every(m => m.role !== 'assistant');
+                        if (!isLast) return null;
+                        return (
+                          <div className="mt-2 flex flex-wrap gap-1.5" data-testid={`finance-bot-action-card-${idx}`}>
+                            {actions.map((action) => (
+                              <button
+                                key={`${idx}-${action}`}
+                                type="button"
+                                onClick={() => runInteractiveAction(action, msg)}
+                                disabled={chatLoading}
+                                className="rounded-lg border border-slate-600 bg-slate-800/60 px-3 py-1.5 text-[11px] font-medium text-slate-100 hover:bg-slate-700 hover:border-slate-500 active:scale-95 transition-all disabled:opacity-40"
+                                data-testid={`finance-bot-action-${action}-${idx}`}
+                              >
+                                {actionLabelMap[action] || action}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ) : (
                     msg.content

@@ -5171,3 +5171,99 @@ async def migrate_legacy_account_codes(
         "apply_changes": apply_changes,
         "sample": [{"id": c["id"]} for c in candidates[:5]],
     }
+
+
+
+@router.post("/reports/reclassify-revenue-sub-accounts")
+async def reclassify_revenue_sub_accounts(
+    workshop_id: str = Query(...),
+    apply_changes: bool = Query(False),
+):
+    """
+    يُعيد تصنيف قيود الإيراد من الحسابات العامة (025/026/4001/4000/4100)
+    إلى الحسابات الفرعية الصحيحة:
+    - بنود تحتوي "توضيب" → 028 (إيرادات إصلاح محركات)
+    - غير ذلك → 027 (إيرادات خدمات ميكانيكية)
+    """
+    OLD_REV_CODES = {"025", "026", "027", "4001", "4000", "4100", "4101", "4102"}
+    TOWDHEEB_KW = ["توضيب", "تلميع مكينة", "غسيل مكينة", "تنظيف مكينة"]
+    NAME_MAP = {
+        "027": "إيرادات خدمات ميكانيكية",
+        "028": "إيرادات إصلاح محركات",
+    }
+
+    def _pick_code(op_text: str) -> str:
+        for kw in TOWDHEEB_KW:
+            if kw in op_text:
+                return "028"
+        return "027"
+
+    invalidate_finance_caches()
+    entries = _fetch_journal_entries(
+        workshop_id, "2000-01-01",
+        datetime.now().strftime("%Y-%m-%d"),
+        limit=5000,
+        include_rakan=True,
+    )
+
+    # بناء خريطة معرّف_العملية → نص_العملية لتحديد الكود
+    op_text_map: Dict[str, str] = {}
+    if supabase:
+        try:
+            # العمليات لا تملك workshop_id — نجلبها بدون فلتر
+            ops_res = supabase.table("operations").select(
+                "id, notes, description, items"
+            ).limit(2000).execute()
+            for op in (ops_res.data or []):
+                items = op.get("items") or []
+                text = " ".join(
+                    [str(op.get("notes") or ""), str(op.get("description") or "")]
+                    + [str(it.get("name") or "") for it in items]
+                )
+                op_text_map[str(op.get("id") or "")] = text
+        except Exception as e:
+            print(f"reclassify_revenue: ops fetch failed: {e}")
+
+    candidates = []
+    for entry in entries:
+        lines = entry.get("lines") or []
+        new_lines = []
+        changed = False
+        for line in lines:
+            acc = str(line.get("account") or "")
+            credit = float(line.get("credit") or 0)
+            if acc in OLD_REV_CODES and credit > 0:
+                # تحديد الكود الصحيح من العملية المرتبطة
+                ref_id = str(entry.get("reference_id") or "")
+                op_text = op_text_map.get(ref_id, "")
+                # أيضاً من وصف القيد نفسه
+                op_text += " " + str(entry.get("description") or "")
+                new_acc = _pick_code(op_text)
+                new_line = dict(line)
+                new_line["account"] = new_acc
+                new_line["account_name"] = NAME_MAP[new_acc]
+                new_lines.append(new_line)
+                changed = True
+            else:
+                new_lines.append(line)
+        if changed:
+            candidates.append({"id": entry.get("id"), "lines": new_lines})
+
+    updated = 0
+    if apply_changes and supabase:
+        for c in candidates:
+            try:
+                supabase.table("journal_entries").update(
+                    {"lines": c["lines"]}
+                ).eq("id", c["id"]).execute()
+                updated += 1
+            except Exception as e:
+                print(f"reclassify_revenue: update {c['id']} failed: {e}")
+        invalidate_finance_caches()
+
+    return {
+        "success": True,
+        "candidates": len(candidates),
+        "updated": updated if apply_changes else 0,
+        "apply_changes": apply_changes,
+    }

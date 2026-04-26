@@ -250,6 +250,56 @@ async def _derive_suppliers_from_parts(provider: Optional[str] = None) -> List[D
     return []
 
 
+async def _enrich_suppliers_from_accounts(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    يُضيف الموردين الموجودين في دليل الحسابات (حسابات نوع liability باسم 'مورد - X')
+    إلى قائمة الموردين الحالية — يتجنب التكرار بناءً على الاسم.
+    """
+    try:
+        acc_rows: List[Dict[str, Any]] = []
+        if DB_PROVIDER == "supabase" and supabase_service.client and not supabase_service.mock_mode:
+            res = supabase_service.client.table("accounts").select("id,code,name,type").execute()
+            acc_rows = res.data or []
+        elif db is not None:
+            acc_rows = await db.accounts.find({}, {"_id": 0, "id": 1, "code": 1, "name": 1, "type": 1}).to_list(5000)
+
+        existing_names = {str(r.get("name") or "").strip().lower() for r in rows}
+        now_utc = datetime.now(timezone.utc)
+        added = []
+        for acc in acc_rows:
+            acc_name = str(acc.get("name") or "").strip()
+            # استخراج اسم المورد من "مورد - X" أو "مورد-X"
+            if acc_name.startswith("مورد - "):
+                supplier_name = acc_name[len("مورد - "):].strip()
+            elif acc_name.startswith("مورد-"):
+                supplier_name = acc_name[len("مورد-"):].strip()
+            else:
+                continue
+            if not supplier_name:
+                continue
+            if supplier_name.lower() in existing_names:
+                continue
+            existing_names.add(supplier_name.lower())
+            stable_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"acc_supplier::{supplier_name}")
+            added.append({
+                "id": f"acc-{stable_id.hex[:12]}",
+                "name": supplier_name,
+                "phone": "",
+                "contactPerson": "",
+                "email": "",
+                "address": "",
+                "city": "",
+                "category": "من دليل الحسابات",
+                "rating": 5.0,
+                "createdAt": now_utc,
+                "accountCode": acc.get("code", ""),
+            })
+        return rows + added
+    except Exception as e:
+        print(f"_enrich_suppliers_from_accounts failed: {e}")
+        return rows
+
+
 def _is_suppliers_table_missing(err: Exception) -> bool:
     message = str(err)
     return "PGRST205" in message and "suppliers" in message
@@ -2810,6 +2860,7 @@ async def get_suppliers(
             rows = _mem_read("suppliers")
             if not rows:
                 rows = await _derive_suppliers_from_parts("supabase")
+            rows = await _enrich_suppliers_from_accounts(rows)
             financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
             if sync_accounts:
                 await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
@@ -2824,6 +2875,7 @@ async def get_suppliers(
                 rows = res.data or []
                 if not rows:
                     rows = await _derive_suppliers_from_parts("supabase")
+                rows = await _enrich_suppliers_from_accounts(rows)
                 financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
                 if sync_accounts:
                     await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
@@ -2840,6 +2892,7 @@ async def get_suppliers(
             rows = _mem_read("suppliers")
             if not rows:
                 rows = await _derive_suppliers_from_parts("supabase")
+            rows = await _enrich_suppliers_from_accounts(rows)
             financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
             if sync_accounts:
                 await _safe_sync_partner_subaccounts("supplier", rows, financial_map)
@@ -2851,6 +2904,7 @@ async def get_suppliers(
         rows = _mem_read("suppliers")
         if not rows:
             rows = await _derive_suppliers_from_parts("supabase")
+        rows = await _enrich_suppliers_from_accounts(rows)
         financial_map = await _build_partner_financial_map("supplier", rows, workshop_id)
         if sync_accounts:
             await _safe_sync_partner_subaccounts("supplier", rows, financial_map)

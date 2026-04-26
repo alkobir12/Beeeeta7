@@ -1063,6 +1063,7 @@ ACCOUNT_NAME_MAP = {
     "025": "الإيرادات",
     "026": "إيرادات الخدمات",
     "030": "تكلفة الخدمات",
+    "042": "ايراد قطع الورشه",
     "031": "تكاليف مباشرة",
     "035": "المصروفات التشغيلية",
     "036": "مصروفات عامة وإدارية",
@@ -1379,11 +1380,29 @@ def _build_operation_journal_entry(
             return None
 
         # 🚫 Non-Rakan parts-only sale → archive only, no journal entry.
-        # The operation row + supplier file movement still record the activity.
+        # BUT: if any item has revenueAccountCode='042' (workshop supplier part),
+        # create a journal entry to account 042 (ايراد قطع الورشة).
+        items_for_check = op.get("items") or []
+        workshop_supplier_items = [
+            it for it in items_for_check
+            if isinstance(it, dict)
+            and str(it.get("itemType") or "").lower() == "supplier"
+            and not is_rakan_operation
+            and (it.get("revenueAccountCode") == "042" or it.get("linkedPart"))
+        ]
+        workshop_parts_total = sum(
+            _safe_amount(it.get("total") or it.get("price") or 0)
+            for it in workshop_supplier_items
+        )
+        # إذا لم يُضبط workshop_parts_total من العناصر، استخدم supplier_total
+        if workshop_parts_total <= 0 and supplier_total > 0 and workshop_supplier_items:
+            workshop_parts_total = supplier_total
+
         if (
             op_type == "sale"
             and has_part_item
             and not has_service_item
+            and not workshop_supplier_items
         ):
             return None
 
@@ -1394,35 +1413,81 @@ def _build_operation_journal_entry(
             if selected_code and len(selected_code) <= 12 and "-" not in selected_code
             else None
         )
-        # تحويل الكود الصالح إلى الجديد إذا كان legacy
         if _valid_rev_code:
             _valid_rev_code = LEGACY_TO_NEW_CODE.get(_valid_rev_code, _valid_rev_code)
         revenue_code = _valid_rev_code or "026"
-        lines = [
-            {
-                "account": debit_code,
-                "account_name": ACCOUNT_NAME_MAP.get(debit_code, debit_code),
-                "debit": total,
-                "credit": 0,
-            },
-            {
-                "account": revenue_code,
-                "account_name": ACCOUNT_NAME_MAP.get(revenue_code, revenue_code),
-                "debit": 0,
-                "credit": total,
-            },
-        ]
+
+        # المبلغ الإجمالي للقيد = workshop services + workshop supplier parts (042)
+        # workshop_total (متاح من الحسابات السابقة) = الخدمات فقط (بدون موردين)
+        # نتجنب الازدواجية باستخدام workshop_total الصافي للخدمات
+        service_amount = workshop_total  # 0 في حالة قطع فقط، 200 في حالة مختلطة
+        full_debit = service_amount + workshop_parts_total  # 200+120=320 أو 0+150=150
+
+        if workshop_parts_total > 0 and service_amount > 0:
+            # عملية مختلطة: خدمات → 026، قطع ورشة → 042
+            lines = [
+                {
+                    "account": debit_code,
+                    "account_name": ACCOUNT_NAME_MAP.get(debit_code, debit_code),
+                    "debit": full_debit,
+                    "credit": 0,
+                },
+                {
+                    "account": revenue_code,
+                    "account_name": ACCOUNT_NAME_MAP.get(revenue_code, "إيرادات الخدمات"),
+                    "debit": 0,
+                    "credit": service_amount,
+                },
+                {
+                    "account": "042",
+                    "account_name": "ايراد قطع الورشه",
+                    "debit": 0,
+                    "credit": workshop_parts_total,
+                },
+            ]
+        elif workshop_parts_total > 0:
+            # قطع ورشة فقط → 042 (بدون خدمات)
+            lines = [
+                {
+                    "account": debit_code,
+                    "account_name": ACCOUNT_NAME_MAP.get(debit_code, debit_code),
+                    "debit": workshop_parts_total,
+                    "credit": 0,
+                },
+                {
+                    "account": "042",
+                    "account_name": "ايراد قطع الورشه",
+                    "debit": 0,
+                    "credit": workshop_parts_total,
+                },
+            ]
+        else:
+            lines = [
+                {
+                    "account": debit_code,
+                    "account_name": ACCOUNT_NAME_MAP.get(debit_code, debit_code),
+                    "debit": total,
+                    "credit": 0,
+                },
+                {
+                    "account": revenue_code,
+                    "account_name": ACCOUNT_NAME_MAP.get(revenue_code, revenue_code),
+                    "debit": 0,
+                    "credit": total,
+                },
+            ]
 
     elif op_type in ("purchase", "expense"):
         transaction_type = "purchase" if op_type == "purchase" else "expense"
 
         # enforce purchases/expenses into expense accounts (030-059 new codes, or 5xxx/6xxx legacy)
         def _is_expense_code(c):
-            if not c: return False
-            # new codes 030-059 range
+            if not c:
+                return False
             try:
                 n = int(c)
-                if 30 <= n <= 59: return True
+                if 30 <= n <= 59:
+                    return True
             except (ValueError, TypeError):
                 pass
             return str(c or "").startswith(("5", "6"))
@@ -1430,7 +1495,8 @@ def _build_operation_journal_entry(
             debit_code = selected_code if (selected_code and len(selected_code) <= 12 and "-" not in selected_code and _is_expense_code(selected_code)) else "036"
         else:
             debit_code = selected_code if (selected_code and len(selected_code) <= 12 and "-" not in selected_code and _is_expense_code(selected_code)) else "036"
-        if debit_code: debit_code = LEGACY_TO_NEW_CODE.get(debit_code, debit_code)
+        if debit_code:
+            debit_code = LEGACY_TO_NEW_CODE.get(debit_code, debit_code)
         credit_code = "2101" if is_credit else cash_code
 
         lines = [

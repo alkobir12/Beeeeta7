@@ -115,6 +115,79 @@ const isRakanSupplierName = (value) => {
   return v.includes('راكان') || v.toLowerCase().includes('rakan');
 };
 
+// ─── مكوّن اختيار قطعة لموردي الورشة (غير راكان) → حساب 042 ───────────────
+const WorkshopSupplierPartPicker = ({ item, onChange, partsCatalog = [], rowId, visitId, variant = 'row' }) => {
+  // يظهر فقط لموردي الورشة (غير راكان)
+  if (!item.name || isRakanSupplierName(item.name)) return null;
+
+  const linkedValue = String(item.linkedPart || '').trim();
+  const matched = partsCatalog.find((p) => (p.name || '').trim() === linkedValue);
+  const showManual = Boolean(item.linkedPartManualEntry || (linkedValue && !matched));
+  const baseTestId = `visit-item-workshop-part-${variant}-${visitId}-${rowId}`;
+
+  return (
+    <div
+      className="space-y-2 mt-2 p-2 rounded-lg"
+      style={{
+        background: 'rgba(59,130,246,0.06)',
+        border: '1px solid rgba(59,130,246,0.22)',
+      }}
+      data-testid={`${baseTestId}-wrapper`}
+    >
+      <select
+        value={showManual ? '__manual__' : linkedValue}
+        onChange={(e) => {
+          const val = e.target.value;
+          if (val === '__manual__') {
+            onChange('linkedPartManualEntry', true);
+            onChange('linkedPart', '');
+            onChange('revenueAccountCode', '042');
+            return;
+          }
+          onChange('linkedPartManualEntry', false);
+          onChange('linkedPart', val);
+          onChange('revenueAccountCode', '042');
+        }}
+        className="w-full text-xs sm:text-sm rounded-lg p-2"
+        style={{
+          background: 'rgba(255,255,255,0.06)',
+          border: '1px solid rgba(59,130,246,0.30)',
+          color: 'rgba(248,250,252,0.92)',
+        }}
+        data-testid={`${baseTestId}-select`}
+      >
+        <option value="">اختر القطعة (ايراد قطع الورشة)</option>
+        {partsCatalog.map((p) => (
+          <option key={p.id || p.name} value={p.name}>
+            {p.name}
+          </option>
+        ))}
+        <option value="__manual__">إدخال يدوي</option>
+      </select>
+
+      {showManual && (
+        <input
+          type="text"
+          value={item.linkedPart || ''}
+          onChange={(e) => {
+            onChange('linkedPartManualEntry', true);
+            onChange('linkedPart', e.target.value);
+            onChange('revenueAccountCode', '042');
+          }}
+          className="w-full text-xs sm:text-sm rounded-lg p-2"
+          style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(59,130,246,0.30)',
+            color: 'rgba(248,250,252,0.92)',
+          }}
+          placeholder="اكتب اسم القطعة يدوياً"
+          data-testid={`${baseTestId}-manual`}
+        />
+      )}
+    </div>
+  );
+};
+
 const RakanLinkedPartPicker = ({ item, onChange, partsCatalog = [], rowId, visitId, variant = 'row' }) => {
   if (!isRakanSupplierName(item.name)) return null;
 
@@ -322,14 +395,24 @@ const VisitItemRow = ({
             )}
 
             {item.itemType === 'supplier' && (
-              <RakanLinkedPartPicker
-                item={item}
-                onChange={onChange}
-                partsCatalog={partsCatalog}
-                rowId={rowId}
-                visitId={visitId}
-                variant="row"
-              />
+              <>
+                <RakanLinkedPartPicker
+                  item={item}
+                  onChange={onChange}
+                  partsCatalog={partsCatalog}
+                  rowId={rowId}
+                  visitId={visitId}
+                  variant="row"
+                />
+                <WorkshopSupplierPartPicker
+                  item={item}
+                  onChange={onChange}
+                  partsCatalog={partsCatalog}
+                  rowId={rowId}
+                  visitId={visitId}
+                  variant="row"
+                />
+              </>
             )}
           </div>
         ) : (
@@ -618,14 +701,24 @@ const VisitItemCard = ({
                   )}
 
                   {item.itemType === 'supplier' && (
-                    <RakanLinkedPartPicker
-                      item={item}
-                      onChange={onChange}
-                      partsCatalog={partsCatalog}
-                      rowId={rowId}
-                      visitId={visitId}
-                      variant="card"
-                    />
+                    <>
+                      <RakanLinkedPartPicker
+                        item={item}
+                        onChange={onChange}
+                        partsCatalog={partsCatalog}
+                        rowId={rowId}
+                        visitId={visitId}
+                        variant="card"
+                      />
+                      <WorkshopSupplierPartPicker
+                        item={item}
+                        onChange={onChange}
+                        partsCatalog={partsCatalog}
+                        rowId={rowId}
+                        visitId={visitId}
+                        variant="card"
+                      />
+                    </>
                   )}
                 </div>
               ) : (

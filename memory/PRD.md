@@ -29,6 +29,38 @@
 
 ## What's Been Implemented
 
+### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
+
+**3 محركات جديدة في `routes_finance_bot.py`:**
+
+1. **Auto-Linking Engine** (`_auto_link_finding`):
+   - عند `open_investigation` يجلب تلقائياً القيود المحاسبية المرتبطة بالحساب/المبلغ (هامش ±10%)
+   - يجلب العمليات المرتبطة زمنياً
+   - يُعيد `{journal_entries, operations, accounts_involved, summary_text}`
+   - endpoint: `POST /api/finance-bot/auto-link`
+
+2. **Contradiction Engine** (`_detect_contradictions`):
+   - فحص 1: إيراد الملاحظة vs. قائمة الدخل الفعلية (score threshold 15%)
+   - فحص 2: تناقضات داخلية بين findings على نفس الحساب
+   - فحص 3: وصف يذكر مبالغ لكن القيمة المسجّلة صفر
+   - endpoint: `POST /api/finance-bot/detect-contradictions`
+
+3. **Escalation Workflow** (`_build_escalation_report`):
+   - Auto-Escalation: بعد 6 جولات probing بدون حل على finding بخطورة high/critical
+   - تقرير تصعيد كامل: finding details + توضيح المستخدم + التناقضات + الأدلة
+   - endpoint: `GET /api/finance-bot/sessions/{session_id}/report`
+
+**Frontend (`AbuFahadFloatingChat.jsx`):**
+- عرض `contradictions` المكتشفة (amber panel)
+- عرض `linked_data` القيود المرتبطة (sky panel)
+- زر "تقرير التصعيد الكامل" عند `state=escalated`
+
+**النتائج المؤكدة:**
+- Auto-link: 3 قيود مرتبطة لحساب 005 ✅
+- Contradiction: كشف revenue_mismatch (50000 vs 27081) بخطورة high ✅
+- Auto-Escalation: يُفعَّل في الجولة السادسة بالضبط ✅
+- Escalation Report: تقرير كامل مع التوصية ✅
+
 ### شامل: تنظيف البيانات + ترحيل الأكواد (25 Apr 2026)
 **ما تم:**
 1. **حذف بيانات الاختبار**: 6 عمليات + 2 قيد يومية تجريبية حُذفت نهائياً

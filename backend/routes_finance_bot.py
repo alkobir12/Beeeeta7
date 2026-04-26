@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
 from pydantic import BaseModel, Field
-from typing import Optional, Any, Dict, List
+from typing import Optional, Any, Dict, List, Tuple
 import os
 import uuid
 import re
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
@@ -22,6 +22,7 @@ FINANCE_SYSTEM_PROMPT = """
 - ابدأ دائمًا بأعلى ملاحظة خطورة.
 - واجه التناقضات بالأرقام مباشرة.
 - عند المخاطر العالية لا تقبل تفسيرًا بلا مستند داعم.
+- عند اكتشاف تناقض بين تفسير المستخدم والبيانات، واجهه بالرقم الفعلي مباشرةً.
 """.strip()
 
 
@@ -313,6 +314,9 @@ class FinanceBotChatResponse(BaseModel):
     finding_status: Optional[str] = None
     state: Optional[str] = None
     interactive: Optional[Dict[str, Any]] = None
+    linked_data: Optional[Dict[str, Any]] = None
+    contradictions: Optional[List[Dict[str, Any]]] = None
+    auto_escalated: Optional[bool] = None
     provider: str = "openai-gpt-5.1"
     timestamp: str
 
@@ -666,13 +670,9 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
     reply_text = ""
 
     if action == "open_investigation":
-        if target_finding.get("status") in {"open", "pending_evidence"}:
-            target_finding["status"] = "probing"
-        if not target_finding.get("category"):
-            target_finding["category"] = _detect_category(target_finding)
-        if not target_finding.get("suggested_fix"):
-            target_finding["suggested_fix"] = _pick_single_suggestion(target_finding)
-        reply_text = _build_next_question(target_finding, ask_evidence=False)
+        reply_text, target_finding = await _enriched_open_investigation(
+            target_finding, session, workshop_id, payload.financial_data
+        )
 
     elif action == "apply_suggested_fix":
         if not target_finding.get("suggested_fix"):
@@ -703,7 +703,7 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
         reply_text = "تم تصعيد هذه الملاحظة للمراجعة المتقدمة."
 
     else:
-        # التدفق الحالي الطبيعي
+        # التدفق الطبيعي
         if target_finding.get("status") == "open":
             target_finding["status"] = "probing"
             reply_text = _build_next_question(target_finding, ask_evidence=False)
@@ -726,9 +726,25 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
             else:
                 reply_text = _build_next_question(target_finding, ask_evidence=False)
 
+    # ─── Auto-Escalation بعد 6 جولات probing بدون حل ───────────────────
+    q_count = int(target_finding.get("question_count") or 0) if isinstance(target_finding, dict) else 0
+    if (
+        isinstance(target_finding, dict)
+        and target_finding.get("status") == "probing"
+        and q_count >= 5
+        and _normalize_severity(target_finding.get("severity")) in {"high", "critical"}
+    ):
+        target_finding["status"] = "escalated"
+        target_finding["escalated_at"] = _now_iso()
+        target_finding["auto_escalated"] = True
+        reply_text = (
+            "⚠️ تم التصعيد التلقائي: تجاوزت هذه الملاحظة 6 جولات تحقيق بدون حل."
+            " سيتم توليد تقرير تصعيد كامل. يمكنك مراجعته عبر زر «تقرير التصعيد»."
+        )
+
     # لا نزيد عداد الأسئلة إلا عند probing
-    if target_finding.get("status") == "probing":
-        target_finding["question_count"] = int(target_finding.get("question_count") or 0) + 1
+    if isinstance(target_finding, dict) and target_finding.get("status") == "probing":
+        target_finding["question_count"] = q_count + 1
         reply_text = _enforce_single_question(reply_text)
 
     target_finding.setdefault("history", []).append(
@@ -745,5 +761,398 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
         finding_status=target_finding.get("status") if isinstance(target_finding, dict) else "probing",
         state=target_finding.get("status") if isinstance(target_finding, dict) else "probing",
         interactive=_build_interactive_card(target_finding),
+        linked_data=target_finding.get("linked_data") if isinstance(target_finding, dict) else None,
+        contradictions=target_finding.get("contradictions") if isinstance(target_finding, dict) else None,
+        auto_escalated=target_finding.get("auto_escalated") if isinstance(target_finding, dict) else None,
         timestamp=datetime.now().isoformat(),
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 1. AUTO-LINKING ENGINE
+# ربط الملاحظة تلقائياً بالقيود والعمليات الفعلية
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def _auto_link_finding(
+    finding: Dict[str, Any],
+    workshop_id: str,
+    days_back: int = 90,
+) -> Dict[str, Any]:
+    """
+    يجلب القيود المحاسبية والعمليات المرتبطة بالملاحظة تلقائياً.
+    Returns: {journal_entries, operations, accounts_involved, summary_text}
+    """
+    result: Dict[str, Any] = {
+        "journal_entries": [],
+        "operations": [],
+        "accounts_involved": [],
+        "summary_text": "",
+    }
+    if not supabase:
+        return result
+
+    account_code = str(finding.get("account_code") or finding.get("account") or "").strip()
+    amount = float(finding.get("actual_value") or finding.get("amount") or 0)
+    date_from = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%d")
+
+    try:
+        # جلب قيود اليومية المرتبطة بالحساب
+        je_res = (
+            supabase.table("journal_entries")
+            .select("id, date, description, lines, reference_id, workshop_id")
+            .eq("workshop_id", workshop_id)
+            .gte("date", date_from)
+            .order("date", desc=True)
+            .limit(200)
+            .execute()
+        )
+        all_entries = je_res.data or []
+
+        matched_entries = []
+        accounts_seen: Dict[str, str] = {}
+        for entry in all_entries:
+            for line in (entry.get("lines") or []):
+                line_acc = str(line.get("account") or line.get("account_code") or "")
+                line_name = str(line.get("account_name") or line_acc)
+                # ربط بالحساب المذكور في الملاحظة
+                acc_match = account_code and (
+                    line_acc == account_code
+                    or line_acc.startswith(account_code)
+                    or account_code.startswith(line_acc)
+                )
+                # ربط بالمبلغ (هامش ±10%)
+                line_amt = float(line.get("debit") or line.get("credit") or 0)
+                amt_match = amount > 0 and abs(line_amt - amount) / max(amount, 1) < 0.12
+                if acc_match or amt_match:
+                    matched_entries.append({
+                        "id": entry.get("id"),
+                        "date": entry.get("date"),
+                        "description": entry.get("description"),
+                        "account": line_acc,
+                        "account_name": line_name,
+                        "debit": line.get("debit", 0),
+                        "credit": line.get("credit", 0),
+                        "reference_id": entry.get("reference_id"),
+                    })
+                    accounts_seen[line_acc] = line_name
+                    break  # واحد لكل قيد
+
+        result["journal_entries"] = matched_entries[:10]
+        result["accounts_involved"] = [
+            {"code": k, "name": v} for k, v in list(accounts_seen.items())[:8]
+        ]
+
+        # جلب العمليات المرتبطة (تاريخياً)
+        ops_res = (
+            supabase.table("operations")
+            .select("id, date, type, total, payment_method, partner_name, notes, items")
+            .eq("workshop_id", workshop_id)
+            .gte("date", date_from)
+            .order("date", desc=True)
+            .limit(200)
+            .execute()
+        )
+        all_ops = ops_res.data or []
+        matched_ops = []
+        for op in all_ops:
+            op_total = float(op.get("total") or 0)
+            # ربط بالمبلغ (هامش ±10%)
+            if amount > 0 and abs(op_total - amount) / max(amount, 1) < 0.15:
+                matched_ops.append({
+                    "id": op.get("id"),
+                    "date": op.get("date"),
+                    "type": op.get("type"),
+                    "total": op_total,
+                    "payment_method": op.get("payment_method") or op.get("paymentMethod"),
+                    "partner_name": op.get("partner_name") or op.get("partnerName"),
+                })
+        result["operations"] = matched_ops[:5]
+
+    except Exception as e:
+        print(f"auto_link_finding error: {e}")
+
+    # نص ملخص للمدقق
+    parts = []
+    if result["journal_entries"]:
+        parts.append(f"عثر على {len(result['journal_entries'])} قيد مرتبط.")
+    if result["operations"]:
+        parts.append(f"عثر على {len(result['operations'])} عملية مطابقة.")
+    if result["accounts_involved"]:
+        names = [a["name"] for a in result["accounts_involved"][:3]]
+        parts.append(f"الحسابات المرتبطة: {', '.join(names)}.")
+    result["summary_text"] = " ".join(parts) if parts else "لم يُعثر على قيود أو عمليات مرتبطة مباشرة."
+
+    return result
+
+
+@router.post("/auto-link")
+async def auto_link_endpoint(payload: Dict[str, Any]):
+    """
+    يربط ملاحظة تدقيق بالقيود والعمليات الفعلية تلقائياً.
+    Body: {finding: {...}, workshop_id: str, days_back: int}
+    """
+    finding = payload.get("finding") or {}
+    workshop_id = str(payload.get("workshop_id") or "finmodule-sync")
+    days_back = int(payload.get("days_back") or 90)
+    linked = await _auto_link_finding(finding, workshop_id, days_back)
+    return {"success": True, "data": linked}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 2. CONTRADICTION ENGINE
+# كشف التناقضات بين تفسير المستخدم والبيانات الفعلية
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _contradiction_score(expected: float, actual: float) -> float:
+    """حساب درجة التناقض (0-1). كلما اقترب من 1 كان التناقض أشد."""
+    if expected == 0 and actual == 0:
+        return 0.0
+    denom = max(abs(expected), abs(actual), 1.0)
+    return min(abs(expected - actual) / denom, 1.0)
+
+
+async def _detect_contradictions(
+    findings: List[Dict[str, Any]],
+    workshop_id: str,
+    financial_data: Optional[Dict[str, Any]] = None,
+) -> List[Dict[str, Any]]:
+    """
+    يكشف التناقضات بين الملاحظات والبيانات الفعلية.
+    يفحص:
+    1. قائمة الدخل (income-statement) مقابل ملاحظات الإيراد
+    2. ميزان المراجعة مقابل ملاحظات الأصول/الخصوم
+    3. تناقضات داخلية بين الملاحظات (finding A vs finding B)
+    """
+    contradictions: List[Dict[str, Any]] = []
+
+    # --- فحص 1: قائمة الدخل المسجّلة مقابل الملاحظات ---
+    if financial_data:
+        recorded_revenue = float(
+            (financial_data.get("totals") or {}).get("revenue")
+            or financial_data.get("revenue")
+            or 0
+        )
+
+        for f in findings:
+            ftype = str(f.get("type") or f.get("category") or "").lower()
+            title = str(f.get("title") or "").lower()
+            claimed = float(f.get("expected_value") or f.get("expected_range") or f.get("expected") or 0)
+
+            if "إيراد" in title or "revenue" in ftype:
+                if claimed > 0 and recorded_revenue > 0:
+                    score = _contradiction_score(claimed, recorded_revenue)
+                    if score > 0.15:
+                        contradictions.append({
+                            "finding_id": f.get("finding_id"),
+                            "type": "revenue_mismatch",
+                            "description": (
+                                f"الملاحظة تشير لإيراد {claimed:,.0f} ر.س "
+                                f"بينما قائمة الدخل تسجّل {recorded_revenue:,.0f} ر.س "
+                                f"(فرق {abs(claimed-recorded_revenue):,.0f} ر.س)."
+                            ),
+                            "expected": claimed,
+                            "actual": recorded_revenue,
+                            "delta": recorded_revenue - claimed,
+                            "score": round(score, 3),
+                            "severity": "high" if score > 0.4 else "medium",
+                        })
+
+    # --- فحص 2: تناقضات داخلية بين الملاحظات ---
+    account_findings: Dict[str, List[Dict]] = {}
+    for f in findings:
+        acc = str(f.get("account_code") or f.get("account") or "")
+        if acc:
+            account_findings.setdefault(acc, []).append(f)
+
+    for acc, acc_findings in account_findings.items():
+        if len(acc_findings) < 2:
+            continue
+        amounts = [float(f.get("actual_value") or f.get("amount") or 0) for f in acc_findings]
+        if max(amounts) > 0 and _contradiction_score(min(amounts), max(amounts)) > 0.3:
+            contradictions.append({
+                "finding_id": None,
+                "type": "inter_finding_conflict",
+                "description": (
+                    f"ملاحظتان متضاربتان على الحساب {acc}: "
+                    f"قيم {amounts[0]:,.0f} و{amounts[1]:,.0f} ر.س."
+                ),
+                "account": acc,
+                "expected": amounts[0],
+                "actual": amounts[1],
+                "delta": amounts[1] - amounts[0],
+                "score": round(_contradiction_score(amounts[0], amounts[1]), 3),
+                "severity": "medium",
+            })
+
+    # --- فحص 3: Findings بقيمة 0 لكن وصفها يشير لمبالغ ---
+    for f in findings:
+        actual = float(f.get("actual_value") or 0)
+        title = str(f.get("title") or "")
+        # نص يذكر مبالغ (أرقام) لكن actual_value = 0
+        has_number_in_title = bool(re.search(r"\d[\d,\.]+", title))
+        if actual == 0 and has_number_in_title:
+            amount_in_title = re.findall(r"\d[\d,\.]+", title)
+            contradictions.append({
+                "finding_id": f.get("finding_id"),
+                "type": "zero_value_with_description",
+                "description": (
+                    f"الملاحظة تصف مبلغاً ({', '.join(amount_in_title[:2])}) "
+                    "لكن القيمة المسجّلة صفر — قد يكون هناك قيد ناقص أو غير مكتمل."
+                ),
+                "expected": 0,
+                "actual": 0,
+                "delta": 0,
+                "score": 0.5,
+                "severity": "medium",
+            })
+
+    # ترتيب حسب درجة التناقض
+    contradictions.sort(key=lambda x: x.get("score", 0), reverse=True)
+    return contradictions
+
+
+@router.post("/detect-contradictions")
+async def detect_contradictions_endpoint(payload: Dict[str, Any]):
+    """
+    يكشف التناقضات في مجموعة findings مقارنةً بالبيانات المالية.
+    Body: {findings: [...], workshop_id: str, financial_data: {...}}
+    """
+    raw_findings = payload.get("findings") or []
+    workshop_id = str(payload.get("workshop_id") or "finmodule-sync")
+    financial_data = payload.get("financial_data") or {}
+    findings = [_normalize_finding(f, i) for i, f in enumerate(raw_findings)]
+    contradictions = await _detect_contradictions(findings, workshop_id, financial_data)
+    return {
+        "success": True,
+        "data": {
+            "contradictions": contradictions,
+            "count": len(contradictions),
+            "has_critical": any(c.get("severity") == "critical" for c in contradictions),
+        },
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 3. ESCALATION WORKFLOW
+# تقرير التصعيد الشامل عند التصعيد
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _build_escalation_report(
+    session: Dict[str, Any],
+    contradictions: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """يبني تقرير تصعيد شامل من بيانات الجلسة."""
+    findings = session.get("findings") or []
+    escalated = [f for f in findings if f.get("status") == "escalated"]
+    resolved = [f for f in findings if f.get("status") == "resolved"]
+    open_count = len([f for f in findings if f.get("status") not in {"resolved", "escalated"}])
+
+    report_lines = [
+        "تقرير التصعيد المحاسبي",
+        f"الجلسة: {session.get('session_id', '—')}",
+        f"الورشة: {session.get('workshop_id', '—')}",
+        f"التاريخ: {_now_iso()[:10]}",
+        "─" * 40,
+        f"الملاحظات المصعّدة : {len(escalated)}",
+        f"الملاحظات المغلقة : {len(resolved)}",
+        f"الملاحظات المفتوحة: {open_count}",
+    ]
+
+    if escalated:
+        report_lines.append("\nتفاصيل الملاحظات المصعّدة:")
+        for f in escalated:
+            history = f.get("history") or []
+            user_msgs = [h.get("text", "") for h in history if h.get("role") == "user" and h.get("text")]
+            evidence = f.get("evidence") or []
+            report_lines.append(f"  [{_normalize_severity(f.get('severity'))}] {f.get('title', '—')}")
+            if f.get("actual_value"):
+                report_lines.append(f"    المبلغ المرصود: {f.get('actual_value'):,.2f} ر.س")
+            if f.get("suggested_fix"):
+                report_lines.append(f"    الإجراء المقترح: {f.get('suggested_fix')}")
+            if user_msgs:
+                report_lines.append(f"    توضيح المستخدم: «{user_msgs[-1][:120]}»")
+            if evidence:
+                report_lines.append(f"    مستندات مرفوعة: {len(evidence)}")
+            report_lines.append(f"    تصعيد في: {f.get('escalated_at', '—')[:16]}")
+
+    if contradictions:
+        report_lines.append(f"\nالتناقضات المرصودة: {len(contradictions)}")
+        for c in contradictions[:5]:
+            report_lines.append(f"  • {c.get('description', '')[:100]}")
+
+    report_lines.append("\nتوصية: راجع الملاحظات المصعّدة مع المحاسب القانوني وتأكد من رفع المستندات الداعمة.")
+
+    return {
+        "session_id": session.get("session_id"),
+        "generated_at": _now_iso(),
+        "escalated_count": len(escalated),
+        "resolved_count": len(resolved),
+        "open_count": open_count,
+        "has_contradictions": bool(contradictions),
+        "report_text": "\n".join(report_lines),
+        "escalated_findings": escalated,
+        "contradictions": contradictions or [],
+    }
+
+
+@router.get("/sessions/{session_id}/report")
+async def get_escalation_report(
+    session_id: str,
+    workshop_id: str = Query("finmodule-sync"),
+):
+    """يولّد تقرير التصعيد الكامل لجلسة تدقيق."""
+    session = await _load_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="الجلسة غير موجودة")
+    findings = session.get("findings") or []
+    financial_data: Dict[str, Any] = {}
+    contradictions = await _detect_contradictions(findings, workshop_id, financial_data)
+    report = _build_escalation_report(session, contradictions)
+    return {"success": True, "data": report}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ENHANCED CHAT: Auto-Link + Contradiction inline in open_investigation
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def _enriched_open_investigation(
+    finding: Dict[str, Any],
+    session: Dict[str, Any],
+    workshop_id: str,
+    financial_data: Optional[Dict[str, Any]],
+) -> Tuple[str, Dict[str, Any]]:
+    """
+    يُنفّذ open_investigation بشكل مُثرى:
+    1. يربط القيود والعمليات تلقائياً
+    2. يكشف التناقضات
+    3. يُضمّن ملخص النتائج في السؤال
+    """
+    if finding.get("status") in {"open", "pending_evidence"}:
+        finding["status"] = "probing"
+    if not finding.get("category"):
+        finding["category"] = _detect_category(finding)
+    if not finding.get("suggested_fix"):
+        finding["suggested_fix"] = _pick_single_suggestion(finding)
+
+    # Auto-linking
+    linked = await _auto_link_finding(finding, workshop_id)
+    finding["linked_data"] = linked
+
+    # Contradictions
+    all_findings = session.get("findings") or [finding]
+    contradictions = await _detect_contradictions(all_findings, workshop_id, financial_data)
+    finding["contradictions"] = contradictions
+
+    base_question = _build_next_question(finding, ask_evidence=False)
+    extras = []
+    if linked["journal_entries"]:
+        extras.append(f"[مرتبط بـ {len(linked['journal_entries'])} قيد يومية]")
+    if contradictions:
+        c = contradictions[0]
+        extras.append(f"⚠️ تناقض: {c['description'][:80]}")
+
+    reply = f"{base_question}"
+    if extras:
+        reply = f"{base_question}\n\n{'  '.join(extras)}"
+
+    return reply, finding

@@ -182,6 +182,10 @@ const AbuFahadFloatingChat = ({
         findingId: res.data?.finding_id,
         state: res.data?.state || res.data?.finding_status,
         interactive: res.data?.interactive || null,
+        linkedData: res.data?.linked_data || null,
+        contradictions: res.data?.contradictions || null,
+        autoEscalated: res.data?.auto_escalated || false,
+        sessionId: res.data?.session_id,
       };
 
       const newId = res.data?.session_id || res.data?.conversation_id || conversationId || currentSessionId;
@@ -236,6 +240,10 @@ const AbuFahadFloatingChat = ({
         findingId: res.data?.finding_id,
         state: res.data?.state || res.data?.finding_status,
         interactive: res.data?.interactive || null,
+        linkedData: res.data?.linked_data || null,
+        contradictions: res.data?.contradictions || null,
+        autoEscalated: res.data?.auto_escalated || false,
+        sessionId: res.data?.session_id,
       };
 
       const newId = res.data?.session_id || res.data?.conversation_id || conversationId || currentSessionId;
@@ -360,6 +368,44 @@ const AbuFahadFloatingChat = ({
                           الحالة: {msg.state}
                         </div>
                       ) : null}
+
+                      {/* ─── التناقضات المكتشفة ─── */}
+                      {msg?.contradictions?.length > 0 && (
+                        <div className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/8 p-2 space-y-1" data-testid={`finance-bot-contradictions-${idx}`}>
+                          <div className="text-[10px] font-semibold text-amber-300">تناقضات مرصودة ({msg.contradictions.length})</div>
+                          {msg.contradictions.slice(0, 3).map((c, ci) => (
+                            <div key={ci} className="text-[10px] text-amber-200">• {c.description}</div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* ─── القيود المرتبطة ─── */}
+                      {msg?.linkedData?.journal_entries?.length > 0 && (
+                        <div className="mt-2 rounded-lg border border-sky-500/25 bg-sky-500/6 p-2" data-testid={`finance-bot-linked-${idx}`}>
+                          <div className="text-[10px] font-semibold text-sky-300 mb-1">
+                            قيود مرتبطة ({msg.linkedData.journal_entries.length})
+                          </div>
+                          {msg.linkedData.journal_entries.slice(0, 3).map((je, ji) => (
+                            <div key={ji} className="text-[10px] text-sky-200 flex justify-between">
+                              <span>{je.description?.slice(0, 30) || je.account_name}</span>
+                              <span className="opacity-70">{je.date?.slice(0, 10)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* ─── زر تقرير التصعيد ─── */}
+                      {(msg?.state === 'escalated' || msg?.autoEscalated) && msg?.sessionId && (
+                        <a
+                          href={`${process.env.REACT_APP_BACKEND_URL}/api/finance-bot/sessions/${msg.sessionId}/report?workshop_id=${process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync'}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-block rounded-md border border-red-500/40 bg-red-500/10 px-3 py-1 text-[10px] text-red-300 hover:bg-red-500/20"
+                          data-testid={`finance-bot-escalation-report-${idx}`}
+                        >
+                          تقرير التصعيد الكامل
+                        </a>
+                      )}
 
                       {msg?.interactive?.enabled && Array.isArray(msg?.interactive?.actions) ? (
                         <div className="mt-2 flex flex-wrap gap-1" data-testid={`finance-bot-action-card-${idx}`}>

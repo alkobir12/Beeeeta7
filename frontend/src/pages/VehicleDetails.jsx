@@ -1066,7 +1066,8 @@ const VisitCard = ({
       toast({ title: 'تم الحفظ', description: `تم حفظ ${items.length} بند بنجاح` });
     } catch (e) {
       console.error('Save visit error:', e);
-      toast({ title: 'خطأ', description: 'فشل الحفظ. تأكد من الاتصال وحاول مرة أخرى.', variant: 'destructive' });
+      const errMsg = e?.response?.data?.detail || e?.message || '';
+      toast({ title: 'خطأ في الحفظ', description: errMsg || 'فشل الحفظ. تأكد من الاتصال وحاول مرة أخرى.', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -1156,7 +1157,8 @@ const VisitCard = ({
       toast({ title: 'تم الحفظ والإغلاق', description: 'تم حفظ البنود وإغلاق الزيارة بنجاح' });
     } catch (e) {
       console.error('Close visit error:', e);
-      toast({ title: 'خطأ', description: 'فشل إغلاق الزيارة. تأكد من الاتصال وحاول مرة أخرى.', variant: 'destructive' });
+      const errMsg = e?.response?.data?.detail || e?.message || '';
+      toast({ title: 'خطأ في الإغلاق', description: errMsg || 'فشل إغلاق الزيارة. تأكد من الاتصال وحاول مرة أخرى.', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }

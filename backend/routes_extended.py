@@ -4683,12 +4683,14 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
             r = res.data[0]
             print(f"   Visit updated in DB: status={r.get('status')} notes_len={len(r.get('notes','') or '')}")
             
-            # --- Prevent closing visit unless balance == 0 (financial rule) ---
+            # --- Balance check (non-blocking): log only if workshop balance unpaid ---
             if payload.get("status") == "completed":
                 parsed_notes = _parse_notes_json(upd.get("notes") or r.get("notes"))
                 fin = _calc_visit_financial(parsed_notes)
-                if fin.get('balance', 0) != 0:
-                    raise HTTPException(status_code=400, detail="Cannot close visit unless balance is zero")
+                # الموردون وحدة أرشيفية منفصلة — الفحص على رصيد الورشة فقط
+                workshop_balance = round(fin.get('total_workshop', 0) - fin.get('total_paid', 0), 2)
+                if workshop_balance > 0.01:
+                    print(f"   [INFO] Visit closed with outstanding workshop balance: {workshop_balance:.2f} SAR")
 
             # Make sure we return 4xx properly (Cloudflare 520 appears when unhandled)
             if payload.get("status") == "completed":

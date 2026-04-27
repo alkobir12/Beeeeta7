@@ -1097,14 +1097,28 @@ const VisitCard = ({
 
   // ─── تأكيد السداد من الزيارة مباشرة ────────────────────────────────────────
   const handleConfirmVisitPayment = async ({ amount, date, paymentMethod }) => {
-    if (!amount || amount <= 0) return;
+    // إذا لم يُدخل مبلغ → السداد الكامل للرصيد المتبقي
+    const workshopTotal = items.reduce((sum, it) => {
+      if (it.itemType === 'supplier') return sum;
+      return sum + Number(it.total ?? (Number(it.quantity || 1) * Number(it.price || 0)));
+    }, 0);
+    const alreadyPaid = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const remainingBalance = Math.round((workshopTotal - alreadyPaid) * 100) / 100;
+
+    const payAmount = (amount && amount > 0) ? amount : remainingBalance;
+    if (!payAmount || payAmount <= 0) {
+      toast({ title: 'تنبيه', description: 'لا يوجد رصيد متبقٍ للسداد', variant: 'destructive' });
+      setConfirmPayOpen(false);
+      return;
+    }
+
     setConfirmPayLoading(true);
     try {
       const methodLabel = paymentMethod === 'bank' ? 'بنك/تحويل' : paymentMethod === 'pos' ? 'نقاط بيع' : 'نقد';
       const newPayment = {
         id: `pay-${Date.now()}`,
         kind: 'payment',
-        amount,
+        amount: payAmount,
         date: date || new Date().toISOString().split('T')[0],
         paymentMethod,
         label: `تسديد (${methodLabel})`,
@@ -1125,7 +1139,7 @@ const VisitCard = ({
       });
 
       setConfirmPayOpen(false);
-      toast({ title: 'تم السداد', description: `تم تسجيل ${amount.toLocaleString('ar-SA')} ر.س بنجاح` });
+      toast({ title: 'تم السداد', description: `تم تسجيل ${payAmount.toLocaleString('ar-SA')} ر.س بنجاح` });
       onUpdate?.();
     } catch (e) {
       const errMsg = e?.response?.data?.detail || e?.message || '';
@@ -1996,6 +2010,10 @@ const VisitCard = ({
         onOpenChange={setConfirmPayOpen}
         onConfirm={handleConfirmVisitPayment}
         loading={confirmPayLoading}
+        remainingBalance={Math.max(0, Math.round((
+          items.filter(it => it.itemType !== 'supplier').reduce((s, it) => s + Number(it.total ?? (Number(it.quantity||1) * Number(it.price||0))), 0)
+          - paymentsTotal
+        ) * 100) / 100)}
       />
     </div>
   );

@@ -13,22 +13,18 @@ import { Input } from './ui/input';
 
 const todayISO = () => new Date().toISOString().split('T')[0];
 
-// amount: number | undefined (undefined => full amount)
-// date: ISO YYYY-MM-DD
-const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }) => {
+const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false, remainingBalance }) => {
   const [amountStr, setAmountStr] = useState('');
   const [dateStr, setDateStr] = useState(todayISO());
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState('bank');
   const [receiptFile, setReceiptFile] = useState(null);
   const [encodingReceipt, setEncodingReceipt] = useState(false);
 
-  // Reset fields when dialog opens
-  // (Avoid useEffect reset to satisfy strict lint rules)
   const handleOpenChange = (v) => {
     if (v) {
       setAmountStr('');
       setDateStr(todayISO());
-      setPaymentMethod('cash');
+      setPaymentMethod('bank');
       setReceiptFile(null);
     }
     onOpenChange(v);
@@ -57,16 +53,21 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
         setEncodingReceipt(false);
       }
     }
+    // amount=undefined يعني السداد الكامل (يُحسب في الـ parent)
     onConfirm({ amount: parsed.amount, date: dateStr || todayISO(), paymentMethod, receipt });
   };
 
   const parsed = useMemo(() => {
     const raw = amountStr.trim();
-    if (!raw) return { amount: undefined, error: null };
+    if (!raw) return { amount: undefined, error: null };  // فارغ = سداد كامل
     const n = Number(raw);
     if (!Number.isFinite(n) || n <= 0) return { amount: undefined, error: 'مبلغ غير صحيح' };
     return { amount: n, error: null };
   }, [amountStr]);
+
+  const placeholderText = remainingBalance > 0
+    ? `الرصيد المتبقي: ${remainingBalance.toLocaleString('ar-SA')} ر.س — اتركه فارغاً للسداد الكامل`
+    : 'اتركه فارغاً للسداد الكامل';
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -122,7 +123,7 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
             <Input
               value={amountStr}
               onChange={(e) => setAmountStr(e.target.value)}
-              placeholder="اتركه فارغاً للسداد الكامل"
+              placeholder={placeholderText}
               inputMode="decimal"
             />
             {parsed.error && <p className="text-sm text-red-600">{parsed.error}</p>}

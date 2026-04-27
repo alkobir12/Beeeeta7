@@ -1095,6 +1095,24 @@ const VisitCard = ({
 
   const handleCloseVisit = async () => {
     if (isSaving) return;
+
+    // حساب رصيد الورشة المتبقي (الموردون مستثنون)
+    const workshopTotal = items.reduce((sum, it) => {
+      if (it.itemType === 'supplier') return sum;
+      return sum + Number(it.total ?? (Number(it.quantity || 1) * Number(it.price || 0)));
+    }, 0);
+    const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const remainingBalance = Math.round((workshopTotal - totalPaid) * 100) / 100;
+
+    if (remainingBalance > 0.01) {
+      toast({
+        title: 'لا يمكن إغلاق الزيارة',
+        description: `يجب سداد المتبقي ${remainingBalance.toLocaleString('ar-SA', { minimumFractionDigits: 2 })} ر.س قبل الإغلاق.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!window.confirm('هل تريد حفظ جميع البنود وإغلاق الزيارة؟')) return;
     setIsSaving(true);
     try {

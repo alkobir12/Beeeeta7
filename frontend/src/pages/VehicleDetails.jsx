@@ -303,7 +303,10 @@ const VisitItemRow = ({
         <td className="py-2 px-3 text-xs text-center" style={{ color: 'rgba(248,250,252,0.86)' }}>{item.quantity}</td>
         <td className="py-2 px-3 text-xs text-center" style={{ color: 'rgba(248,250,252,0.86)' }}>{item.price}</td>
         <td className="py-2 px-3 text-xs font-bold text-right tabular-nums" style={{ color: 'rgba(186,230,253,0.95)' }}>
-          {formatCurrency(item.quantity * item.price)}
+          {formatCurrency(item.total ?? (item.quantity * item.price))}
+          {item._priceQtyMismatch && (
+            <span className="mr-1 text-[9px] text-amber-400" title={`السعر × الكمية = ${item.quantity * item.price} ر.س`}>⚠</span>
+          )}
         </td>
       </tr>
     );
@@ -906,7 +909,22 @@ const VisitCard = ({
         qty: quantity,
         price,
         discount: Number(item?.discount ?? 0) || 0,
-        total: Number(item?.total ?? (quantity * price)) || 0,
+        total: (() => {
+          const qty   = Number(item?.quantity ?? item?.qty ?? 1) || 1;
+          const price = Number(item?.price || 0);
+          const storedTotal = item?.total !== null && item?.total !== undefined ? Number(item.total) : null;
+          // استخدم الـ total المخزون دائماً (هو المبلغ الفعلي المتفق عليه)
+          // إذا لم يوجد total → احسبه من price × qty
+          return storedTotal !== null ? storedTotal : qty * price;
+        })(),
+        _priceQtyMismatch: (() => {
+          // مؤشر للعرض فقط: هل يختلف price × qty عن total؟
+          const qty   = Number(item?.quantity ?? item?.qty ?? 1) || 1;
+          const price = Number(item?.price || 0);
+          const total = item?.total !== null && item?.total !== undefined ? Number(item.total) : null;
+          if (total === null || price === 0) return false;
+          return Math.abs(total - qty * price) > 0.5;
+        })(),
         taxRate: Number(item?.taxRate ?? 0) || 0,
         taxAmount: Number(item?.taxAmount ?? 0) || 0,
         unit: item?.unit ?? '',
@@ -1151,6 +1169,14 @@ const VisitCard = ({
   const updateItem = (index, field, value) => {
     const next = [...items];
     next[index][field] = value;
+    // إعادة حساب total تلقائياً عند تغيير price أو quantity
+    if (field === 'price' || field === 'quantity' || field === 'qty') {
+      const qty   = Number(next[index].quantity || next[index].qty || 1);
+      const price = Number(next[index].price || 0);
+      next[index].total = qty * price;
+      next[index].quantity = qty;
+      next[index].qty = qty;
+    }
     setItems(next);
   };
 
@@ -1183,7 +1209,12 @@ const VisitCard = ({
     .filter((p) => (p.kind || '').toLowerCase() === 'advance')
     .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-  const totalAmount = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+  const totalAmount = items.reduce((sum, item) => {
+    const qty   = Number(item.quantity || item.qty || 1);
+    const price = Number(item.price || 0);
+    const total = Number(item.total ?? (qty * price));
+    return sum + total;
+  }, 0);
 
   const openLabel = status === 'in_progress' ? 'جارية' : 'مكتملة';
   const statusPill =

@@ -867,6 +867,8 @@ const VisitCard = ({
   const [techId, setTechId] = useState(visit.technicianId || visit.technician_id || '');
   const [notes, setNotes] = useState(visit.notes || '');
   const [mileage, setMileage] = useState(visit.mileage || '');
+  const [confirmPayOpen, setConfirmPayOpen] = useState(false);
+  const [confirmPayLoading, setConfirmPayLoading] = useState(false);
 
   // Ref to preserve whatsapp notification across re-renders
   const whatsappNotificationRef = useRef(null);
@@ -1092,6 +1094,46 @@ const VisitCard = ({
   };
 
   const latestApproval = approvals?.[0];
+
+  // ─── تأكيد السداد من الزيارة مباشرة ────────────────────────────────────────
+  const handleConfirmVisitPayment = async ({ amount, date, paymentMethod }) => {
+    if (!amount || amount <= 0) return;
+    setConfirmPayLoading(true);
+    try {
+      const methodLabel = paymentMethod === 'bank' ? 'بنك/تحويل' : paymentMethod === 'pos' ? 'نقاط بيع' : 'نقد';
+      const newPayment = {
+        id: `pay-${Date.now()}`,
+        kind: 'payment',
+        amount,
+        date: date || new Date().toISOString().split('T')[0],
+        paymentMethod,
+        label: `تسديد (${methodLabel})`,
+      };
+      const nextPayments = [...payments, newPayment];
+      setPayments(nextPayments);
+
+      // حفظ في DB
+      const itemsForSave = items.map((item) => ({
+        ...item,
+        billingType: item.itemType === 'supplier' || item.itemType === 'part' ? 'supplier' : 'workshop',
+      }));
+      await axios.put(`${API_URL}/visits/${visit.id}`, {
+        status,
+        technicianId: techId || null,
+        mileage: Number(mileage),
+        notes: JSON.stringify({ text: notes, items: itemsForSave, payments: nextPayments }),
+      });
+
+      setConfirmPayOpen(false);
+      toast({ title: 'تم السداد', description: `تم تسجيل ${amount.toLocaleString('ar-SA')} ر.س بنجاح` });
+      onUpdate?.();
+    } catch (e) {
+      const errMsg = e?.response?.data?.detail || e?.message || '';
+      toast({ title: 'خطأ', description: errMsg || 'فشل تسجيل السداد', variant: 'destructive' });
+    } finally {
+      setConfirmPayLoading(false);
+    }
+  };
 
   const handleCloseVisit = async () => {
     if (isSaving) return;
@@ -1604,8 +1646,25 @@ const VisitCard = ({
                   تحت الحساب / دفعة مقدمة
                 </div>
               </div>
-              <div className="text-[11px] font-semibold" style={{ color: 'rgba(186,230,253,0.95)' }} data-testid={`visit-payments-summary-${visit.id}`}>
-                إجمالي الدفعات: {formatCurrency(paymentsTotal)} • المقدّم: {formatCurrency(advanceTotal)}
+              <div className="flex items-center gap-2">
+                <div className="text-[11px] font-semibold" style={{ color: 'rgba(186,230,253,0.95)' }} data-testid={`visit-payments-summary-${visit.id}`}>
+                  إجمالي الدفعات: {formatCurrency(paymentsTotal)} • المقدّم: {formatCurrency(advanceTotal)}
+                </div>
+                {/* زر تأكيد السداد */}
+                <button
+                  type="button"
+                  onClick={() => setConfirmPayOpen(true)}
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all hover:opacity-90 active:scale-95"
+                  style={{
+                    background: 'rgba(34,197,94,0.18)',
+                    border: '1px solid rgba(34,197,94,0.40)',
+                    color: 'rgba(167,243,208,0.95)',
+                  }}
+                  data-testid={`visit-confirm-payment-btn-${visit.id}`}
+                >
+                  <span>✓</span>
+                  <span>تأكيد السداد</span>
+                </button>
               </div>
             </div>
 
@@ -1930,6 +1989,14 @@ const VisitCard = ({
           </div>
         </div>
       )}
+
+      {/* ─── نافذة تأكيد السداد للزيارة ─── */}
+      <ConfirmPaymentDialog
+        open={confirmPayOpen}
+        onOpenChange={setConfirmPayOpen}
+        onConfirm={handleConfirmVisitPayment}
+        loading={confirmPayLoading}
+      />
     </div>
   );
 };

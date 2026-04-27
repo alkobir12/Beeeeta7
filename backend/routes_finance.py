@@ -1270,7 +1270,7 @@ def _build_repair_journal_entry_from_operation(
 
     payment_method = _normalize_payment_method(operation.get("payment_method") or operation.get("paymentMethod") or "cash")
     is_credit = payment_method == "credit"
-    cash_code = "004" if payment_method == "bank" else "003"
+    cash_code = "004" if payment_method == "bank" else ("006" if payment_method == "pos" else "003")
     selected_code = (
         operation.get("accounting_account_code")
         or operation.get("accountCode")

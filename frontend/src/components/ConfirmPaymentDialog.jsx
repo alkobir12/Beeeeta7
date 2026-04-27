@@ -81,15 +81,39 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false }
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="confirm-payment-method-select">وسيلة السداد</label>
+            <div className="grid grid-cols-3 gap-2" data-testid="confirm-payment-dialog-method-select">
+              {[
+                { value: 'cash', label: 'نقد', sub: 'حساب 003', color: 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300' },
+                { value: 'bank', label: 'بنك / تحويل', sub: 'حساب 004', color: 'border-sky-500/60 bg-sky-500/10 text-sky-300' },
+                { value: 'pos',  label: 'نقاط بيع',   sub: 'حساب 006', color: 'border-violet-500/60 bg-violet-500/10 text-violet-300' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setPaymentMethod(opt.value)}
+                  className={`rounded-xl border-2 px-2 py-2.5 text-center transition-all ${
+                    paymentMethod === opt.value
+                      ? opt.color + ' font-semibold'
+                      : 'border-slate-600 bg-slate-800/40 text-slate-300 hover:border-slate-500'
+                  }`}
+                  data-testid={`confirm-payment-method-${opt.value}`}
+                >
+                  <div className="text-sm font-medium">{opt.label}</div>
+                  <div className="text-[10px] opacity-70 mt-0.5">{opt.sub}</div>
+                </button>
+              ))}
+            </div>
+            {/* hidden select for test compatibility */}
             <select
               id="confirm-payment-method-select"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none"
+              className="sr-only"
               data-testid="confirm-payment-dialog-method-select"
             >
               <option value="cash">نقد</option>
-              <option value="bank">تحويل/بطاقة/بنك</option>
+              <option value="bank">بنك</option>
+              <option value="pos">نقاط بيع</option>
             </select>
           </div>
 

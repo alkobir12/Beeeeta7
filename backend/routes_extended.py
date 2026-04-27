@@ -1341,10 +1341,12 @@ def _build_operation_journal_entry(
 
     is_credit = payment_method == "credit"
 
-    # Choose cash/bank code for non-credit payments (أكواد جديدة)
+    # Choose cash/bank/pos code for non-credit payments (أكواد جديدة)
     cash_code = "003"
-    if payment_method in ("transfer", "bank", "card", "pos", "mada", "visa", "mastercard"):
+    if payment_method in ("transfer", "bank", "card", "mada", "visa", "mastercard"):
         cash_code = "004"
+    elif payment_method in ("pos", "نقاط بيع", "نقاط_بيع", "point_of_sale"):
+        cash_code = "006"
 
     chart_account_ref_map = chart_account_ref_map or {}
 
@@ -2341,19 +2343,28 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         ).strip().lower()
 
         bank_aliases = {
-            "bank", "transfer", "bank_transfer", "card", "pos", "mada", "visa", "mastercard",
+            "bank", "transfer", "bank_transfer", "card", "mada", "visa", "mastercard",
             "بطاقة", "بطاقه", "تحويل", "بنك", "شبكة",
         }
         cash_aliases = {"cash", "نقد", "نقدي", "كاش"}
+        pos_aliases  = {"pos", "نقاط بيع", "نقاط_بيع", "point_of_sale"}
 
-        if requested_method_raw in bank_aliases:
+        if requested_method_raw in pos_aliases:
+            settlement_method = "pos"
+        elif requested_method_raw in bank_aliases:
             settlement_method = "bank"
         elif requested_method_raw in cash_aliases:
             settlement_method = "cash"
         else:
-            raise HTTPException(status_code=400, detail="payment_method must be cash or bank")
+            raise HTTPException(status_code=400, detail="payment_method must be cash, bank, or pos")
 
-        cash_code = "1102" if settlement_method == "bank" else "1101"
+        # الأكواد الجديدة: 003=نقد، 004=بنك، 006=نقاط بيع
+        if settlement_method == "bank":
+            cash_code = "004"
+        elif settlement_method == "pos":
+            cash_code = "006"
+        else:
+            cash_code = "003"
 
         op_account_code = str(op_row.get("account") or op_row.get("accountCode") or "").strip()
         if not op_account_code:
@@ -2383,7 +2394,7 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
 
         if has_base_operation_entry:
             if op_type in ("sale", "service"):
-                # Accrual settlement: Dr Cash/Bank, Cr AR
+                # Accrual settlement: Dr Cash/Bank/POS, Cr AR
                 lines = [
                     {
                         "account": cash_code,
@@ -2392,19 +2403,19 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
                         "credit": 0,
                     },
                     {
-                        "account": "1103",
-                        "account_name": ACCOUNT_NAME_MAP.get("1103", "1103"),
+                        "account": "005",
+                        "account_name": ACCOUNT_NAME_MAP.get("005", "العملاء"),
                         "debit": 0,
                         "credit": pay_amount,
                     },
                 ]
                 desc = f"تحصيل آجل - {op_row.get('partner_name') or ''}"
             elif op_type in ("purchase", "expense"):
-                # Accrual settlement: Dr AP, Cr Cash/Bank
+                # Accrual settlement: Dr AP, Cr Cash/Bank/POS
                 lines = [
                     {
                         "account": "2101",
-                        "account_name": ACCOUNT_NAME_MAP.get("2101", "2101"),
+                        "account_name": ACCOUNT_NAME_MAP.get("2101", "الموردون"),
                         "debit": pay_amount,
                         "credit": 0,
                     },

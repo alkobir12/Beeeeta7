@@ -960,7 +960,7 @@ const PartsInventory = () => {
               >
                 <span>
                   <FileSpreadsheet className="ml-2" size={18} />
-                  {importing ? "Loading..." : "Import Excel"}
+                  {importing ? 'جارٍ الاستيراد...' : 'استيراد Excel'}
                 </span>
               </Button>
             </label>
@@ -969,79 +969,73 @@ const PartsInventory = () => {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                onClick={() => { resetForm(); setIsDialogOpen(true); }}
-                className="apple-button w-full sm:w-auto"
-                data-testid="parts-add-button"
-              >
-                <Plus className="ml-2" size={18} />
-                {"Add Part"}
-              </Button>
+            onClick={() => { resetForm(); setIsDialogOpen(true); }}
+            className="apple-button w-full sm:w-auto"
+            data-testid="parts-add-button"
+          >
+            <Plus className="ml-2" size={18} />
+            إضافة قطعة
+          </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingPart ? "Edit" : "Add Part"}</DialogTitle>
+                <DialogTitle>{editingPart ? 'تعديل قطعة' : 'إضافة قطعة جديدة'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>{"Part Number"} *</Label>
+                    <Label>رقم القطعة *</Label>
                     <Input required value={formData.partNumber} onChange={e => setFormData({...formData, partNumber: e.target.value})} data-testid="part-number-input" />
                   </div>
                   <div className="space-y-2">
-                    <Label>{"Part Name"} *</Label>
+                    <Label>اسم القطعة *</Label>
                     <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} data-testid="part-name-input" />
                   </div>
                   <div className="space-y-2">
-                    <Label>{"Category"} *</Label>
+                    <Label>التصنيف *</Label>
                     <Input required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} data-testid="part-category-input" />
                   </div>
                   <div className="space-y-2">
-                    <Label>{"Supplier"}</Label>
+                    <Label>الموقع</Label>
                     <Input value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} placeholder="A-12" data-testid="part-location-input" />
                   </div>
                   <div className="space-y-2">
-                    <Label>{"Quantity"} *</Label>
+                    <Label>الكمية *</Label>
                     <Input required type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} data-testid="part-quantity-input" />
                   </div>
                   <div className="space-y-2">
-                    <Label>{"Min Quantity"}</Label>
+                    <Label>الحد الأدنى</Label>
                     <Input type="number" value={formData.minQuantity} onChange={e => setFormData({...formData, minQuantity: e.target.value})} data-testid="part-min-quantity-input" />
                   </div>
                   <div className="space-y-2">
-                    <Label>{"Purchase Price"} *</Label>
+                    <Label>سعر الشراء *</Label>
                     <Input required type="number" value={formData.purchasePrice} onChange={e => setFormData({...formData, purchasePrice: e.target.value})} data-testid="part-purchase-price-input" />
                   </div>
                   <div className="space-y-2">
-                    <Label>{"Selling Price"} *</Label>
+                    <Label>سعر البيع *</Label>
                     <Input required type="number" value={formData.sellingPrice} onChange={e => setFormData({...formData, sellingPrice: e.target.value})} data-testid="part-selling-price-input" />
                   </div>
                   <div className="space-y-2 col-span-2">
-                    <Label>{"Supplier"}</Label>
+                    <Label>المورد</Label>
                     <Input value={formData.supplier} onChange={e => setFormData({...formData, supplier: e.target.value})} data-testid="part-supplier-input" />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>{"Image"}</Label>
-                  <div className="flex items-center gap-4">
-                    <label className="cursor-pointer apple-button-secondary flex items-center gap-2 px-4 py-2">
-                      <Upload size={16} />
-                      <span>{uploading ? "Loading..." : "Upload"}</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        data-testid="part-image-input"
-                      />
-                    </label>
-                    {formData.image && <img src={formData.image} alt="Preview" className="h-12 w-12 object-cover rounded-lg border border-gray-200" />}
+                  <div className="space-y-2">
+                    <Label>الصورة</Label>
+                    <div className="flex items-center gap-4">
+                      <label className="cursor-pointer apple-button-secondary flex items-center gap-2 px-4 py-2">
+                        <Upload size={16} />
+                        <span>{uploading ? 'جارٍ الرفع...' : 'رفع صورة'}</span>
+                        <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" data-testid="part-image-input" />
+                      </label>
+                      {formData.image && <img src={formData.image} alt="Preview" className="h-12 w-12 object-cover rounded-lg border border-gray-200" />}
+                    </div>
                   </div>
-                </div>
 
                 <div className="flex gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" data-testid="part-dialog-cancel">{"Cancel"}</Button>
-                  <Button type="submit" className="flex-1 apple-button" data-testid="part-dialog-save">{"Save"}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1" data-testid="part-dialog-cancel">إلغاء</Button>
+                  <Button type="submit" className="flex-1 apple-button" data-testid="part-dialog-save">حفظ</Button>
                 </div>
               </form>
             </DialogContent>
@@ -1104,6 +1098,30 @@ const PartsInventory = () => {
       </div>
 
       <div className="glass-card p-2 flex gap-2 w-full sm:w-fit" data-testid="inventory-main-tabs">
+
+      {/* بطاقات الإحصاء المحسّنة */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-2 w-full" data-testid="inventory-stats-cards">
+        {[
+          { label: 'إجمالي الأصناف', value: parts.length, color: '#a78bfa', icon: '📦' },
+          { label: 'قيمة المخزون', value: inventoryValue.toLocaleString('ar-SA') + ' ر.س', color: '#38bdf8', icon: '💰' },
+          { label: 'نفاد الحد الأدنى', value: lowStockCount, color: '#fb923c', icon: '⚠️', alert: lowStockCount > 0 },
+          { label: 'نافد تماماً', value: outOfStockCount, color: '#ef4444', icon: '🚫', alert: outOfStockCount > 0 },
+        ].map((s) => (
+          <div key={s.label}
+            className={`rounded-2xl p-3 border transition-all ${s.alert ? 'animate-pulse' : ''}`}
+            style={{
+              background: `${s.color}14`,
+              borderColor: `${s.color}30`,
+            }}
+            data-testid={`inventory-stat-${s.label}`}
+          >
+            <div className="text-xl mb-1">{s.icon}</div>
+            <div className="text-lg font-bold tabular-nums" style={{ color: s.color }}>{s.value}</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
         <Button
           type="button"
           onClick={() => setInventoryViewTab('stock')}

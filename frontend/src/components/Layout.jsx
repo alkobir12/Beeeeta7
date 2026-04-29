@@ -4,9 +4,8 @@ import { Eye, EyeOff, Menu } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router-dom';
 import AnimatedBackground from './AnimatedBackground';
 import { useTranslation } from 'react-i18next';
-import AbuFahadFloatingChat from './AbuFahadFloatingChat';
+import UnifiedBotWidget from './UnifiedBotWidget';
 import FinanceAlertsWidget from './FinanceAlertsWidget';
-import ChatWidget from './ChatWidget';
 import { Toaster } from './ui/toaster';
 import { hasPermission, resolveRoutePermission } from '../utils/permissions';
 import { siteBuilderAPI } from '../services/siteBuilderAPI';
@@ -300,17 +299,10 @@ const Layout = ({ pageTitle }) => {
           </Suspense>
         </div>
 
-        {/* AbuFahad Floating Chat (Finance only) */}
-        {isEditorWorkspace ? null : <AbuFahadFloatingChat
-          enabledPaths={[
-            '/operations',
-            '/accounting/chart-of-accounts',
-            '/accounting/comprehensive',
-          ]}
-        />}
+        {/* AbuFahad Floating Chat - replaced by UnifiedBotWidget */}
       </main>
-        {/* Workshop Assistant Chat Widget */}
-        {isEditorWorkspace ? null : <ChatWidget />}
+        {/* Unified Bot Widget (replaces AbuFahadFloatingChat + ChatWidget) */}
+        {isEditorWorkspace ? null : <UnifiedBotWidget />}
 
       
       {/* Toast Notifications */}

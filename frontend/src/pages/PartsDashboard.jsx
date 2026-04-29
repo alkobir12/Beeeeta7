@@ -367,9 +367,9 @@ const PartsDashboard = () => {
     <div className="p-6 space-y-6" data-testid="parts-control-panel-page">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white" data-testid="parts-control-panel-title">Parts Control Panel</h1>
+          <h1 className="text-2xl font-bold text-white" data-testid="parts-control-panel-title">لوحة تحكم القطع</h1>
           <p className="text-slate-400" data-testid="parts-control-panel-subtitle">
-            تحليلات ذكية للمبيعات والمخزون وإدارة backorders من شاشة واحدة
+            تحليلات ذكية للمبيعات والمخزون وإدارة الطلبات من شاشة واحدة
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

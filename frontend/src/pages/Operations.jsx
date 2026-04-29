@@ -611,7 +611,8 @@ const Operations = () => {
       const isPartnerSubAccount =
         accountId.startsWith('acc-customer-')
         || accountId.startsWith('acc-supplier-')
-        || accountCode.startsWith('1103')
+        || accountCode.startsWith('1103')   // legacy AR
+        || accountCode.startsWith('005')    // جديد: العملاء
         || accountCode.startsWith('2101')
         || accountName.startsWith('عميل -')
         || accountName.startsWith('مورد -')
@@ -3166,19 +3167,28 @@ const Operations = () => {
           setConfirmOpen(v);
           if (!v) setConfirmTarget(null);
         }}
-        onConfirm={async ({ amount, date, paymentMethod, receipt }) => {
+        onConfirm={async ({ paymentLines, date, amount, paymentMethod, receipt }) => {
           if (!confirmTarget?.id) return;
           try {
-            await axios.post(`${API_URL}/operations/${confirmTarget.id}/confirm-payment`, {
-              workshopId: workshopId || null,
-              amount,
-              date,
-              payment_method: paymentMethod || 'cash',
-              receipt: receipt || null,
-            });
+            // دعم الـ API الجديد (paymentLines) والقديم (amount/paymentMethod) معاً
+            const lines = paymentLines && paymentLines.length > 0
+              ? paymentLines
+              : [{ method: paymentMethod || 'cash', amount }];
+
+            for (const line of lines) {
+              // amount=null/undefined → يدفع الرصيد كاملاً (البكند يتعامل معه)
+              const payAmt = (line.amount && line.amount > 0) ? line.amount : undefined;
+              await axios.post(`${API_URL}/operations/${confirmTarget.id}/confirm-payment`, {
+                workshopId: workshopId || null,
+                ...(payAmt !== undefined && { amount: payAmt }),
+                date,
+                payment_method: line.method || 'cash',
+                receipt: receipt || null,
+              });
+            }
+
             setConfirmOpen(false);
             setConfirmTarget(null);
-
             queryClient.invalidateQueries({ queryKey: ['operations'] });
           } catch (e) {
             console.error('Failed to confirm payment:', e);

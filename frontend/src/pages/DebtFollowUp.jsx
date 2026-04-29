@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, MessageCircle, RefreshCw } from 'lucide-react';
 import { api, customerAPI, supplierAPI } from '../services/api';
 import { useToast } from '../hooks/use-toast';
 import DebtWhatsAppComposerDialog from '../components/DebtWhatsAppComposerDialog';
+import ConfirmPaymentDialog from '../components/ConfirmPaymentDialog';
 import { buildDebtWhatsAppDraft } from '../utils/debtWhatsapp';
 import { getWhatsAppLink } from '../utils/constants';
 
@@ -20,6 +21,8 @@ export default function DebtFollowUp() {
   const [expandedCards, setExpandedCards] = useState({});
   const [manualAmounts, setManualAmounts] = useState({});
   const [savingRowId, setSavingRowId] = useState('');
+  const [confirmPayRow, setConfirmPayRow] = useState(null);   // الصف المُراد تأكيد سداده
+  const [confirmPayLoading, setConfirmPayLoading] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -230,50 +233,68 @@ export default function DebtFollowUp() {
     toast({ title: 'تم التنفيذ', description: `تم فتح ${validDrafts.length} رسالة واتساب بعد المعاينة` });
   };
 
-  const createSettlementOrder = async (row) => {
+  const createSettlementOrder = async (row, paymentLines, date) => {
     const rowId = `${row.entityType}-${row.id}`;
-    const amount = Number(manualAmounts[rowId] || row.ajelBalance || 0);
-    const accountId = settlementAccounts[0]?.id || settlementAccounts[0]?.code || '';
+    const manualAmt = Number(manualAmounts[rowId] || 0);
+    const defaultAmount = manualAmt > 0 ? manualAmt : Number(row.ajelBalance || 0);
 
-    if (amount <= 0 || !accountId) {
-      toast({ title: 'تنبيه', description: 'أدخل مبلغ صحيح وتأكد من وجود حساب قيد', variant: 'destructive' });
+    if (!paymentLines) {
+      // فتح الـ dialog لاختيار وسيلة السداد
+      setConfirmPayRow({ ...row, defaultAmount });
+      return;
+    }
+
+    // تنفيذ السداد بعد اختيار الوسيلة
+    const lines = paymentLines.length > 0 ? paymentLines : [{ method: 'bank', amount: null }];
+    const totalFromLines = lines.reduce((s, l) => s + (l.amount || 0), 0);
+    const finalAmount = totalFromLines > 0 ? totalFromLines : defaultAmount;
+
+    if (finalAmount <= 0) {
+      toast({ title: 'تنبيه', description: 'أدخل مبلغ صحيح', variant: 'destructive' });
       return;
     }
 
     setSavingRowId(rowId);
     try {
-      const payload = {
-        type: 'payment_order',
-        total: amount,
-        amount,
-        paymentAmount: amount,
-        paymentMethod: 'cash',
-        paymentStatus: 'paid',
-        status: 'issued',
-        date: new Date().toISOString().split('T')[0],
-        accountingAccountId: accountId,
-        partnerId: row.id,
-        partnerName: row.name,
-        partnerPhone: row.phone || '',
-        partnerType: row.entityType,
-        notes: `أمر سداد/تحصيل من متابعة الذمم - ${row.name}`,
-        items: [{
-          name: `سداد ذمم - ${row.name}`,
-          quantity: 1,
-          price: amount,
-          total: amount,
-          isCustom: true,
-        }],
-      };
-
-      await api.post('/operations', payload);
+      for (const line of lines) {
+        const lineAmt = line.amount && line.amount > 0 ? line.amount : finalAmount;
+        const methodLabel = { bank: 'بنك/تحويل', cash: 'نقد', pos: 'نقاط بيع' }[line.method] || line.method;
+        // توجيه حساب السداد حسب الوسيلة
+        const cashAccountCode = line.method === 'pos' ? '006' : line.method === 'bank' ? '004' : '003';
+        const payload = {
+          type: 'payment_order',
+          total: lineAmt,
+          amount: lineAmt,
+          paymentAmount: lineAmt,
+          paymentMethod: line.method || 'bank',
+          paymentStatus: 'paid',
+          status: 'issued',
+          date: date || new Date().toISOString().split('T')[0],
+          accountingAccountCode: cashAccountCode,
+          partnerId: row.id,
+          partnerName: row.name,
+          partnerPhone: row.phone || '',
+          partnerType: row.entityType,
+          notes: `أمر سداد/تحصيل (${methodLabel}) من متابعة الذمم - ${row.name}`,
+          items: [{
+            name: `سداد ذمم (${methodLabel}) - ${row.name}`,
+            quantity: 1,
+            price: lineAmt,
+            total: lineAmt,
+            isCustom: true,
+          }],
+        };
+        await api.post('/operations', payload);
+      }
       toast({ title: 'تم إنشاء أمر السداد بنجاح' });
       setManualAmounts((prev) => ({ ...prev, [rowId]: '' }));
+      setConfirmPayRow(null);
       await fetchData();
     } catch (_error) {
       toast({ title: 'تعذر إنشاء أمر السداد', variant: 'destructive' });
     } finally {
       setSavingRowId('');
+      setConfirmPayLoading(false);
     }
   };
 
@@ -441,6 +462,19 @@ export default function DebtFollowUp() {
         onUpdateDraft={updateDraftMessage}
         onSendCurrent={sendCurrent}
         onSendAll={sendAll}
+      />
+
+      {/* نافذة تأكيد السداد لمتابعة الذمم */}
+      <ConfirmPaymentDialog
+        open={!!confirmPayRow}
+        onOpenChange={(v) => { if (!v) setConfirmPayRow(null); }}
+        loading={confirmPayLoading}
+        remainingBalance={confirmPayRow?.defaultAmount || 0}
+        onConfirm={async ({ paymentLines, date }) => {
+          if (!confirmPayRow) return;
+          setConfirmPayLoading(true);
+          await createSettlementOrder(confirmPayRow, paymentLines, date);
+        }}
       />
     </div>
   );

@@ -455,6 +455,16 @@ const NewVehicle = () => {
                 readOnly={!!existingCustomerId}
               />
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">رقم الملف</label>
+              <input
+                className="apple-input"
+                placeholder="رقم الملف (اختياري)"
+                value={formData.fileNumber || ''}
+                onChange={e => setFormData({...formData, fileNumber: e.target.value})}
+                data-testid="new-vehicle-file-number-input"
+              />
+            </div>
             {existingCustomerId && (
               <div className="md:col-span-2 flex justify-end">
                 <button 

@@ -820,6 +820,12 @@ const Dashboard = () => {
                         <p className="font-bold text-sm truncate" style={{ color: vehicleText.primary }}>
                           {vehicle.customerName || '-'}
                         </p>
+                        {(vehicle.fileNumber || vehicle.file_number) && (
+                          <p className="text-xs font-bold mt-0.5" style={{ color: 'rgba(56,189,248,0.90)' }}
+                            data-testid={`dashboard-vehicle-file-number-${vehicle.id}`}>
+                            ملف: {vehicle.fileNumber || vehicle.file_number}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -138,7 +138,16 @@ const VehicleArchive = () => {
                       <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                         <span className="flex items-center gap-1"><User size={14} /> {vehicle.customerName}</span>
                         <span className="flex items-center gap-1"><Phone size={14} /> {vehicle.customerPhone}</span>
-                        <span className="flex items-center gap-1 text-cyan-700" data-testid={`vehicle-archive-file-number-${vehicle.id}`}><FileText size={14} /> {vehicle.fileNumber || vehicle.customerFileNumber || '-'}</span>
+                        <span
+                          className="flex items-center gap-1.5 font-bold text-base text-cyan-600"
+                          data-testid={`vehicle-archive-file-number-${vehicle.id}`}
+                        >
+                          <FileText size={16} />
+                          {vehicle.fileNumber || vehicle.customerFileNumber
+                            ? <span>{vehicle.fileNumber || vehicle.customerFileNumber}</span>
+                            : <span className="font-normal text-gray-400 text-sm">—</span>
+                          }
+                        </span>
                         <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(vehicle.entryDate).toLocaleDateString('ar-SA')}</span>
                       </div>
                     </div>

@@ -25,6 +25,7 @@ const Suppliers = () => {
   const [editingSupplier, setEditingSupplier]         = useState(null);
   const [settlementSupplier, setSettlementSupplier]   = useState(null);
   const [importSupplier, setImportSupplier]           = useState(null);
+  const [deleteConfirm, setDeleteConfirm]             = useState(null); // supplier to delete
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -99,10 +100,6 @@ const Suppliers = () => {
       toast({ title: 'تنبيه', description: 'يرجى إدخال اسم المورد', variant: 'destructive' });
       return;
     }
-    if (!formData.phone.trim()) {
-      toast({ title: 'تنبيه', description: 'يرجى إدخال رقم الجوال', variant: 'destructive' });
-      return;
-    }
 
     setIsSaving(true);
     try {
@@ -117,7 +114,19 @@ const Suppliers = () => {
       };
 
       if (editingSupplier?.id) {
-        await supplierAPI.update(editingSupplier.id, payload);
+        const isAccSupplier = String(editingSupplier.id).startsWith('acc-');
+        if (isAccSupplier) {
+          // تعديل اسم الحساب في دليل الحسابات
+          const API_URL = process.env.REACT_APP_BACKEND_URL;
+          const accountId = editingSupplier.accountId || editingSupplier.id.replace('acc-', '');
+          await fetch(`${API_URL}/api/accounts/${accountId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: `مورد - ${formData.name.trim()}` }),
+          });
+        } else {
+          await supplierAPI.update(editingSupplier.id, payload);
+        }
         toast({ title: 'تم التحديث', description: 'تم تحديث بيانات المورد بنجاح' });
       } else {
         await supplierAPI.create(payload);
@@ -136,12 +145,25 @@ const Suppliers = () => {
 
   const handleDeleteSupplier = async (supplier) => {
     if (!supplier?.id) return;
-    const confirmed = window.confirm(`هل أنت متأكد من حذف المورد "${supplier.name}"؟`);
-    if (!confirmed) return;
+    const isAccSupplier = String(supplier.id).startsWith('acc-');
+    setDeleteConfirm({ ...supplier, isAccSupplier });
+  };
 
+  const confirmDelete = async () => {
+    const supplier = deleteConfirm;
+    if (!supplier) return;
     try {
-      await supplierAPI.delete(supplier.id);
-      toast({ title: 'تم الحذف', description: 'تم حذف المورد بنجاح' });
+      const isAccSupplier = String(supplier.id).startsWith('acc-');
+      if (isAccSupplier) {
+        // حذف من دليل الحسابات
+        const API_URL = process.env.REACT_APP_BACKEND_URL;
+        const accountId = supplier.accountId || supplier.id.replace('acc-', '');
+        await fetch(`${API_URL}/api/accounts/${accountId}`, { method: 'DELETE' });
+      } else {
+        await supplierAPI.delete(supplier.id);
+      }
+      toast({ title: 'تم الحذف', description: `تم حذف المورد "${supplier.name}" بنجاح` });
+      setDeleteConfirm(null);
       fetchSuppliers();
     } catch (error) {
       console.error('Error deleting supplier:', error);
@@ -552,18 +574,18 @@ const Suppliers = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.7)' }}>رقم الجوال *</label>
+                  <label className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.7)' }}>رقم الجوال</label>
                   <input
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full rounded-xl px-3 py-2 text-sm"
+                    placeholder="اختياري"
                     style={{
                       background: 'rgba(255,255,255,0.06)',
                       border: '1px solid rgba(148,163,184,0.18)',
                       color: 'rgba(248,250,252,0.92)',
                     }}
                     data-testid="supplier-phone-input"
-                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -674,6 +696,59 @@ const Suppliers = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* نافذة تأكيد الحذف */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4" data-testid="supplier-delete-confirm-overlay">
+          <div
+            className="w-full max-w-sm rounded-2xl p-6 space-y-4"
+            style={{ background: 'rgba(15,23,42,0.96)', border: '1px solid rgba(239,68,68,0.35)' }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <Trash2 size={18} className="text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-100">تأكيد الحذف</h3>
+                <p className="text-xs text-slate-400 mt-0.5">هذا الإجراء لا يمكن التراجع عنه</p>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-red-500/8 border border-red-500/20 px-3 py-2.5">
+              <p className="text-xs text-slate-300">
+                هل أنت متأكد من حذف المورد:
+              </p>
+              <p className="text-sm font-bold text-red-300 mt-1" data-testid="delete-confirm-supplier-name">
+                "{deleteConfirm.name}"
+              </p>
+              {deleteConfirm.isAccSupplier && (
+                <p className="text-[11px] text-amber-400 mt-1.5">
+                  ⚠️ هذا المورد من دليل الحسابات — سيُحذف الحساب المرتبط به
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 rounded-xl py-2 text-sm font-semibold text-slate-300 border border-slate-700 hover:bg-slate-800 transition-colors"
+                data-testid="delete-confirm-cancel"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="flex-1 rounded-xl py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-500 transition-colors"
+                data-testid="delete-confirm-ok"
+              >
+                حذف نهائياً
+              </button>
+            </div>
           </div>
         </div>
       )}

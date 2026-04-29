@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "id": "33437757-91b5-4b8e-8b10-2d28965eed48",
+    "supplier_id": "c2e9cbf8-44b8-4d5e-8633-6682282d10a3",
+    "supplier_name": "راكان",
+    "workshop_id": "finmodule-sync",
+    "date": "2026-04-29",
+    "total_debit": 55.0,
+    "total_credit": 0.0,
+    "net_amount": -55.0,
+    "notes": "",
+    "lines": [
+      {
+        "je_id": "5750ae7d-b399-4853-90ba-f3ad8ff230d8",
+        "date": "2026-04-16",
+        "description": "ركان",
+        "debit": 55.0,
+        "credit": 0.0
+      }
+    ],
+    "created_at": "2026-04-29T22:55:58.670575+00:00"
+  }
+]

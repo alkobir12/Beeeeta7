@@ -1096,8 +1096,8 @@ const VisitCard = ({
   const latestApproval = approvals?.[0];
 
   // ─── تأكيد السداد من الزيارة مباشرة ────────────────────────────────────────
-  const handleConfirmVisitPayment = async ({ amount, date, paymentMethod }) => {
-    // إذا لم يُدخل مبلغ → السداد الكامل للرصيد المتبقي
+  const handleConfirmVisitPayment = async ({ paymentLines, date }) => {
+    // حساب الرصيد المتبقي للورشة
     const workshopTotal = items.reduce((sum, it) => {
       if (it.itemType === 'supplier') return sum;
       return sum + Number(it.total ?? (Number(it.quantity || 1) * Number(it.price || 0)));
@@ -1105,26 +1105,46 @@ const VisitCard = ({
     const alreadyPaid = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
     const remainingBalance = Math.round((workshopTotal - alreadyPaid) * 100) / 100;
 
-    const payAmount = (amount && amount > 0) ? amount : remainingBalance;
-    if (!payAmount || payAmount <= 0) {
+    if (remainingBalance <= 0.01) {
       toast({ title: 'تنبيه', description: 'لا يوجد رصيد متبقٍ للسداد', variant: 'destructive' });
       setConfirmPayOpen(false);
       return;
     }
 
+    // توزيع الرصيد على الوسائل التي بدون مبلغ
+    const linesWithNull = (paymentLines || []).filter(l => !l.amount);
+    const linesWithAmount = (paymentLines || []).filter(l => l.amount && l.amount > 0);
+    const sumWithAmount = linesWithAmount.reduce((s, l) => s + l.amount, 0);
+    const leftover = Math.max(0, remainingBalance - sumWithAmount);
+
+    // توزيع المتبقي على السطور بدون مبلغ بالتساوي
+    const share = linesWithNull.length > 0 ? Math.round((leftover / linesWithNull.length) * 100) / 100 : 0;
+    const resolvedLines = (paymentLines || []).map(l => ({
+      ...l,
+      amount: (l.amount && l.amount > 0) ? l.amount : share,
+    })).filter(l => l.amount > 0.01);
+
+    if (!resolvedLines.length) {
+      toast({ title: 'تنبيه', description: 'يرجى إدخال مبلغ', variant: 'destructive' });
+      return;
+    }
+
     setConfirmPayLoading(true);
     try {
-      const methodLabel = paymentMethod === 'bank' ? 'بنك/تحويل' : paymentMethod === 'pos' ? 'نقاط بيع' : 'نقد';
-      const newPayment = {
-        id: `pay-${Date.now()}`,
+      const methodLabel = { bank: 'بنك/تحويل', cash: 'نقد', pos: 'نقاط بيع' };
+      const newPaymentEntries = resolvedLines.map(l => ({
+        id: `pay-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         kind: 'payment',
-        amount: payAmount,
+        amount: l.amount,
         date: date || new Date().toISOString().split('T')[0],
-        paymentMethod,
-        label: `تسديد (${methodLabel})`,
-      };
-      const nextPayments = [...payments, newPayment];
+        paymentMethod: l.method,
+        label: `تسديد (${methodLabel[l.method] || l.method})`,
+      }));
+
+      const nextPayments = [...payments, ...newPaymentEntries];
       setPayments(nextPayments);
+
+      const totalConfirmed = resolvedLines.reduce((s, l) => s + l.amount, 0);
 
       // حفظ في DB
       const itemsForSave = items.map((item) => ({
@@ -1139,7 +1159,11 @@ const VisitCard = ({
       });
 
       setConfirmPayOpen(false);
-      toast({ title: 'تم السداد', description: `تم تسجيل ${payAmount.toLocaleString('ar-SA')} ر.س بنجاح` });
+      const summaryParts = resolvedLines.map(l => `${(methodLabel[l.method] || l.method)}: ${l.amount.toLocaleString('ar-SA')} ر.س`);
+      toast({
+        title: 'تم السداد',
+        description: summaryParts.join(' • '),
+      });
       onUpdate?.();
     } catch (e) {
       const errMsg = e?.response?.data?.detail || e?.message || '';

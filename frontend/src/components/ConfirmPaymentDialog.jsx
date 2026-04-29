@@ -1,172 +1,192 @@
-import React, { useMemo, useState } from 'react';
-
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
 
 const todayISO = () => new Date().toISOString().split('T')[0];
 
-const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false, remainingBalance }) => {
-  const [amountStr, setAmountStr] = useState('');
-  const [dateStr, setDateStr] = useState(todayISO());
-  const [paymentMethod, setPaymentMethod] = useState('bank');
-  const [receiptFile, setReceiptFile] = useState(null);
-  const [encodingReceipt, setEncodingReceipt] = useState(false);
+const METHODS = [
+  { value: 'bank', label: 'بنك / تحويل', sub: '004', color: 'border-sky-500/60 bg-sky-500/10 text-sky-200' },
+  { value: 'cash', label: 'نقد',          sub: '003', color: 'border-emerald-500/60 bg-emerald-500/10 text-emerald-200' },
+  { value: 'pos',  label: 'نقاط بيع',    sub: '006', color: 'border-violet-500/60 bg-violet-500/10 text-violet-200' },
+];
 
+const emptyLine = () => ({ id: Date.now() + Math.random(), method: 'bank', amountStr: '' });
+
+const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false, remainingBalance = 0 }) => {
+  const [lines, setLines]       = useState([emptyLine()]);
+  const [dateStr, setDateStr]   = useState(todayISO());
+
+  /* reset when dialog opens */
   const handleOpenChange = (v) => {
     if (v) {
-      setAmountStr('');
+      setLines([emptyLine()]);
       setDateStr(todayISO());
-      setPaymentMethod('bank');
-      setReceiptFile(null);
     }
     onOpenChange(v);
   };
 
-  const fileToBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = () => reject(new Error('file_read_failed'));
-    reader.readAsDataURL(file);
-  });
-
-  const handleSubmit = async () => {
-    if (parsed.error) return;
-    let receipt = null;
-    if (receiptFile) {
-      setEncodingReceipt(true);
-      try {
-        const base64 = await fileToBase64(receiptFile);
-        receipt = {
-          name: receiptFile.name,
-          mimeType: receiptFile.type || 'application/octet-stream',
-          base64,
-        };
-      } finally {
-        setEncodingReceipt(false);
-      }
-    }
-    // amount=undefined يعني السداد الكامل (يُحسب في الـ parent)
-    onConfirm({ amount: parsed.amount, date: dateStr || todayISO(), paymentMethod, receipt });
+  const updateLine = (id, field, value) => {
+    setLines(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
   };
 
-  const parsed = useMemo(() => {
-    const raw = amountStr.trim();
-    if (!raw) return { amount: undefined, error: null };  // فارغ = سداد كامل
-    const n = Number(raw);
-    if (!Number.isFinite(n) || n <= 0) return { amount: undefined, error: 'مبلغ غير صحيح' };
-    return { amount: n, error: null };
-  }, [amountStr]);
+  const addLine = () => setLines(prev => [...prev, emptyLine()]);
 
-  const placeholderText = remainingBalance > 0
-    ? `الرصيد المتبقي: ${remainingBalance.toLocaleString('ar-SA')} ر.س — اتركه فارغاً للسداد الكامل`
-    : 'اتركه فارغاً للسداد الكامل';
+  const removeLine = (id) => {
+    setLines(prev => prev.length > 1 ? prev.filter(l => l.id !== id) : prev);
+  };
+
+  /* إجمالي ما أُدخل */
+  const enteredTotal = lines.reduce((s, l) => {
+    const n = parseFloat(l.amountStr);
+    return s + (Number.isFinite(n) && n > 0 ? n : 0);
+  }, 0);
+
+  /* هل يوجد خطأ في أي سطر؟ */
+  const hasError = lines.some(l => {
+    if (!l.amountStr.trim()) return false; // فارغ = مقبول
+    const n = parseFloat(l.amountStr);
+    return !Number.isFinite(n) || n <= 0;
+  });
+
+  const handleSubmit = () => {
+    if (hasError) return;
+
+    // بناء قائمة المدفوعات
+    const paymentLines = lines.map(l => {
+      const n = parseFloat(l.amountStr);
+      return {
+        method: l.method,
+        amount: Number.isFinite(n) && n > 0 ? n : null,  // null = حصة من الرصيد
+      };
+    });
+
+    onConfirm({ paymentLines, date: dateStr || todayISO() });
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent dir="rtl" className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>تأكيد سداد</DialogTitle>
-          <DialogDescription>
-            أدخل مبلغ السداد (اختياري للسداد الكامل) وحدد تاريخ السداد.
-          </DialogDescription>
+          <DialogTitle>تأكيد السداد</DialogTitle>
+          {remainingBalance > 0 && (
+            <p className="text-sm text-amber-300 mt-1">
+              الرصيد المتبقي: <span className="font-bold tabular-nums">{remainingBalance.toLocaleString('ar-SA', { minimumFractionDigits: 2 })}</span> ر.س
+            </p>
+          )}
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="confirm-payment-method-select">وسيلة السداد</label>
-            <div className="grid grid-cols-3 gap-2" data-testid="confirm-payment-dialog-method-select">
-              {[
-                { value: 'cash', label: 'نقد', sub: 'حساب 003', color: 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300' },
-                { value: 'bank', label: 'بنك / تحويل', sub: 'حساب 004', color: 'border-sky-500/60 bg-sky-500/10 text-sky-300' },
-                { value: 'pos',  label: 'نقاط بيع',   sub: 'حساب 006', color: 'border-violet-500/60 bg-violet-500/10 text-violet-300' },
-              ].map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setPaymentMethod(opt.value)}
-                  className={`rounded-xl border-2 px-2 py-2.5 text-center transition-all ${
-                    paymentMethod === opt.value
-                      ? opt.color + ' font-semibold'
-                      : 'border-slate-600 bg-slate-800/40 text-slate-300 hover:border-slate-500'
-                  }`}
-                  data-testid={`confirm-payment-method-${opt.value}`}
-                >
-                  <div className="text-sm font-medium">{opt.label}</div>
-                  <div className="text-[10px] opacity-70 mt-0.5">{opt.sub}</div>
-                </button>
-              ))}
+        <div className="space-y-3 mt-2">
+          {/* سطور الوسائل */}
+          {lines.map((line, idx) => {
+            const n = parseFloat(line.amountStr);
+            const isValid = !line.amountStr.trim() || (Number.isFinite(n) && n > 0);
+            return (
+              <div key={line.id} className="rounded-xl border border-white/10 bg-white/4 p-3 space-y-2" data-testid={`pay-line-${idx}`}>
+                {/* وسيلة الدفع */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  {METHODS.map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => updateLine(line.id, 'method', opt.value)}
+                      className={`rounded-lg border px-1.5 py-2 text-center text-xs transition-all ${
+                        line.method === opt.value
+                          ? opt.color + ' border-opacity-80 font-semibold'
+                          : 'border-slate-600 bg-slate-800/40 text-slate-400 hover:border-slate-500'
+                      }`}
+                      data-testid={`pay-line-${idx}-method-${opt.value}`}
+                    >
+                      <div className="font-medium">{opt.label}</div>
+                      <div className="text-[9px] opacity-60">{opt.sub}</div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* المبلغ */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={line.amountStr}
+                    onChange={e => updateLine(line.id, 'amountStr', e.target.value)}
+                    placeholder={
+                      idx === 0 && lines.length === 1
+                        ? `${remainingBalance > 0 ? remainingBalance.toLocaleString('ar-SA') : 'المبلغ'} ر.س — فارغ = كامل الرصيد`
+                        : 'المبلغ'
+                    }
+                    className={`flex-1 rounded-lg border px-3 py-2 text-sm bg-slate-900/60 text-slate-100 outline-none focus:ring-1 ${
+                      isValid ? 'border-slate-600 focus:ring-sky-500' : 'border-red-500 focus:ring-red-500'
+                    }`}
+                    data-testid={`pay-line-${idx}-amount`}
+                  />
+                  {lines.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeLine(line.id)}
+                      className="p-2 rounded-lg text-red-400 hover:bg-red-500/10 border border-red-500/30 text-xs"
+                      data-testid={`pay-line-${idx}-remove`}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                {!isValid && (
+                  <p className="text-xs text-red-400">مبلغ غير صحيح</p>
+                )}
+              </div>
+            );
+          })}
+
+          {/* زر إضافة وسيلة */}
+          <button
+            type="button"
+            onClick={addLine}
+            className="w-full rounded-xl border border-dashed border-slate-500 py-2 text-xs text-slate-400 hover:border-sky-500 hover:text-sky-300 transition-all"
+            data-testid="pay-add-method-btn"
+          >
+            + إضافة وسيلة دفع أخرى
+          </button>
+
+          {/* إجمالي ما أُدخل */}
+          {enteredTotal > 0 && (
+            <div className="flex justify-between text-sm rounded-lg bg-white/5 px-3 py-2">
+              <span className="text-slate-400">إجمالي المُدخل</span>
+              <span className="font-bold tabular-nums text-sky-300">
+                {enteredTotal.toLocaleString('ar-SA', { minimumFractionDigits: 2 })} ر.س
+              </span>
             </div>
-            {/* hidden select for test compatibility */}
-            <select
-              id="confirm-payment-method-select"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="sr-only"
-              data-testid="confirm-payment-dialog-method-select"
-            >
-              <option value="cash">نقد</option>
-              <option value="bank">بنك</option>
-              <option value="pos">نقاط بيع</option>
-            </select>
-          </div>
+          )}
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">مبلغ السداد (اختياري)</label>
-            <Input
-              value={amountStr}
-              onChange={(e) => setAmountStr(e.target.value)}
-              placeholder={placeholderText}
-              inputMode="decimal"
-            />
-            {parsed.error && <p className="text-sm text-red-600">{parsed.error}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">تاريخ السداد</label>
-            <Input type="date" value={dateStr} onChange={(e) => setDateStr(e.target.value)} />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="confirm-payment-dialog-receipt-input">إرفاق إيصال (اختياري)</label>
+          {/* تاريخ السداد */}
+          <div className="space-y-1">
+            <label className="text-xs text-slate-400">تاريخ السداد</label>
             <input
-              id="confirm-payment-dialog-receipt-input"
-              type="file"
-              accept="image/*,.pdf"
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                setReceiptFile(file);
-              }}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-              data-testid="confirm-payment-dialog-receipt-input"
+              type="date"
+              value={dateStr}
+              onChange={e => setDateStr(e.target.value)}
+              className="w-full rounded-lg border border-slate-600 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 outline-none focus:ring-1 focus:ring-sky-500"
+              data-testid="confirm-payment-dialog-date"
             />
-            {receiptFile ? (
-              <div className="text-xs text-emerald-700" data-testid="confirm-payment-dialog-receipt-name">✓ {receiptFile.name}</div>
-            ) : null}
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
+        <DialogFooter className="gap-2 mt-2">
+          <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={loading}>
             إلغاء
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading || encodingReceipt || !!parsed.error}
+            disabled={loading || hasError}
             data-testid="confirm-payment-dialog-submit"
           >
-            {loading || encodingReceipt ? 'جارٍ التنفيذ...' : 'تأكيد'}
+            {loading ? 'جارٍ التنفيذ...' : 'تأكيد السداد'}
           </Button>
         </DialogFooter>
       </DialogContent>

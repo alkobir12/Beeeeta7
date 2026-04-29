@@ -1401,6 +1401,13 @@ def _build_operation_journal_entry(
         if isinstance(it, dict)
     )
 
+    # كشف موردي الورشة المعروفين (أبو خالد) حتى بدون linkedPart/revenueAccountCode
+    _ABU_KHALED_KW = ["أبو خالد الكبير", "ابو خالد الكبير", "أبو خالد", "ابو خالد"]
+
+    def _is_known_workshop_supplier(name: str) -> bool:
+        n = str(name or "").strip()
+        return any(kw in n for kw in _ABU_KHALED_KW)
+
     if op_type in ("sale", "service"):
         total = workshop_total if workshop_total > 0 else total
         if total <= 0:
@@ -1415,7 +1422,11 @@ def _build_operation_journal_entry(
             if isinstance(it, dict)
             and str(it.get("itemType") or "").lower() == "supplier"
             and not is_rakan_operation
-            and (it.get("revenueAccountCode") == "042" or it.get("linkedPart"))
+            and (
+                it.get("revenueAccountCode") == "042"
+                or it.get("linkedPart")
+                or _is_known_workshop_supplier(str(it.get("name") or ""))
+            )
         ]
         workshop_parts_total = sum(
             _safe_amount(it.get("total") or it.get("price") or 0)
@@ -2368,7 +2379,11 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
 
         op_account_code = str(op_row.get("account") or op_row.get("accountCode") or "").strip()
         if not op_account_code:
-            op_account_code = "4001" if op_type in ("sale", "service") else "5001"
+            # الأكواد الجديدة: 027 للخدمات الميكانيكية بدلاً من 4001 القديم
+            op_account_code = "027" if op_type in ("sale", "service") else "036"
+        else:
+            # تحويل أي كود قديم إلى الجديد
+            op_account_code = LEGACY_TO_NEW_CODE.get(op_account_code, op_account_code)
         op_account_name = (
             op_row.get("account_name")
             or op_row.get("accountName")

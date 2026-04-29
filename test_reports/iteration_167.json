@@ -1,0 +1,105 @@
+{
+  "timestamp": "2026-04-29T12:34:08.070619",
+  "passed": 23,
+  "failed": 0,
+  "total": 23,
+  "revenue_distribution": {
+    "027": 16277.0,
+    "042": 1000.0,
+    "028": 20417.0
+  },
+  "details": [
+    {
+      "ok": true,
+      "label": "GET /api/vehicles → 200"
+    },
+    {
+      "ok": true,
+      "label": "مركبات موجودة"
+    },
+    {
+      "ok": true,
+      "label": "حقل fileNumber موجود في المركبات"
+    },
+    {
+      "ok": true,
+      "label": "GET /api/operations → 200"
+    },
+    {
+      "ok": true,
+      "label": "عمليات موجودة"
+    },
+    {
+      "ok": true,
+      "label": "يوجد عمليات آجل قابلة للسداد"
+    },
+    {
+      "ok": true,
+      "label": "confirm-payment يعمل"
+    },
+    {
+      "ok": true,
+      "label": "GET /api/finance/journal-entries → 200"
+    },
+    {
+      "ok": true,
+      "label": "قيود يومية موجودة"
+    },
+    {
+      "ok": true,
+      "label": "لا أكواد قديمة في القيود"
+    },
+    {
+      "ok": true,
+      "label": "جميع القيود متوازنة"
+    },
+    {
+      "ok": true,
+      "label": "حساب 042 (ايراد قطع الورشه) موجود في القيود"
+    },
+    {
+      "ok": true,
+      "label": "GET /api/finance/chart-of-accounts → 200"
+    },
+    {
+      "ok": true,
+      "label": "حسابات الدليل موجودة"
+    },
+    {
+      "ok": true,
+      "label": "حساب العملاء 005 موجود"
+    },
+    {
+      "ok": true,
+      "label": "إنشاء أمر سداد من الذمم"
+    },
+    {
+      "ok": true,
+      "label": "income-statement → 200"
+    },
+    {
+      "ok": true,
+      "label": "revenue > 0"
+    },
+    {
+      "ok": true,
+      "label": "net_income > 0"
+    },
+    {
+      "ok": true,
+      "label": "accounts/tree → 200"
+    },
+    {
+      "ok": true,
+      "label": "assets > 0 في الدليل"
+    },
+    {
+      "ok": true,
+      "label": "revenue > 0 في الدليل"
+    },
+    {
+      "ok": true,
+      "label": "ميزان المراجعة متوازن"
+    }
+  ]
+}

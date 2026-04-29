@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, Plus, RefreshCw, Phone, Mail, MapPin, Edit2, Trash2, X, MessageCircle } from 'lucide-react';
+import { Package, Search, Plus, RefreshCw, Phone, Mail, MapPin, Edit2, Trash2, X, MessageCircle, FileText, Upload, GitMerge } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../hooks/use-toast';
 import { supplierAPI } from '../services/api';
 import DebtWhatsAppComposerDialog from '../components/DebtWhatsAppComposerDialog';
+import SupplierSettlementDialog from '../components/SupplierSettlementDialog';
+import SupplierImportDialog from '../components/SupplierImportDialog';
 import { buildDebtWhatsAppDraft } from '../utils/debtWhatsapp';
 import { getWhatsAppLink } from '../utils/constants';
 
@@ -16,11 +18,13 @@ const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedSupplierId, setExpandedSupplierId] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [whatsAppDialogOpen, setWhatsAppDialogOpen] = useState(false);
-  const [whatsAppDrafts, setWhatsAppDrafts] = useState([]);
-  const [editingSupplier, setEditingSupplier] = useState(null);
+  const [showModal, setShowModal]           = useState(false);
+  const [isSaving, setIsSaving]             = useState(false);
+  const [whatsAppDialogOpen, setWhatsAppDialogOpen]   = useState(false);
+  const [whatsAppDrafts, setWhatsAppDrafts]           = useState([]);
+  const [editingSupplier, setEditingSupplier]         = useState(null);
+  const [settlementSupplier, setSettlementSupplier]   = useState(null);
+  const [importSupplier, setImportSupplier]           = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -227,6 +231,17 @@ const Suppliers = () => {
             <Plus size={18} />
             <span>مورد جديد</span>
           </button>
+
+          {/* زر استيراد عام */}
+          <button
+            onClick={() => setImportSupplier({ id: 'global', name: '' })}
+            className="flex items-center gap-2 px-4 py-3 rounded-2xl font-bold text-sm transition-all"
+            style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', color: '#fcd34d' }}
+            data-testid="supplier-import-global-btn"
+          >
+            <Upload size={16} />
+            <span>استيراد</span>
+          </button>
         </div>
       </div>
 
@@ -422,37 +437,55 @@ const Suppliers = () => {
 
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openWhatsAppPreview(supplier);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); openWhatsAppPreview(supplier); }}
                         className="flex-1 py-2 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500 hover:text-white transition-all text-sm font-semibold"
                         data-testid={`supplier-whatsapp-preview-${supplier.id}`}
                       >
-                        <MessageCircle size={14} className="inline ml-1" />
-                        معاينة واتساب
+                        <MessageCircle size={14} className="inline ml-1" />واتساب
                       </button>
+
+                      {/* زر التسوية */}
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditSupplier(supplier);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); setSettlementSupplier(supplier); }}
+                        className="flex-1 py-2 rounded-lg bg-sky-500/20 text-sky-300 hover:bg-sky-500 hover:text-white transition-all text-sm font-semibold"
+                        data-testid={`supplier-settlement-${supplier.id}`}
+                      >
+                        <GitMerge size={14} className="inline ml-1" />تسوية
+                      </button>
+
+                      {/* زر كشف الحساب PDF */}
+                      <a
+                        href={`${process.env.REACT_APP_BACKEND_URL}/api/suppliers-ext/${supplier.id}/statement/pdf?workshop_id=${workshopId || 'finmodule-sync'}&supplier_name=${encodeURIComponent(supplier.name)}`}
+                        target="_blank" rel="noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="flex-1 py-2 rounded-lg bg-violet-500/20 text-violet-300 hover:bg-violet-500 hover:text-white transition-all text-sm font-semibold text-center"
+                        data-testid={`supplier-pdf-${supplier.id}`}
+                      >
+                        <FileText size={14} className="inline ml-1" />PDF
+                      </a>
+
+                      {/* زر استيراد */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setImportSupplier(supplier); }}
+                        className="flex-1 py-2 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500 hover:text-white transition-all text-sm font-semibold"
+                        data-testid={`supplier-import-${supplier.id}`}
+                      >
+                        <Upload size={14} className="inline ml-1" />استيراد
+                      </button>
+
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEditSupplier(supplier); }}
                         className="flex-1 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all text-sm font-semibold"
                         data-testid={`supplier-edit-${supplier.id}`}
                       >
-                        <Edit2 size={14} className="inline ml-1" />
-                        تعديل
+                        <Edit2 size={14} className="inline ml-1" />تعديل
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSupplier(supplier);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteSupplier(supplier); }}
                         className="flex-1 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all text-sm font-semibold"
                         data-testid={`supplier-delete-${supplier.id}`}
                       >
-                        <Trash2 size={14} className="inline ml-1" />
-                        حذف
+                        <Trash2 size={14} className="inline ml-1" />حذف
                       </button>
                     </div>
                   </div>
@@ -655,6 +688,22 @@ const Suppliers = () => {
           if (!draft.phone || !draft.url) return;
           setTimeout(() => window.open(draft.url, '_blank', 'noopener,noreferrer'), index * 250);
         })}
+      />
+
+      {/* نافذة التسوية */}
+      <SupplierSettlementDialog
+        open={!!settlementSupplier}
+        onOpenChange={(v) => { if (!v) setSettlementSupplier(null); }}
+        supplier={settlementSupplier}
+        workshopId={workshopId || 'finmodule-sync'}
+      />
+
+      {/* نافذة الاستيراد */}
+      <SupplierImportDialog
+        open={!!importSupplier}
+        onOpenChange={(v) => { if (!v) setImportSupplier(null); }}
+        supplier={importSupplier}
+        workshopId={workshopId || 'finmodule-sync'}
       />
     </div>
   );

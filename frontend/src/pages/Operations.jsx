@@ -3167,22 +3167,32 @@ const Operations = () => {
           setConfirmOpen(v);
           if (!v) setConfirmTarget(null);
         }}
+        remainingBalance={(() => {
+          const op = confirmTarget;
+          if (!op) return 0;
+          const total = parseFloat(op.total || op.workshopTotal || 0);
+          return Math.max(0, total);
+        })()}
         onConfirm={async ({ paymentLines, date, amount, paymentMethod, receipt }) => {
           if (!confirmTarget?.id) return;
+          // جلب workshopId من env أو من العملية مباشرة
+          const wid = workshopId
+            || confirmTarget.workshopId
+            || confirmTarget.workshop_id
+            || process.env.REACT_APP_WORKSHOP_ID
+            || 'finmodule-sync';
           try {
-            // دعم الـ API الجديد (paymentLines) والقديم (amount/paymentMethod) معاً
             const lines = paymentLines && paymentLines.length > 0
               ? paymentLines
-              : [{ method: paymentMethod || 'cash', amount }];
+              : [{ method: paymentMethod || 'bank', amount }];
 
             for (const line of lines) {
-              // amount=null/undefined → يدفع الرصيد كاملاً (البكند يتعامل معه)
               const payAmt = (line.amount && line.amount > 0) ? line.amount : undefined;
               await axios.post(`${API_URL}/operations/${confirmTarget.id}/confirm-payment`, {
-                workshopId: workshopId || null,
+                workshopId: wid,
                 ...(payAmt !== undefined && { amount: payAmt }),
                 date,
-                payment_method: line.method || 'cash',
+                payment_method: line.method || 'bank',
                 receipt: receipt || null,
               });
             }
@@ -3190,9 +3200,11 @@ const Operations = () => {
             setConfirmOpen(false);
             setConfirmTarget(null);
             queryClient.invalidateQueries({ queryKey: ['operations'] });
+            toast({ title: 'تم السداد بنجاح', description: 'تم تسجيل الدفعة وتحديث حالة العملية' });
           } catch (e) {
             console.error('Failed to confirm payment:', e);
-            alert(t('operations.payment_confirm_failed'));
+            const errMsg = e?.response?.data?.detail || e?.message || '';
+            toast({ title: 'فشل تأكيد السداد', description: errMsg || 'تأكد من الاتصال وحاول مرة أخرى', variant: 'destructive' });
           }
         }}
       />

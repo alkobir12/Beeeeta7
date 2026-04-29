@@ -2280,8 +2280,6 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
 
         supa = SupabaseService()
         workshop_id = (payload or {}).get("workshopId") or (payload or {}).get("workshop_id")
-        if not workshop_id:
-            raise HTTPException(status_code=400, detail="workshopId required")
 
         op_rows = (
             supa.client.table("operations").select("*").eq("id", op_id).execute().data
@@ -2290,6 +2288,16 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         if not op_rows:
             raise HTTPException(status_code=404, detail="operation not found")
         op_row = op_rows[0]
+
+        # إذا لم يُرسَل workshopId من الفرونت، استخدم الـ workshop_id من العملية نفسها
+        if not workshop_id:
+            workshop_id = (
+                op_row.get("workshopId")
+                or op_row.get("workshop_id")
+                or os.environ.get("DEFAULT_WORKSHOP_ID", "finmodule-sync")
+            )
+        if not workshop_id:
+            raise HTTPException(status_code=400, detail="workshopId required")
 
         payment_methods = {
             str(op_row.get("payment_method") or "").lower(),

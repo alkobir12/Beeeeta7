@@ -86,7 +86,7 @@ const ExpandableMetricCard = ({ title, value, subtitle, details = [], expanded, 
               </div>
             );
           }
-          // Object form: { label, value, highlight? }
+          // Object form: { label, value, highlight?, tooltip? }
           if (line && typeof line === 'object' && 'label' in line) {
             const base = 'flex items-center justify-between gap-3 text-xs py-1.5 border-b border-white/5 last:border-b-0';
             const valueClass = line.highlight
@@ -94,7 +94,16 @@ const ExpandableMetricCard = ({ title, value, subtitle, details = [], expanded, 
               : 'text-slate-100 tabular-nums font-medium text-left';
             return (
               <div key={`${testId}-line-${idx}`} className={base}>
-                <span className="text-slate-400 whitespace-nowrap">{line.label}</span>
+                <span className="text-slate-400 whitespace-nowrap flex items-center gap-1">
+                  {line.label}
+                  {line.tooltip && (
+                    <span
+                      title={line.tooltip}
+                      className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[9px] cursor-help"
+                      style={{ background: 'rgba(148,163,184,0.25)', color: 'rgba(148,163,184,0.9)' }}
+                    >?</span>
+                  )}
+                </span>
                 <span className={valueClass}>{line.value}</span>
               </div>
             );
@@ -696,13 +705,37 @@ export default function ComprehensiveFinancial() {
       key: 'parts_profit',
       title: 'أرباح القطع',
       value: formatCurrency(partsNet),
-      subtitle: 'ربح/خسارة نشاط القطع',
+      subtitle: partsNet >= 0 ? 'القطع تحقق ربحًا' : 'القطع في منطقة خسارة',
       accent: partsNet >= 0 ? 'from-cyan-500/25 to-blue-400/10' : 'from-rose-500/25 to-pink-400/10',
       details: [
-        { label: 'إيرادات القطع', value: formatCurrency(revenueBreakdown.parts || 0) },
-        { label: 'تكلفة/مصروفات القطع', value: formatCurrency(expenseBreakdown.parts || 0) },
-        { label: 'ربح/خسارة الخدمات', value: formatCurrency(serviceNet) },
-        { label: 'الحالة', value: partsNet >= 0 ? 'القطع تحقق ربحًا' : 'القطع في منطقة خسارة' },
+        {
+          label: 'إيرادات القطع',
+          value: formatCurrency(revenueBreakdown.parts || 0),
+          tooltip: 'المبالغ المحصّلة من بيع القطع للعملاء (حساب 042 ايراد قطع الورشه)',
+        },
+        {
+          label: 'تكلفة/مصروفات القطع',
+          value: formatCurrency(expenseBreakdown.parts || 0),
+          tooltip: 'تكلفة شراء القطع من الموردين (تُخصم من الإيراد لحساب الربح الصافي)',
+        },
+        {
+          label: 'صافي ربح/خسارة القطع',
+          value: formatCurrency(partsNet),
+          tooltip: 'إيرادات القطع ناقص تكاليفها — رقم موجب = ربح، سالب = خسارة',
+          highlight: true,
+        },
+        {
+          label: 'ربح/خسارة الخدمات',
+          value: formatCurrency(serviceNet),
+          tooltip: 'صافي نشاط الخدمات الميكانيكية (إيرادات 027/028 ناقص مصروفاتها)',
+        },
+        {
+          label: 'هامش الربح (القطع)',
+          value: revenueBreakdown.parts > 0
+            ? `${((partsNet / revenueBreakdown.parts) * 100).toFixed(1)}%`
+            : '—',
+          tooltip: 'نسبة الربح الصافي إلى إيراد القطع',
+        },
       ],
       testId: 'financial-headline-parts-profit',
     },

@@ -1404,9 +1404,30 @@ def _build_operation_journal_entry(
     # كشف موردي الورشة المعروفين (أبو خالد) حتى بدون linkedPart/revenueAccountCode
     _ABU_KHALED_KW = ["أبو خالد الكبير", "ابو خالد الكبير", "أبو خالد", "ابو خالد"]
 
+    # موردو الآجل: تُنشأ لهم قيود مشتريات آجل تلقائياً
+    _AJEL_SUPPLIER_KW = [
+        "مخرطة", "مخرطه", "المخرطة", "المخرطه",
+        "مخرطة العوفي", "العبدالرحيم", "عبدالرحيم",
+        "عبدالرحيم صيانة", "عبدالرحيم  صيانة",
+    ]
+
     def _is_known_workshop_supplier(name: str) -> bool:
         n = str(name or "").strip()
         return any(kw in n for kw in _ABU_KHALED_KW)
+
+    def _is_ajel_supplier(name: str) -> bool:
+        """موردو الآجل: المخرطة والعبدالرحيم — تُسجَّل مشترياتهم كذمم دائنة آجل."""
+        n = str(name or "").strip()
+        return any(kw in n for kw in _AJEL_SUPPLIER_KW)
+
+    # استخرج بنود موردي الآجل
+    ajel_supplier_items = [
+        it for it in items_for_check
+        if isinstance(it, dict)
+        and str(it.get("itemType") or "").lower() == "supplier"
+        and _is_ajel_supplier(str(it.get("name") or ""))
+    ]
+    ajel_total = sum(_safe_amount(it.get("total") or it.get("price") or 0) for it in ajel_supplier_items)
 
     if op_type in ("sale", "service"):
         total = workshop_total if workshop_total > 0 else total
@@ -1422,6 +1443,7 @@ def _build_operation_journal_entry(
             if isinstance(it, dict)
             and str(it.get("itemType") or "").lower() == "supplier"
             and not is_rakan_operation
+            and not _is_ajel_supplier(str(it.get("name") or ""))  # موردو الآجل مُستثنون
             and (
                 it.get("revenueAccountCode") == "042"
                 or it.get("linkedPart")
@@ -1642,7 +1664,7 @@ def _build_operation_journal_entry(
     if is_rakan_operation and "[RAKAN_PARTS]" not in str(description):
         description = f"[RAKAN_PARTS] {description}".strip()
 
-    return {
+    primary_entry = {
         "id": str(uuid.uuid4()),
         "workshop_id": workshop_id,
         "date": op.get("date") or op.get("op_date") or datetime.utcnow().isoformat(),
@@ -1656,6 +1678,49 @@ def _build_operation_journal_entry(
         "transaction_type": transaction_type,
         "reference_id": op.get("id"),
     }
+
+    # ─── قيود آجل إضافية لموردي المخرطة والعبدالرحيم ────────────────────────
+    # المنطق الصحيح:
+    # - العميل يدفع للورشة مبلغاً يشمل تكلفة المخرطة
+    # - الورشة تكون مدينة للمخرطة بهذا المبلغ (آجل)
+    # القيد المنفصل: Dr تكلفة (036) / Cr مورد آجل (2101)
+    # القيد الرئيسي لا يشمل مبلغ المخرطة في الدائن (يُحسب كامل المبلغ عبر النقدية)
+    extra_entries = []
+    if ajel_total > 0:
+        for it in ajel_supplier_items:
+            it_total = _safe_amount(it.get("total") or it.get("price") or 0)
+            if it_total <= 0:
+                continue
+            sup_name = str(it.get("name") or "مورد")
+            extra_entries.append({
+                "id": str(uuid.uuid4()),
+                "workshop_id": workshop_id,
+                "date": op.get("date") or datetime.utcnow().isoformat(),
+                "description": f"[آجل] مشتريات من {sup_name} — {op.get('partnerName') or op.get('partner_name') or ''}",
+                "lines": [
+                    {
+                        "account": "036",
+                        "account_name": "مصروفات عامة وإدارية",
+                        "debit": it_total,
+                        "credit": 0,
+                    },
+                    {
+                        "account": "2101",
+                        "account_name": f"مورد - {sup_name}",
+                        "debit": 0,
+                        "credit": it_total,
+                    },
+                ],
+                "total": it_total,
+                "source": "ajel_supplier_purchase",
+                "transaction_type": "purchase",
+                "reference_id": op.get("id"),
+                "supplier_name": sup_name,
+            })
+
+    if extra_entries:
+        return [primary_entry] + extra_entries
+    return primary_entry
 
 
 def _safe_insert_journal_entry(supa: SupabaseService, entry: Dict[str, Any]):
@@ -2866,7 +2931,12 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                     workshop_id,
                     chart_account_ref_map=chart_account_ref_map,
                 )
-                _safe_insert_journal_entry(supa, entry)
+                # قد يُعيد list من القيود (في حالة موردي الآجل)
+                if isinstance(entry, list):
+                    for e in entry:
+                        _safe_insert_journal_entry(supa, e)
+                else:
+                    _safe_insert_journal_entry(supa, entry)
             except Exception as je_error:
                 print(f"Failed to create journal entry for operation: {je_error}")
             await _append_operation_to_visit(payload, op, provider, db, visit_data)

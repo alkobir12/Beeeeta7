@@ -2108,6 +2108,8 @@ async def get_finance_alerts(
                     "title": "عدم توازن ميزان المراجعة",
                     "message": f"الإجمالي مدين {td:,.2f} ≠ دائن {tc:,.2f}",
                     "action": "راجع القيود والعمليات للتأكد من اكتمال التسجيل.",
+                    "route": "/accounting/comprehensive",
+                    "route_label": "فتح القوائم المالية",
                 }
             )
 
@@ -2131,6 +2133,8 @@ async def get_finance_alerts(
                     "title": "ذمم مدينة مفتوحة",
                     "message": f"يوجد آجل (غير محصل) بقيمة {ar_amt:,.2f} على حساب الذمم المدينة 1103.",
                     "action": "تابع التحصيل أو اربطها بفاتورة/سداد.",
+                    "route": "/debt-follow-up",
+                    "route_label": "متابعة الذمم",
                 }
             )
         if ap_amt > 0:
@@ -2141,6 +2145,8 @@ async def get_finance_alerts(
                     "title": "ذمم دائنة مفتوحة",
                     "message": f"يوجد آجل (غير مسدد) بقيمة {ap_amt:,.2f} على حساب الذمم الدائنة 2101.",
                     "action": "راجع التزامات الموردين وجدول السداد.",
+                    "route": "/suppliers",
+                    "route_label": "صفحة الموردين",
                 }
             )
 
@@ -2164,6 +2170,8 @@ async def get_finance_alerts(
                             "title": "هامش ربح منخفض",
                             "message": f"الهامش الحالي {margin:.1f}% خلال آخر 30 يوم.",
                             "action": "راجع التسعير والمصروفات وهوامش قطع الغيار.",
+                            "route": "/accounting/comprehensive",
+                            "route_label": "لوحة المؤشرات",
                         }
                     )
                 elif margin < 20:
@@ -2174,6 +2182,8 @@ async def get_finance_alerts(
                             "title": "هامش ربح متوسط",
                             "message": f"الهامش الحالي {margin:.1f}% خلال آخر 30 يوم.",
                             "action": "توجد فرصة لتحسين الربحية.",
+                            "route": "/accounting/comprehensive",
+                            "route_label": "لوحة المؤشرات",
                         }
                     )
             if revenue > 0 and expenses > revenue:
@@ -2184,6 +2194,8 @@ async def get_finance_alerts(
                         "title": "المصروفات أعلى من الإيرادات",
                         "message": "هناك خسارة تشغيلية خلال آخر 30 يوم.",
                         "action": "تحقق من تسجيل الإيرادات/المصروفات وصحة التصنيف.",
+                        "route": "/accounting/comprehensive",
+                        "route_label": "لوحة المؤشرات",
                     }
                 )
     except Exception:
@@ -2203,6 +2215,8 @@ async def get_finance_alerts(
                         "title": "انخفاض درجة صحة النظام المحاسبي",
                         "message": f"درجة الصحة {score}/100",
                         "action": "شغّل صفحة التدقيق وراجع خطة التصحيح.",
+                        "route": "/ai-financial",
+                        "route_label": "فتح المدقق المالي",
                     }
                 )
             corrections = data.get("corrections_needed") or []
@@ -2214,6 +2228,8 @@ async def get_finance_alerts(
                         "title": "تصحيحات محاسبية مطلوبة",
                         "message": f"عدد التصحيحات المقترحة: {len(corrections)}",
                         "action": "راجع تفاصيل التدقيق لتطبيق التصحيحات.",
+                        "route": "/ai-financial",
+                        "route_label": "فتح المدقق المالي",
                     }
                 )
     except Exception:

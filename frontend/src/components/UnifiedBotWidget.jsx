@@ -181,7 +181,13 @@ export default function UnifiedBotWidget() {
   const [vehicleSearch, setVehicleSearch]     = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [vehicleDropOpen, setVehicleDropOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState(null); // override credit account
+  const [selectedAccount, setSelectedAccount] = useState(null);
+
+  // services + parts catalog
+  const [servicesCatalog, setServicesCatalog] = useState([]);
+  const [partsCatalog, setPartsCatalog]       = useState([]);
+  const [itemSearch, setItemSearch]           = useState('');
+  const [itemDropOpen, setItemDropOpen]       = useState(false);
 
   const messagesEndRef = useRef(null);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aMessages, fMessages, tab]);
@@ -239,6 +245,17 @@ export default function UnifiedBotWidget() {
         setVehicles(list);
       })
       .catch(() => {});
+    // جلب الخدمات والقطع
+    axios.get(`${API}/api/services?limit=500`)
+      .then(r => {
+        const list = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.services || [];
+        setServicesCatalog(list.filter(s => s.active !== false));
+      }).catch(() => {});
+    axios.get(`${API}/api/parts?limit=500`)
+      .then(r => {
+        const list = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.parts || [];
+        setPartsCatalog(list.filter(p => Number(p.quantity || 0) > 0));
+      }).catch(() => {});
   }, [tab, vehicles.length]);
 
   // auto-detect template from description
@@ -613,7 +630,7 @@ export default function UnifiedBotWidget() {
                           const Icon = t.icon;
                           return (
                             <button key={t.id} type="button"
-                              onClick={() => { setSelectedTemplate(t.id); setCreateResult(null); if (t.forcePayment) setPaymentMethod(t.forcePayment); }}
+                              onClick={() => { setSelectedTemplate(t.id); setCreateResult(null); setItemSearch(''); setItemDropOpen(false); if (t.forcePayment) setPaymentMethod(t.forcePayment); }}
                               className={`rounded-xl p-2 flex flex-col items-center gap-1 border text-[10px] transition-all ${
                                 selectedTemplate === t.id
                                   ? 'border-opacity-60 font-semibold'
@@ -628,6 +645,99 @@ export default function UnifiedBotWidget() {
                         })}
                       </div>
                     </div>
+
+                    {/* ── قائمة الخدمات عند "بيع خدمة" ── */}
+                    {selectedTemplate === 'service_sale' && (
+                      <div>
+                        <label className="text-[10px] text-slate-400 mb-1 block">
+                          اختر خدمة <span className="text-slate-600">({servicesCatalog.length} خدمة متاحة)</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            value={itemSearch}
+                            onChange={e => { setItemSearch(e.target.value); setItemDropOpen(true); }}
+                            onFocus={() => setItemDropOpen(true)}
+                            placeholder="ابحث في قائمة الخدمات..."
+                            className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
+                            style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(56,189,248,0.3)' }}
+                            data-testid="service-search-input"
+                          />
+                          {itemDropOpen && (
+                            <div className="absolute top-full left-0 right-0 mt-0.5 rounded-lg border border-slate-700 max-h-44 overflow-y-auto z-50"
+                              style={{ background: 'rgba(15,23,42,0.99)' }}>
+                              {servicesCatalog
+                                .filter(s => !itemSearch || s.name?.toLowerCase().includes(itemSearch.toLowerCase()))
+                                .slice(0, 20)
+                                .map(s => (
+                                  <button key={s.id} type="button"
+                                    onClick={() => {
+                                      setDescription(s.name);
+                                      setAmount(String(s.price || ''));
+                                      setItemSearch(s.name);
+                                      setItemDropOpen(false);
+                                    }}
+                                    className="w-full text-right px-2.5 py-2 text-[11px] text-slate-200 hover:bg-sky-500/15 flex justify-between items-center border-b border-slate-800/50 last:border-0"
+                                    data-testid={`service-option-${s.id}`}>
+                                    <span className="text-sky-300 font-medium tabular-nums">{Number(s.price || 0).toLocaleString('ar-SA')} ر.س</span>
+                                    <span className="truncate max-w-[65%]">{s.name}</span>
+                                  </button>
+                                ))}
+                              {servicesCatalog.filter(s => !itemSearch || s.name?.toLowerCase().includes(itemSearch.toLowerCase())).length === 0 && (
+                                <div className="px-2.5 py-2 text-[10px] text-slate-500">لا توجد نتائج</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── قائمة القطع عند "بيع قطع" ── */}
+                    {selectedTemplate === 'parts_sale' && (
+                      <div>
+                        <label className="text-[10px] text-slate-400 mb-1 block">
+                          اختر قطعة <span className="text-slate-600">({partsCatalog.length} قطعة متاحة)</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            value={itemSearch}
+                            onChange={e => { setItemSearch(e.target.value); setItemDropOpen(true); }}
+                            onFocus={() => setItemDropOpen(true)}
+                            placeholder="ابحث في قائمة القطع..."
+                            className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
+                            style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(167,139,250,0.3)' }}
+                            data-testid="part-search-input"
+                          />
+                          {itemDropOpen && (
+                            <div className="absolute top-full left-0 right-0 mt-0.5 rounded-lg border border-slate-700 max-h-44 overflow-y-auto z-50"
+                              style={{ background: 'rgba(15,23,42,0.99)' }}>
+                              {partsCatalog
+                                .filter(p => !itemSearch || p.name?.toLowerCase().includes(itemSearch.toLowerCase()))
+                                .slice(0, 20)
+                                .map(p => (
+                                  <button key={p.id} type="button"
+                                    onClick={() => {
+                                      setDescription(p.name);
+                                      setAmount(String(p.sellingPrice || p.price || ''));
+                                      setItemSearch(p.name);
+                                      setItemDropOpen(false);
+                                    }}
+                                    className="w-full text-right px-2.5 py-2 text-[11px] text-slate-200 hover:bg-violet-500/15 flex justify-between items-center border-b border-slate-800/50 last:border-0"
+                                    data-testid={`part-option-${p.id}`}>
+                                    <div className="flex flex-col items-end">
+                                      <span className="text-violet-300 font-medium tabular-nums">{Number(p.sellingPrice || p.price || 0).toLocaleString('ar-SA')} ر.س</span>
+                                      <span className="text-[9px] text-slate-500">متبقي: {p.quantity}</span>
+                                    </div>
+                                    <span className="truncate max-w-[60%]">{p.name}</span>
+                                  </button>
+                                ))}
+                              {partsCatalog.filter(p => !itemSearch || p.name?.toLowerCase().includes(itemSearch.toLowerCase())).length === 0 && (
+                                <div className="px-2.5 py-2 text-[10px] text-slate-500">لا توجد نتائج</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* وسيلة السداد */}
                     {selectedTemplate && !currentTemplate?.forcePayment && (

@@ -2,61 +2,194 @@
  * UnifiedBotWidget — بوت موحد يجمع:
  * 1. المساعد الذكي (Workshop AI)
  * 2. المدقق المالي (Finance Auditor)
- * 3. أوامر سريعة: إنشاء قيد / إنشاء عملية
- *
- * الموضع: فوق زر القائمة على الجوال (bottom-20 left-4)
- *         في الزاوية السفلى اليسرى على الديسكتوب
+ * 3. نقطة بيع ذكية + إنشاء قيد/عملية بربط تلقائي للحسابات
  */
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Bot, X, MessageSquare, ShieldCheck, Plus, ChevronLeft, Send, Loader, FileText, Wrench } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import {
+  Bot, X, MessageSquare, ShieldCheck, Plus, Send, Loader,
+  FileText, Wrench, Zap, CreditCard, ShoppingBag, DollarSign,
+  Users, Package, TrendingUp, AlertCircle, CheckCircle, ChevronDown
+} from 'lucide-react';
 import axios from 'axios';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 const WID = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
 
-// ─── tabs ──────────────────────────────────────────────────────────────────
-const TABS = [
-  { id: 'assistant', label: 'المساعد', icon: MessageSquare },
-  { id: 'auditor',   label: 'المدقق',   icon: ShieldCheck  },
-  { id: 'create',    label: 'إنشاء',    icon: Plus         },
+// ─── خريطة الحسابات ────────────────────────────────────────────────────────
+const ACCOUNTS = {
+  '003': 'النقد',   '004': 'البنك',     '005': 'العملاء',
+  '006': 'نقاط بيع','027': 'خدمات ميكانيكية','028': 'إصلاح محركات',
+  '029': 'فرامل وتعليق','030': 'تكلفة الخدمات','035': 'المصروفات التشغيلية',
+  '036': 'مصروفات عامة','037': 'رواتب','042': 'ايراد قطع الورشه',
+  '2101': 'الموردون (آجل)', '211': 'فروقات ترحيل',
+};
+
+const PAYMENT_ACCOUNT = { bank: '004', cash: '003', pos: '006', credit: '005' };
+
+// ─── نماذج العمليات الذكية ──────────────────────────────────────────────────
+const SMART_TEMPLATES = [
+  {
+    id: 'service_sale',
+    label: 'بيع خدمة',
+    icon: Wrench,
+    color: '#38bdf8',
+    desc: 'صيانة / خدمة ميكانيكية',
+    getLines: (pm, amt) => [
+      { account: PAYMENT_ACCOUNT[pm] || '004', name: ACCOUNTS[PAYMENT_ACCOUNT[pm]] || 'البنك', debit: amt, credit: 0 },
+      { account: '027', name: 'خدمات ميكانيكية', debit: 0, credit: amt },
+    ],
+    opType: 'sale',
+  },
+  {
+    id: 'parts_sale',
+    label: 'بيع قطع',
+    icon: Package,
+    color: '#a78bfa',
+    desc: 'قطع غيار ورشة',
+    getLines: (pm, amt) => [
+      { account: PAYMENT_ACCOUNT[pm] || '004', name: ACCOUNTS[PAYMENT_ACCOUNT[pm]] || 'البنك', debit: amt, credit: 0 },
+      { account: '042', name: 'ايراد قطع الورشه', debit: 0, credit: amt },
+    ],
+    opType: 'sale',
+  },
+  {
+    id: 'expense',
+    label: 'مصروف',
+    icon: TrendingUp,
+    color: '#fb923c',
+    desc: 'مصروف تشغيلي / إداري',
+    getLines: (pm, amt) => [
+      { account: '036', name: 'مصروفات عامة', debit: amt, credit: 0 },
+      { account: PAYMENT_ACCOUNT[pm] || '004', name: ACCOUNTS[PAYMENT_ACCOUNT[pm]] || 'البنك', debit: 0, credit: amt },
+    ],
+    opType: 'expense',
+  },
+  {
+    id: 'salary',
+    label: 'رواتب',
+    icon: Users,
+    color: '#34d399',
+    desc: 'رواتب الموظفين / العمال',
+    getLines: (pm, amt) => [
+      { account: '037', name: 'رواتب', debit: amt, credit: 0 },
+      { account: PAYMENT_ACCOUNT[pm] || '004', name: ACCOUNTS[PAYMENT_ACCOUNT[pm]] || 'البنك', debit: 0, credit: amt },
+    ],
+    opType: 'expense',
+  },
+  {
+    id: 'credit_sale',
+    label: 'بيع آجل',
+    icon: CreditCard,
+    color: '#f59e0b',
+    desc: 'خدمة بالآجل (ذمة مدينة)',
+    getLines: (_pm, amt) => [
+      { account: '005', name: 'العملاء (ذمم مدينة)', debit: amt, credit: 0 },
+      { account: '027', name: 'خدمات ميكانيكية', debit: 0, credit: amt },
+    ],
+    opType: 'sale',
+    forcePayment: 'credit',
+  },
+  {
+    id: 'purchase',
+    label: 'مشتريات',
+    icon: ShoppingBag,
+    color: '#64748b',
+    desc: 'شراء قطع / مواد من مورد',
+    getLines: (pm, amt) => [
+      { account: '030', name: 'تكلفة الخدمات', debit: amt, credit: 0 },
+      { account: pm === 'credit' ? '2101' : PAYMENT_ACCOUNT[pm] || '004',
+        name: pm === 'credit' ? 'الموردون (آجل)' : ACCOUNTS[PAYMENT_ACCOUNT[pm]] || 'البنك', debit: 0, credit: amt },
+    ],
+    opType: 'purchase',
+  },
 ];
 
-// ─── initial messages ──────────────────────────────────────────────────────
-const INIT_ASSISTANT = [
-  { role: 'assistant', content: 'مرحباً! أنا مساعد الورشة الذكي. يمكنني مساعدتك في تشخيص الأعطال واقتراح الصيانة والإجابة على أسئلة الورشة.' }
+// اقتراح النموذج من الوصف النصي
+const guessTemplate = (text) => {
+  const t = text.toLowerCase();
+  if (/راتب|رواتب|أجر|عمال/.test(t)) return 'salary';
+  if (/قطع|فلتر|زيت|مرشح/.test(t)) return 'parts_sale';
+  if (/آجل|اجل|ذمة|دين/.test(t)) return 'credit_sale';
+  if (/شراء|مشتري|مورد|فاتورة شراء/.test(t)) return 'purchase';
+  if (/مصروف|مصاريف|بنزين|فطور|إيجار|كهرباء|ماء/.test(t)) return 'expense';
+  if (/صيانة|خدمة|فرامل|كلتش|تعليق|مكيف/.test(t)) return 'service_sale';
+  return null;
+};
+
+// ─── tabs ───────────────────────────────────────────────────────────────────
+const TABS = [
+  { id: 'assistant', label: 'المساعد', icon: MessageSquare },
+  { id: 'auditor',   label: 'المدقق',  icon: ShieldCheck  },
+  { id: 'create',    label: 'إنشاء',   icon: Zap          },
 ];
-const INIT_AUDITOR = [
-  { role: 'assistant', content: 'مرحباً! أنا المدقق المالي. يمكنني مراجعة القيود، تحليل الإيرادات، وإنشاء قيود يومية مباشرة بأوامر نصية.' }
+
+const INIT_ASSISTANT = [{ role: 'assistant', content: 'مرحباً! أنا مساعد الورشة. اسألني عن أي شيء.' }];
+const INIT_AUDITOR   = [{ role: 'assistant', content: 'مرحباً! أنا المدقق المالي. يمكنني مراجعة الحسابات وإنشاء قيود بأوامر نصية مثل "أنشئ قيد".' }];
+
+const QUICK_AMOUNTS = [50, 100, 200, 500, 1000];
+const PAYMENT_METHODS = [
+  { v: 'bank', l: 'بنك', acc: '004' },
+  { v: 'cash', l: 'نقد', acc: '003' },
+  { v: 'pos',  l: 'POS', acc: '006' },
+  { v: 'credit', l: 'آجل', acc: '005' },
 ];
 
 export default function UnifiedBotWidget() {
-  const [open, setOpen]         = useState(false);
-  const [tab, setTab]           = useState('assistant');
-  const [input, setInput]       = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [open, setOpen]       = useState(false);
+  const [tab, setTab]         = useState('assistant');
+  const [input, setInput]     = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // assistant state
+  // assistant / auditor messages
   const [aMessages, setAMessages] = useState(INIT_ASSISTANT);
-  // auditor state
   const [fMessages, setFMessages] = useState(INIT_AUDITOR);
-  const [fSession, setFSession]   = useState(() => `sess-${Date.now()}`);
+  const [fSession]                = useState(`sess-${Date.now()}`);
 
-  // create form state
-  const [createMode, setCreateMode] = useState('journal'); // 'journal' | 'operation'
-  const [createForm, setCreateForm] = useState({
-    description: '', debit_account: '', credit_account: '', amount: '', date: new Date().toISOString().split('T')[0],
-    // operation fields
-    type: 'sale', payment_method: 'bank', partner_name: '', total: '',
-  });
-  const [createResult, setCreateResult] = useState(null);
+  // smart create state
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [paymentMethod, setPaymentMethod]        = useState('bank');
+  const [amount, setAmount]                      = useState('');
+  const [description, setDescription]            = useState('');
+  const [partnerName, setPartnerName]            = useState('');
+  const [date, setDate]                          = useState(new Date().toISOString().split('T')[0]);
+  const [customDebit, setCustomDebit]            = useState('');
+  const [customCredit, setCustomCredit]          = useState('');
+  const [createResult, setCreateResult]          = useState(null);
+  const [createMode, setCreateMode]              = useState('smart'); // 'smart' | 'manual'
 
   const messagesEndRef = useRef(null);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aMessages, fMessages, tab]);
 
+  // auto-detect template from description
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [aMessages, fMessages, tab]);
+    if (!description) return;
+    const guess = guessTemplate(description);
+    if (guess && !selectedTemplate) setSelectedTemplate(guess);
+  }, [description]);
 
-  // ─── المساعد الذكي ──────────────────────────────────────────────────────
+  const currentTemplate = useMemo(() => SMART_TEMPLATES.find(t => t.id === selectedTemplate), [selectedTemplate]);
+
+  const previewLines = useMemo(() => {
+    if (createMode === 'manual') {
+      const amt = parseFloat(amount) || 0;
+      if (!amt || !customDebit || !customCredit) return [];
+      return [
+        { account: customDebit,  name: ACCOUNTS[customDebit]  || customDebit,  debit: amt, credit: 0 },
+        { account: customCredit, name: ACCOUNTS[customCredit] || customCredit, debit: 0, credit: amt },
+      ];
+    }
+    if (!currentTemplate || !amount) return [];
+    const pm = currentTemplate.forcePayment || paymentMethod;
+    return currentTemplate.getLines(pm, parseFloat(amount) || 0);
+  }, [currentTemplate, paymentMethod, amount, createMode, customDebit, customCredit]);
+
+  const isBalanced = useMemo(() => {
+    const d = previewLines.reduce((s, l) => s + l.debit, 0);
+    const c = previewLines.reduce((s, l) => s + l.credit, 0);
+    return Math.abs(d - c) < 0.01 && d > 0;
+  }, [previewLines]);
+
+  // ─── المساعد ─────────────────────────────────────────────────────────────
   const sendAssistant = useCallback(async (text) => {
     if (!text.trim()) return;
     setAMessages(prev => [...prev, { role: 'user', content: text }]);
@@ -66,47 +199,39 @@ export default function UnifiedBotWidget() {
         message: text, workshop_id: WID,
         history: aMessages.slice(-6).map(m => ({ role: m.role, content: m.content })),
       });
-      const reply = r.data?.response || r.data?.message || 'لا استجابة';
-      setAMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-    } catch {
-      setAMessages(prev => [...prev, { role: 'assistant', content: 'حدث خطأ، حاول مرة أخرى.' }]);
-    } finally { setLoading(false); }
+      setAMessages(prev => [...prev, { role: 'assistant', content: r.data?.response || r.data?.message || 'لا استجابة' }]);
+    } catch { setAMessages(prev => [...prev, { role: 'assistant', content: 'حدث خطأ، حاول مرة أخرى.' }]); }
+    finally { setLoading(false); }
   }, [aMessages]);
 
-  // ─── المدقق المالي ──────────────────────────────────────────────────────
+  // ─── المدقق ──────────────────────────────────────────────────────────────
   const sendAuditor = useCallback(async (text) => {
     if (!text.trim()) return;
     setFMessages(prev => [...prev, { role: 'user', content: text }]);
     setInput(''); setLoading(true);
     try {
-      // كشف أوامر الإنشاء المباشرة
       const lc = text.toLowerCase();
-      if (lc.includes('أنشئ قيد') || lc.includes('انشئ قيد') || lc.includes('create journal')) {
-        setTab('create'); setCreateMode('journal');
-        setFMessages(prev => [...prev, { role: 'assistant', content: 'انتقلت إلى تبويب "إنشاء" — أكمل بيانات القيد وسيُسجَّل مباشرة.' }]);
+      if (lc.includes('أنشئ قيد') || lc.includes('انشئ قيد')) {
+        setTab('create'); setCreateMode('smart');
+        setFMessages(prev => [...prev, { role: 'assistant', content: '✅ انتقلت لتبويب الإنشاء الذكي — اختر نموذج العملية وأدخل المبلغ.' }]);
         setLoading(false); return;
       }
-      if (lc.includes('أنشئ عملية') || lc.includes('انشئ عملية') || lc.includes('create operation')) {
-        setTab('create'); setCreateMode('operation');
-        setFMessages(prev => [...prev, { role: 'assistant', content: 'انتقلت إلى تبويب "إنشاء" — أكمل بيانات العملية.' }]);
+      if (lc.includes('أنشئ عملية') || lc.includes('انشئ عملية')) {
+        setTab('create'); setCreateMode('smart');
+        setFMessages(prev => [...prev, { role: 'assistant', content: '✅ انتقلت لتبويب الإنشاء — اختر نوع العملية.' }]);
         setLoading(false); return;
       }
-
       const r = await axios.post(`${API}/api/finance-bot/chat`, {
-        message: text, session_id: fSession, workshop_id: WID,
-        findings: [], action: null,
+        message: text, session_id: fSession, workshop_id: WID, findings: [], action: null,
       });
       const data = r.data || {};
-      const reply = data.response || 'لا استجابة';
       setFMessages(prev => [...prev, {
-        role: 'assistant', content: reply,
+        role: 'assistant', content: data.response || 'لا استجابة',
         state: data.state, linkedData: data.linked_data,
-        contradictions: data.contradictions, autoEscalated: data.auto_escalated,
-        sessionId: fSession,
+        contradictions: data.contradictions, sessionId: fSession,
       }]);
-    } catch {
-      setFMessages(prev => [...prev, { role: 'assistant', content: 'حدث خطأ، حاول مرة أخرى.' }]);
-    } finally { setLoading(false); }
+    } catch { setFMessages(prev => [...prev, { role: 'assistant', content: 'حدث خطأ، حاول مرة أخرى.' }]); }
+    finally { setLoading(false); }
   }, [fMessages, fSession]);
 
   const handleSend = (e) => {
@@ -115,55 +240,42 @@ export default function UnifiedBotWidget() {
     else if (tab === 'auditor') sendAuditor(input);
   };
 
-  // ─── إنشاء قيد/عملية ───────────────────────────────────────────────────
+  // ─── الإنشاء الذكي ───────────────────────────────────────────────────────
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (!isBalanced) { setCreateResult({ ok: false, msg: 'القيد غير متوازن أو البيانات ناقصة' }); return; }
     setLoading(true); setCreateResult(null);
     try {
-      if (createMode === 'journal') {
-        const amt = parseFloat(createForm.amount);
-        if (!amt || !createForm.debit_account || !createForm.credit_account) {
-          setCreateResult({ ok: false, msg: 'يرجى إدخال الحساب المدين والدائن والمبلغ' });
-          return;
-        }
-        const payload = {
-          workshop_id: WID,
-          date: createForm.date,
-          description: createForm.description || 'قيد يدوي',
-          lines: [
-            { account: createForm.debit_account.trim(),  account_name: createForm.debit_account.trim(),  debit: amt, credit: 0 },
-            { account: createForm.credit_account.trim(), account_name: createForm.credit_account.trim(), debit: 0, credit: amt },
-          ],
-          total: amt,
-          source: 'manual_bot',
-        };
-        await axios.post(`${API}/api/finance/journal-entries?workshop_id=${WID}`, payload);
-        setCreateResult({ ok: true, msg: `✅ تم إنشاء القيد: ${createForm.description || 'قيد يدوي'} — ${amt.toLocaleString('ar-SA')} ر.س` });
-        setCreateForm(prev => ({ ...prev, description: '', amount: '' }));
-      } else {
-        const tot = parseFloat(createForm.total);
-        if (!tot || !createForm.partner_name) {
-          setCreateResult({ ok: false, msg: 'يرجى إدخال اسم الشريك والإجمالي' });
-          return;
-        }
-        const payload = {
+      const amt = parseFloat(amount);
+      const pm  = currentTemplate?.forcePayment || paymentMethod;
+
+      // إنشاء القيد المحاسبي
+      await axios.post(`${API}/api/finance/journal-entries?workshop_id=${WID}`, {
+        workshop_id: WID,
+        date,
+        description: description || currentTemplate?.desc || 'قيد يدوي',
+        lines: previewLines.map(l => ({ account: l.account, account_name: l.name, debit: l.debit, credit: l.credit })),
+        total: amt,
+        source: 'smart_bot',
+      });
+
+      // إذا كانت عملية بيع/شراء → إنشاء عملية أيضاً
+      if (currentTemplate && currentTemplate.opType !== 'expense' && partnerName) {
+        await axios.post(`${API}/api/operations`, {
           workshopId: WID, workshop_id: WID,
-          type: createForm.type,
-          paymentMethod: createForm.payment_method,
-          paymentStatus: 'paid',
-          partnerType: createForm.type === 'purchase' ? 'supplier' : 'customer',
-          partnerName: createForm.partner_name,
-          scope: 'workshop',
-          date: createForm.date,
-          total: tot, subtotal: tot,
-          items: [{ name: createForm.description || createForm.type, itemType: 'service', qty: 1, price: tot, total: tot }],
-        };
-        const r = await axios.post(`${API}/api/operations`, payload);
-        setCreateResult({ ok: true, msg: `✅ تم إنشاء العملية (${r.data?.id?.slice(0,8)})` });
-        setCreateForm(prev => ({ ...prev, description: '', total: '', partner_name: '' }));
+          type: currentTemplate.opType,
+          paymentMethod: pm,
+          paymentStatus: pm === 'credit' ? 'credit' : 'paid',
+          partnerName, partnerType: currentTemplate.opType === 'purchase' ? 'supplier' : 'customer',
+          scope: 'workshop', date, total: amt, subtotal: amt,
+          items: [{ name: description || currentTemplate.label, itemType: 'service', qty: 1, price: amt, total: amt }],
+        });
       }
+
+      setCreateResult({ ok: true, msg: `✅ تم إنشاء القيد بنجاح (${previewLines.map(l=>l.name).join(' / ')}) — ${amt.toLocaleString('ar-SA')} ر.س` });
+      setAmount(''); setDescription(''); setPartnerName('');
     } catch (err) {
-      setCreateResult({ ok: false, msg: err?.response?.data?.detail || 'حدث خطأ أثناء الإنشاء' });
+      setCreateResult({ ok: false, msg: err?.response?.data?.detail || 'فشل الإنشاء' });
     } finally { setLoading(false); }
   };
 
@@ -171,11 +283,8 @@ export default function UnifiedBotWidget() {
 
   return (
     <>
-      {/* ─── زر البوت ───────────────────────────────────────────────────── */}
-      <div
-        className="fixed z-[75] left-4 bottom-20 lg:bottom-6 lg:left-auto lg:right-6"
-        data-testid="unified-bot-trigger"
-      >
+      {/* ─── زر البوت ─────────────────────────────────────────────────── */}
+      <div className="fixed z-[75] left-4 bottom-20 lg:bottom-6 lg:left-auto lg:right-6" data-testid="unified-bot-trigger">
         <button
           type="button"
           onClick={() => setOpen(v => !v)}
@@ -187,34 +296,31 @@ export default function UnifiedBotWidget() {
           data-testid="unified-bot-button"
         >
           {open ? <X size={20} className="text-white" /> : <Bot size={20} className="text-white" />}
-          {/* نقطة خضراء */}
           {!open && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-green-400 border border-slate-900 animate-pulse" />}
         </button>
       </div>
 
-      {/* ─── نافذة البوت ────────────────────────────────────────────────── */}
+      {/* ─── نافذة البوت ──────────────────────────────────────────────── */}
       {open && (
         <div
-          className="fixed z-[74] left-4 bottom-36 lg:bottom-20 lg:left-auto lg:right-6 w-[92vw] max-w-[400px] rounded-2xl shadow-2xl border border-slate-700/60 overflow-hidden flex flex-col"
-          style={{ height: '520px', background: 'rgba(2,6,23,0.97)', backdropFilter: 'blur(20px)' }}
+          className="fixed z-[74] left-4 bottom-36 lg:bottom-20 lg:left-auto lg:right-6 w-[92vw] max-w-[420px] rounded-2xl shadow-2xl border border-slate-700/60 overflow-hidden flex flex-col"
+          style={{ height: '580px', background: 'rgba(2,6,23,0.97)', backdropFilter: 'blur(20px)' }}
           data-testid="unified-bot-panel"
         >
-          {/* رأس البوت */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/60 flex-shrink-0"
+          {/* رأس */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800/60 flex-shrink-0"
             style={{ background: 'rgba(15,23,42,0.9)' }}>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+              <div className="w-7 h-7 rounded-xl flex items-center justify-center"
                 style={{ background: 'linear-gradient(135deg,#0ea5e9,#6366f1)' }}>
-                <Bot size={16} className="text-white" />
+                <Bot size={14} className="text-white" />
               </div>
               <div>
                 <div className="text-xs font-bold text-slate-100">المساعد الموحد</div>
-                <div className="text-[10px] text-green-400">متصل</div>
+                <div className="text-[10px] text-green-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />متصل</div>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-white/8 text-slate-400">
-              <X size={15} />
-            </button>
+            <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-white/8 text-slate-400"><X size={14} /></button>
           </div>
 
           {/* تبويبات */}
@@ -222,48 +328,37 @@ export default function UnifiedBotWidget() {
             {TABS.map(t => {
               const Icon = t.icon;
               return (
-                <button key={t.id} onClick={() => { setTab(t.id); setInput(''); }}
+                <button key={t.id} onClick={() => { setTab(t.id); setInput(''); setCreateResult(null); }}
                   className={`flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors ${
-                    tab === t.id ? 'border-b-2 border-sky-500 text-sky-300' : 'text-slate-500 hover:text-slate-300'
-                  }`}
-                  data-testid={`bot-tab-${t.id}`}
-                >
-                  <Icon size={13} />
-                  {t.label}
+                    tab === t.id ? 'border-b-2 border-sky-500 text-sky-300 bg-sky-500/5' : 'text-slate-500 hover:text-slate-300'}`}
+                  data-testid={`bot-tab-${t.id}`}>
+                  <Icon size={12} />{t.label}
+                  {t.id === 'create' && <span className="w-1.5 h-1.5 rounded-full bg-green-400 ml-0.5" />}
                 </button>
               );
             })}
           </div>
 
-          {/* محتوى التبويب */}
+          {/* ─── محتوى ──────────────────────────────────────────────────── */}
           {tab !== 'create' ? (
             <>
-              {/* رسائل */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin scrollbar-thumb-slate-800">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {messages.map((m, i) => (
-                  <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    data-testid={`bot-message-${i}`}>
-                    <div
-                      className="max-w-[85%] rounded-xl px-3 py-2 text-[11px] leading-relaxed"
+                  <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className="max-w-[88%] rounded-xl px-3 py-2 text-[11px] leading-relaxed"
                       style={m.role === 'user'
-                        ? { background: 'rgba(14,165,233,0.2)', color: 'rgba(186,230,253,0.95)', borderRadius: '14px 14px 4px 14px' }
-                        : { background: 'rgba(30,41,59,0.8)', color: 'rgba(226,232,240,0.92)', borderRadius: '14px 14px 14px 4px' }
-                      }
-                    >
+                        ? { background: 'rgba(14,165,233,0.2)', color: 'rgba(186,230,253,0.95)', borderRadius:'14px 14px 4px 14px' }
+                        : { background: 'rgba(30,41,59,0.8)', color: 'rgba(226,232,240,0.92)', borderRadius:'14px 14px 14px 4px' }}>
                       {m.content}
-                      {/* تناقضات المدقق */}
                       {m.contradictions?.length > 0 && (
-                        <div className="mt-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 p-1.5 text-[10px] text-amber-300">
-                          {m.contradictions[0].description?.slice(0, 80)}
+                        <div className="mt-1.5 rounded bg-amber-500/10 border border-amber-500/30 p-1.5 text-[10px] text-amber-300">
+                          ⚠️ {m.contradictions[0].description?.slice(0, 70)}
                         </div>
                       )}
-                      {/* حالة المدقق */}
                       {m.state && (
                         <span className={`mt-1 inline-block rounded-full text-[9px] px-1.5 py-0.5 ${
-                          m.state === 'escalated' ? 'bg-red-500/20 text-red-300' :
-                          m.state === 'resolved'  ? 'bg-green-500/20 text-green-300' :
-                          'bg-sky-500/20 text-sky-300'}`}>
-                          {m.state === 'escalated' ? 'مصعّدة' : m.state === 'resolved' ? 'محلولة' : 'قيد التحقيق'}
+                          m.state==='escalated'?'bg-red-500/20 text-red-300':m.state==='resolved'?'bg-green-500/20 text-green-300':'bg-sky-500/20 text-sky-300'}`}>
+                          {m.state==='escalated'?'مصعّدة':m.state==='resolved'?'محلولة':'قيد التحقيق'}
                         </span>
                       )}
                     </div>
@@ -271,140 +366,186 @@ export default function UnifiedBotWidget() {
                 ))}
                 {loading && (
                   <div className="flex justify-start">
-                    <div className="rounded-xl px-3 py-2 bg-slate-800/80">
-                      <Loader size={14} className="text-sky-400 animate-spin" />
+                    <div className="rounded-xl px-3 py-2 bg-slate-800/80 flex items-center gap-1.5">
+                      <Loader size={12} className="text-sky-400 animate-spin" />
+                      <span className="text-[10px] text-slate-400">جارٍ التفكير...</span>
                     </div>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
               </div>
-
-              {/* صندوق الإدخال */}
               <form onSubmit={handleSend} className="flex gap-2 p-3 border-t border-slate-800/60 flex-shrink-0">
-                <input
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  placeholder={tab === 'auditor' ? 'مثال: أنشئ قيد، أو راجع الميزان...' : 'اسأل عن أي شيء...'}
-                  className="flex-1 rounded-xl px-3 py-2 text-[12px] text-slate-100 outline-none"
+                <input value={input} onChange={e => setInput(e.target.value)}
+                  placeholder={tab==='auditor' ? '"أنشئ قيد" أو راجع الحسابات...' : 'اسأل عن أي شيء...'}
+                  className="flex-1 rounded-xl px-3 py-2 text-[11px] text-slate-100 outline-none"
                   style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }}
-                  disabled={loading}
-                  data-testid="bot-input"
-                />
+                  disabled={loading} data-testid="bot-input" />
                 <button type="submit" disabled={loading || !input.trim()}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center transition-all disabled:opacity-40"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center disabled:opacity-40"
                   style={{ background: 'rgba(14,165,233,0.25)', border: '1px solid rgba(14,165,233,0.4)' }}>
-                  <Send size={14} className="text-sky-300" />
+                  <Send size={13} className="text-sky-300" />
                 </button>
               </form>
             </>
           ) : (
-            /* ─── تبويب الإنشاء ─────────────────────────────────────── */
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
-              {/* اختيار النوع */}
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { v: 'journal',   label: 'قيد يومية',  icon: FileText },
-                  { v: 'operation', label: 'عملية',      icon: Wrench   },
-                ].map(({ v, label, icon: Icon }) => (
-                  <button key={v} onClick={() => { setCreateMode(v); setCreateResult(null); }}
-                    className={`flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold border transition-all ${
-                      createMode === v
-                        ? 'border-sky-500/60 bg-sky-500/15 text-sky-300'
-                        : 'border-slate-700 bg-slate-800/40 text-slate-400 hover:text-slate-200'
-                    }`}
-                    data-testid={`create-mode-${v}`}
-                  >
-                    <Icon size={14} />{label}
+            /* ─── تبويب الإنشاء الذكي ──────────────────────────────── */
+            <div className="flex-1 overflow-y-auto">
+              {/* وضع: ذكي أو يدوي */}
+              <div className="flex gap-1.5 p-3 pb-0">
+                {[['smart','ذكي ✨'],['manual','يدوي']].map(([v,l]) => (
+                  <button key={v} onClick={() => { setCreateMode(v); setSelectedTemplate(null); setCreateResult(null); }}
+                    className={`flex-1 text-[11px] py-1.5 rounded-lg border transition-colors font-medium ${
+                      createMode===v ? 'border-sky-500/60 bg-sky-500/15 text-sky-300' : 'border-slate-700 text-slate-500 hover:text-slate-300'}`}
+                    data-testid={`create-mode-${v}`}>{l}
                   </button>
                 ))}
               </div>
 
-              <form onSubmit={handleCreate} className="space-y-2.5">
-                {/* حقول مشتركة */}
-                <div>
-                  <label className="text-[10px] text-slate-400 mb-0.5 block">التاريخ</label>
-                  <input type="date" value={createForm.date}
-                    onChange={e => setCreateForm(p => ({ ...p, date: e.target.value }))}
-                    className="w-full rounded-lg px-2.5 py-1.5 text-xs text-slate-100"
-                    style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-400 mb-0.5 block">
-                    {createMode === 'journal' ? 'الوصف' : 'اسم العميل / المورد'}
-                  </label>
-                  <input value={createMode === 'journal' ? createForm.description : createForm.partner_name}
-                    onChange={e => setCreateForm(p => createMode === 'journal'
-                      ? { ...p, description: e.target.value } : { ...p, partner_name: e.target.value })}
-                    placeholder={createMode === 'journal' ? 'مثال: فطور عمال' : 'مثال: أحمد العتيبي'}
-                    className="w-full rounded-lg px-2.5 py-1.5 text-xs text-slate-100"
-                    style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
-                </div>
-
-                {createMode === 'journal' ? (
+              <form onSubmit={handleCreate} className="p-3 space-y-3">
+                {createMode === 'smart' ? (
                   <>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] text-slate-400 mb-0.5 block">حساب المدين</label>
-                        <input value={createForm.debit_account}
-                          onChange={e => setCreateForm(p => ({ ...p, debit_account: e.target.value }))}
-                          placeholder="مثال: 036"
-                          className="w-full rounded-lg px-2.5 py-1.5 text-xs text-slate-100"
-                          style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-slate-400 mb-0.5 block">حساب الدائن</label>
-                        <input value={createForm.credit_account}
-                          onChange={e => setCreateForm(p => ({ ...p, credit_account: e.target.value }))}
-                          placeholder="مثال: 004"
-                          className="w-full rounded-lg px-2.5 py-1.5 text-xs text-slate-100"
-                          style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
+                    {/* نماذج سريعة */}
+                    <div>
+                      <label className="text-[10px] text-slate-400 mb-1.5 block">نوع العملية</label>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {SMART_TEMPLATES.map(t => {
+                          const Icon = t.icon;
+                          return (
+                            <button key={t.id} type="button"
+                              onClick={() => { setSelectedTemplate(t.id); setCreateResult(null); if (t.forcePayment) setPaymentMethod(t.forcePayment); }}
+                              className={`rounded-xl p-2 flex flex-col items-center gap-1 border text-[10px] transition-all ${
+                                selectedTemplate === t.id
+                                  ? 'border-opacity-60 font-semibold'
+                                  : 'border-slate-700/60 bg-slate-800/30 text-slate-400 hover:text-slate-200'
+                              }`}
+                              style={selectedTemplate === t.id ? { borderColor: t.color, background: `${t.color}15`, color: t.color } : {}}
+                              data-testid={`template-${t.id}`}>
+                              <Icon size={14} />
+                              <span>{t.label}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
+
+                    {/* وسيلة السداد */}
+                    {selectedTemplate && !currentTemplate?.forcePayment && (
+                      <div>
+                        <label className="text-[10px] text-slate-400 mb-1 block">وسيلة السداد</label>
+                        <div className="flex gap-1.5">
+                          {PAYMENT_METHODS.map(pm => (
+                            <button key={pm.v} type="button" onClick={() => setPaymentMethod(pm.v)}
+                              className={`flex-1 py-1.5 rounded-lg border text-[10px] font-medium transition-colors ${
+                                paymentMethod===pm.v ? 'border-sky-500/60 bg-sky-500/15 text-sky-300' : 'border-slate-700 text-slate-500'}`}
+                              data-testid={`pm-${pm.v}`}>
+                              {pm.l}
+                              <div className="text-[9px] opacity-60">{pm.acc}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* الوصف */}
                     <div>
-                      <label className="text-[10px] text-slate-400 mb-0.5 block">المبلغ (ر.س)</label>
-                      <input type="number" min="0" step="0.01" value={createForm.amount}
-                        onChange={e => setCreateForm(p => ({ ...p, amount: e.target.value }))}
-                        placeholder="0.00"
-                        className="w-full rounded-lg px-2.5 py-1.5 text-xs text-slate-100"
+                      <label className="text-[10px] text-slate-400 mb-1 block">الوصف (اختياري — يُعرَّف النموذج تلقائياً)</label>
+                      <input value={description} onChange={e => setDescription(e.target.value)}
+                        placeholder="مثال: صيانة فرامل، فطور عمال، شراء زيت..."
+                        className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
+                        style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
+                    </div>
+
+                    {/* اسم الشريك */}
+                    <div>
+                      <label className="text-[10px] text-slate-400 mb-1 block">
+                        {currentTemplate?.opType === 'purchase' ? 'اسم المورد' : 'اسم العميل'} (اختياري — لإنشاء عملية أيضاً)
+                      </label>
+                      <input value={partnerName} onChange={e => setPartnerName(e.target.value)}
+                        placeholder="اترك فارغاً لقيد فقط"
+                        className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
                         style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
                     </div>
                   </>
                 ) : (
+                  /* ─── وضع يدوي ──────────────────────────────────────── */
                   <>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[10px] text-slate-400 mb-0.5 block">نوع العملية</label>
-                        <select value={createForm.type}
-                          onChange={e => setCreateForm(p => ({ ...p, type: e.target.value }))}
-                          className="w-full rounded-lg px-2 py-1.5 text-xs text-slate-100"
-                          style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }}>
-                          <option value="sale">بيع / خدمة</option>
-                          <option value="purchase">شراء</option>
-                          <option value="expense">مصروف</option>
-                        </select>
+                        <label className="text-[10px] text-slate-400 mb-1 block">حساب المدين</label>
+                        <input value={customDebit} onChange={e => setCustomDebit(e.target.value)}
+                          placeholder="مثال: 036"
+                          className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
+                          style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
+                        {customDebit && <div className="text-[9px] text-sky-400 mt-0.5">{ACCOUNTS[customDebit] || '—'}</div>}
                       </div>
                       <div>
-                        <label className="text-[10px] text-slate-400 mb-0.5 block">وسيلة السداد</label>
-                        <select value={createForm.payment_method}
-                          onChange={e => setCreateForm(p => ({ ...p, payment_method: e.target.value }))}
-                          className="w-full rounded-lg px-2 py-1.5 text-xs text-slate-100"
-                          style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }}>
-                          <option value="bank">بنك</option>
-                          <option value="cash">نقد</option>
-                          <option value="pos">نقاط بيع</option>
-                          <option value="credit">آجل</option>
-                        </select>
+                        <label className="text-[10px] text-slate-400 mb-1 block">حساب الدائن</label>
+                        <input value={customCredit} onChange={e => setCustomCredit(e.target.value)}
+                          placeholder="مثال: 004"
+                          className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
+                          style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
+                        {customCredit && <div className="text-[9px] text-sky-400 mt-0.5">{ACCOUNTS[customCredit] || '—'}</div>}
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-400 mb-0.5 block">الإجمالي (ر.س)</label>
-                      <input type="number" min="0" step="0.01" value={createForm.total}
-                        onChange={e => setCreateForm(p => ({ ...p, total: e.target.value }))}
-                        placeholder="0.00"
-                        className="w-full rounded-lg px-2.5 py-1.5 text-xs text-slate-100"
+                      <label className="text-[10px] text-slate-400 mb-1 block">الوصف</label>
+                      <input value={description} onChange={e => setDescription(e.target.value)}
+                        placeholder="وصف القيد..."
+                        className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
                         style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
                     </div>
                   </>
+                )}
+
+                {/* التاريخ + المبلغ */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] text-slate-400 mb-1 block">التاريخ</label>
+                    <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                      className="w-full rounded-lg px-2 py-1.5 text-[11px] text-slate-100"
+                      style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-400 mb-1 block">المبلغ (ر.س)</label>
+                    <input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
+                      style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }}
+                      data-testid="create-amount-input" />
+                  </div>
+                </div>
+
+                {/* أزرار مبالغ سريعة */}
+                <div className="flex gap-1.5 flex-wrap">
+                  {QUICK_AMOUNTS.map(a => (
+                    <button key={a} type="button" onClick={() => setAmount(String(a))}
+                      className={`px-2 py-1 rounded-lg text-[10px] border transition-colors ${
+                        amount===String(a) ? 'border-sky-500/60 bg-sky-500/15 text-sky-300' : 'border-slate-700 text-slate-500 hover:text-slate-300'}`}>
+                      {a}
+                    </button>
+                  ))}
+                </div>
+
+                {/* معاينة القيد */}
+                {previewLines.length > 0 && (
+                  <div className={`rounded-xl border p-2.5 ${isBalanced ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/5'}`}
+                    data-testid="journal-preview">
+                    <div className="flex items-center gap-1.5 mb-1.5 text-[10px] font-semibold">
+                      {isBalanced ? <CheckCircle size={12} className="text-green-400" /> : <AlertCircle size={12} className="text-red-400" />}
+                      <span className={isBalanced ? 'text-green-300' : 'text-red-300'}>
+                        {isBalanced ? 'قيد متوازن ✓' : 'قيد غير متوازن'}
+                      </span>
+                    </div>
+                    {previewLines.map((l, i) => (
+                      <div key={i} className="flex justify-between items-center text-[10px] py-0.5">
+                        <span className="text-slate-300">[{l.account}] {l.name}</span>
+                        <div className="flex gap-3">
+                          {l.debit  > 0 && <span className="text-red-300">د {l.debit.toLocaleString('ar-SA')}</span>}
+                          {l.credit > 0 && <span className="text-green-300">ء {l.credit.toLocaleString('ar-SA')}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
 
                 {createResult && (
@@ -413,13 +554,29 @@ export default function UnifiedBotWidget() {
                   }`} data-testid="create-result">{createResult.msg}</div>
                 )}
 
-                <button type="submit" disabled={loading}
-                  className="w-full rounded-xl py-2.5 text-xs font-bold text-white transition-all disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg,#0ea5e9,#6366f1)' }}
+                <button type="submit" disabled={loading || !isBalanced}
+                  className="w-full rounded-xl py-2.5 text-xs font-bold text-white transition-all disabled:opacity-40"
+                  style={{ background: isBalanced ? 'linear-gradient(135deg,#0ea5e9,#6366f1)' : 'rgba(71,85,105,0.5)' }}
                   data-testid="create-submit-btn">
                   {loading ? <Loader size={14} className="animate-spin mx-auto" /> :
-                    createMode === 'journal' ? 'إنشاء القيد' : 'إنشاء العملية'}
+                    partnerName ? 'إنشاء القيد + العملية' : 'إنشاء القيد'}
                 </button>
+
+                {/* مقترحات */}
+                <div className="rounded-xl border border-dashed border-slate-700 p-2.5 text-[10px] text-slate-500 space-y-1">
+                  <div className="font-semibold text-slate-400 mb-1">💡 اقتراحات سريعة:</div>
+                  {[
+                    ['بيع خدمة بنك', () => { setSelectedTemplate('service_sale'); setPaymentMethod('bank'); }],
+                    ['مصروف نقدي', () => { setSelectedTemplate('expense'); setPaymentMethod('cash'); }],
+                    ['رواتب عمال', () => { setSelectedTemplate('salary'); setPaymentMethod('bank'); }],
+                    ['مشتريات آجل', () => { setSelectedTemplate('purchase'); setPaymentMethod('credit'); }],
+                  ].map(([l, fn]) => (
+                    <button key={l} type="button" onClick={fn}
+                      className="w-full text-right py-1 px-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-sky-300 transition-colors">
+                      → {l}
+                    </button>
+                  ))}
+                </div>
               </form>
             </div>
           )}

@@ -139,6 +139,7 @@ const TABS = [
   { id: 'assistant', label: 'المساعد', icon: MessageSquare },
   { id: 'auditor',   label: 'المدقق',  icon: ShieldCheck  },
   { id: 'create',    label: 'إنشاء',   icon: Zap          },
+  { id: 'quick',     label: 'فوري',    icon: DollarSign   },
 ];
 
 const INIT_ASSISTANT = [{ role: 'assistant', content: 'مرحباً! أنا مساعد الورشة. اسألني عن أي شيء.' }];
@@ -184,6 +185,50 @@ export default function UnifiedBotWidget() {
 
   const messagesEndRef = useRef(null);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aMessages, fMessages, tab]);
+
+  // auditor: load real financial context on tab open
+  const [finContext, setFinContext] = useState(null);
+
+  useEffect(() => {
+    if (tab !== 'auditor' || finContext) return;
+    const load = async () => {
+      try {
+        const [isR, alertsR, rakanR] = await Promise.all([
+          axios.get(`${API}/api/finance/reports/income-statement`),
+          axios.get(`${API}/api/finance/alerts?workshop_id=${WID}`),
+          axios.get(`${API}/api/inventory/rakan-analytics?days=90`),
+        ]);
+        const totals = isR.data?.data?.totals || {};
+        const alerts = alertsR.data?.data?.alerts || [];
+        const rakan  = rakanR.data || {};
+        const ctx = {
+          revenue:  Number(totals.revenue  || 0),
+          expenses: Number(totals.expenses || 0),
+          net:      Number(totals.net_income || 0),
+          rakanRev: Number(rakan.revenue || 0),
+          alerts,
+        };
+        setFinContext(ctx);
+        // رسالة ترحيب مع بيانات فعلية
+        const alertSummary = alerts.length
+          ? `\n\n⚠️ تنبيهات نشطة: ${alerts.map(a => a.title).join('، ')}`
+          : '\n\n✅ لا توجد تنبيهات مالية حالياً.';
+        setFMessages([{
+          role: 'assistant',
+          content: `مرحباً! اطّلعت على بيانات النظام الآن:\n\n` +
+            `💰 إجمالي الإيرادات: ${ctx.revenue.toLocaleString('ar-SA')} ر.س\n` +
+            `📉 إجمالي المصروفات: ${ctx.expenses.toLocaleString('ar-SA')} ر.س\n` +
+            `📊 صافي الدخل: ${ctx.net.toLocaleString('ar-SA')} ر.س\n` +
+            `🔧 إيرادات راكان: ${ctx.rakanRev.toLocaleString('ar-SA')} ر.س` +
+            alertSummary +
+            `\n\nيمكنني مراجعة الحسابات أو كتابة "أنشئ قيد" للانتقال للإنشاء المباشر.`,
+        }]);
+      } catch {
+        // keep default message on error
+      }
+    };
+    load();
+  }, [tab]);
 
   // جلب المركبات عند فتح تبويب الإنشاء
   useEffect(() => {
@@ -271,8 +316,15 @@ export default function UnifiedBotWidget() {
         setFMessages(prev => [...prev, { role: 'assistant', content: '✅ انتقلت لتبويب الإنشاء — اختر نوع العملية.' }]);
         setLoading(false); return;
       }
+      // إضافة السياق المالي الفعلي مع الرسالة
+      const contextNote = finContext
+        ? `[بيانات النظام — الإيرادات: ${finContext.revenue.toLocaleString('ar-SA')} ر.س | المصروفات: ${finContext.expenses.toLocaleString('ar-SA')} ر.س | صافي: ${finContext.net.toLocaleString('ar-SA')} ر.س | راكان: ${finContext.rakanRev.toLocaleString('ar-SA')} ر.س]\n`
+        : '';
       const r = await axios.post(`${API}/api/finance-bot/chat`, {
-        message: text, session_id: fSession, workshop_id: WID, findings: [], action: null,
+        message: contextNote + text,
+        session_id: fSession, workshop_id: WID,
+        financial_data: finContext ? { totals: { revenue: finContext.revenue, expenses: finContext.expenses, net_income: finContext.net } } : {},
+        findings: [], action: null,
       });
       const data = r.data || {};
       setFMessages(prev => [...prev, {
@@ -282,12 +334,45 @@ export default function UnifiedBotWidget() {
       }]);
     } catch { setFMessages(prev => [...prev, { role: 'assistant', content: 'حدث خطأ، حاول مرة أخرى.' }]); }
     finally { setLoading(false); }
-  }, [fMessages, fSession]);
+  }, [fMessages, fSession, finContext]);
 
-  const handleSend = (e) => {
-    e?.preventDefault();
-    if (tab === 'assistant') sendAssistant(input);
-    else if (tab === 'auditor') sendAuditor(input);
+  // state عملية فورية
+  const [quickAmount, setQuickAmount]   = useState('');
+  const [quickPM, setQuickPM]           = useState('bank');
+  const [quickDesc, setQuickDesc]       = useState('');
+  const [quickResult, setQuickResult]   = useState(null);
+  const [quickLoading, setQuickLoading] = useState(false);
+
+  const handleQuickOp = async () => {
+    const amt = parseFloat(quickAmount);
+    if (!amt || amt <= 0) { setQuickResult({ ok: false, msg: 'أدخل مبلغاً صحيحاً' }); return; }
+    setQuickLoading(true); setQuickResult(null);
+    try {
+      const pm = PAYMENT_ACCOUNT[quickPM] || '004';
+      // قيد يومية فوري
+      await axios.post(`${API}/api/finance/journal-entries?workshop_id=${WID}`, {
+        workshop_id: WID, date: new Date().toISOString().split('T')[0],
+        description: quickDesc || 'عملية فورية',
+        lines: [
+          { account: pm, account_name: ACCOUNTS[pm] || pm, debit: amt, credit: 0 },
+          { account: '027', account_name: 'خدمات ميكانيكية', debit: 0, credit: amt },
+        ],
+        total: amt, source: 'quick_op',
+      });
+      // عملية أيضاً
+      await axios.post(`${API}/api/operations`, {
+        workshopId: WID, workshop_id: WID,
+        type: 'sale', paymentMethod: quickPM, paymentStatus: 'paid',
+        partnerName: quickDesc || 'عملية فورية', partnerType: 'customer',
+        scope: 'workshop', date: new Date().toISOString().split('T')[0],
+        total: amt, subtotal: amt,
+        items: [{ name: quickDesc || 'خدمة', itemType: 'service', qty: 1, price: amt, total: amt }],
+      });
+      setQuickResult({ ok: true, msg: `✅ ${amt.toLocaleString('ar-SA')} ر.س — سُجّلت قيداً وعملية` });
+      setQuickAmount(''); setQuickDesc('');
+    } catch (err) {
+      setQuickResult({ ok: false, msg: err?.response?.data?.detail || 'فشل الإنشاء' });
+    } finally { setQuickLoading(false); }
   };
 
   // ─── الإنشاء الذكي ───────────────────────────────────────────────────────
@@ -332,6 +417,12 @@ export default function UnifiedBotWidget() {
     } catch (err) {
       setCreateResult({ ok: false, msg: err?.response?.data?.detail || 'فشل الإنشاء' });
     } finally { setLoading(false); }
+  };
+
+  const handleSend = (e) => {
+    e?.preventDefault();
+    if (tab === 'assistant') sendAssistant(input);
+    else if (tab === 'auditor') sendAuditor(input);
   };
 
   const messages = tab === 'assistant' ? aMessages : fMessages;
@@ -442,6 +533,61 @@ export default function UnifiedBotWidget() {
                 </button>
               </form>
             </>
+          ) : tab === 'quick' ? (
+            /* ─── عملية فورية ──────────────────────────────────────── */
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="text-center pt-2">
+                <div className="w-12 h-12 rounded-2xl mx-auto mb-2 flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)' }}>
+                  <DollarSign size={22} className="text-white" />
+                </div>
+                <div className="text-sm font-bold text-white">عملية فورية</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">قيد + عملية بضغطة واحدة</div>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {PAYMENT_METHODS.map(pm => (
+                  <button key={pm.v} type="button" onClick={() => setQuickPM(pm.v)}
+                    className={`py-2 rounded-xl border text-[11px] font-medium transition-all ${quickPM===pm.v?'border-sky-500/60 bg-sky-500/20 text-sky-200':'border-slate-700 text-slate-400 hover:text-slate-200'}`}
+                    data-testid={`quick-pm-${pm.v}`}>
+                    <div>{pm.l}</div><div className="text-[9px] opacity-60">{pm.acc}</div>
+                  </button>
+                ))}
+              </div>
+              <input value={quickDesc} onChange={e => setQuickDesc(e.target.value)}
+                placeholder="الوصف (اختياري) — مثال: صيانة فرامل"
+                className="w-full rounded-xl px-3 py-2 text-sm text-slate-100"
+                style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }}
+                data-testid="quick-desc-input" />
+              <input type="number" min="0" step="0.01" value={quickAmount}
+                onChange={e => setQuickAmount(e.target.value)}
+                placeholder="0.00"
+                className="w-full rounded-xl px-3 py-4 text-2xl font-bold text-center text-white"
+                style={{ background: 'rgba(30,41,59,0.8)', border: '2px solid rgba(34,197,94,0.4)' }}
+                data-testid="quick-amount-input" />
+              <div className="grid grid-cols-5 gap-1.5">
+                {QUICK_AMOUNTS.map(a => (
+                  <button key={a} type="button" onClick={() => setQuickAmount(String(a))}
+                    className={`py-1.5 rounded-lg text-[11px] border transition-colors ${quickAmount===String(a)?'border-green-500/60 bg-green-500/15 text-green-300':'border-slate-700 text-slate-500 hover:text-slate-300'}`}>
+                    {a}
+                  </button>
+                ))}
+              </div>
+              {quickResult && (
+                <div className={`rounded-xl p-3 text-sm text-center font-medium ${quickResult.ok?'bg-green-500/10 border border-green-500/30 text-green-300':'bg-red-500/10 border border-red-500/30 text-red-300'}`}
+                  data-testid="quick-result">{quickResult.msg}</div>
+              )}
+              <button type="button" onClick={handleQuickOp} disabled={quickLoading || !quickAmount}
+                className="w-full rounded-2xl py-4 text-sm font-bold text-white transition-all disabled:opacity-40"
+                style={{ background: quickAmount&&!quickLoading?'linear-gradient(135deg,#22c55e,#16a34a)':'rgba(71,85,105,0.5)' }}
+                data-testid="quick-submit-btn">
+                {quickLoading ? <Loader size={18} className="animate-spin mx-auto" /> : (
+                  <span>⚡ تسجيل فوري{quickAmount&&` — ${Number(quickAmount).toLocaleString('ar-SA')} ر.س`}</span>
+                )}
+              </button>
+              <div className="text-[10px] text-slate-600 text-center">
+                يُنشئ: Dr {ACCOUNTS[PAYMENT_ACCOUNT[quickPM]]||'البنك'} / Cr إيرادات + عملية مباشرة
+              </div>
+            </div>
           ) : (
             /* ─── تبويب الإنشاء الذكي ──────────────────────────────── */
             <div className="flex-1 overflow-y-auto">

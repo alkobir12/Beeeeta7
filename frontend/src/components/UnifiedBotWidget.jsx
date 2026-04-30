@@ -134,7 +134,132 @@ const guessTemplate = (text) => {
   return null;
 };
 
-// ─── tabs ───────────────────────────────────────────────────────────────────
+// ─── محرك الأوامر الإدارية ─────────────────────────────────────────────────
+const ADMIN_PATTERNS = [
+  {
+    match: (t) => /الوضع العام|ملخص مالي|وضع الورشه|وضع الورشة|الوضع الراهن|كيف الوضع/.test(t),
+    label: 'الوضع العام',
+    handler: async (finCtx) => {
+      if (!finCtx) return null;
+      const margin = finCtx.revenue > 0 ? ((finCtx.net / finCtx.revenue) * 100).toFixed(1) : 0;
+      const status = finCtx.net > 0 ? '✅ الورشة تحقق ربحاً' : '⚠️ الورشة في منطقة خسارة';
+      return `${status}\n\n` +
+        `💰 الإيرادات: ${finCtx.revenue.toLocaleString('ar-SA')} ر.س\n` +
+        `📉 المصروفات: ${finCtx.expenses.toLocaleString('ar-SA')} ر.س\n` +
+        `📊 صافي الدخل: ${finCtx.net.toLocaleString('ar-SA')} ر.س\n` +
+        `📈 هامش الربح: ${margin}%\n` +
+        `🔧 إيرادات راكان: ${finCtx.rakanRev.toLocaleString('ar-SA')} ر.س\n\n` +
+        (finCtx.alerts.length ? `⚠️ تنبيهات: ${finCtx.alerts.map(a => a.title).join(' | ')}` : '✅ لا تنبيهات مالية');
+    },
+  },
+  {
+    match: (t) => /الذمم|ذمم|آجل|اجل|عملاء آجل|ديون عملاء|ماذا يدين|من يدين/.test(t),
+    label: 'الذمم المدينة',
+    handler: async () => {
+      const r = await axios.get(`${API}/api/finance/reports/trial-balance?workshop_id=${WID}`);
+      const accounts = r.data?.data?.accounts || [];
+      const AR_CODES = ['005', '1103', '113'];
+      const arAccounts = accounts.filter(a => AR_CODES.some(c => String(a.code||'').startsWith(c)));
+      const arTotal = arAccounts.reduce((s, a) => s + (Number(a.debit || 0) - Number(a.credit || 0)), 0);
+      const AP_CODES = ['2101', '211'];
+      const apAccounts = accounts.filter(a => AP_CODES.some(c => String(a.code||'').startsWith(c)));
+      const apTotal = apAccounts.reduce((s, a) => s + (Number(a.credit || 0) - Number(a.debit || 0)), 0);
+      return `📋 **الذمم الحالية:**\n\n` +
+        `👥 ذمم مدينة (عملاء آجل): **${Math.max(0, arTotal).toLocaleString('ar-SA')} ر.س**\n` +
+        `🏢 ذمم دائنة (مستحق للموردين): **${Math.max(0, apTotal).toLocaleString('ar-SA')} ر.س**\n\n` +
+        (arTotal > 0 ? `💡 يوجد ${Math.max(0, arTotal).toLocaleString('ar-SA')} ر.س لم يُحصَّل من العملاء بعد.` : '✅ لا ذمم مدينة مفتوحة.');
+    },
+  },
+  {
+    match: (t) => /العمليات الأخيرة|آخر عمليات|اخر عمليات|سجل العمليات/.test(t),
+    label: 'العمليات الأخيرة',
+    handler: async () => {
+      const r = await axios.get(`${API}/api/operations?limit=5`);
+      const ops = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.operations || [];
+      if (!ops.length) return 'لا توجد عمليات مسجلة.';
+      return `📑 **آخر 5 عمليات:**\n\n` +
+        ops.map(o => `• ${o.partnerName || '—'} | ${Number(o.total||0).toLocaleString('ar-SA')} ر.س | ${o.paymentMethod || '—'} | ${String(o.date||'').slice(0,10)}`).join('\n');
+    },
+  },
+  {
+    match: (t) => /إحصاء المركبات|المركبات الحالية|كم مركبة|عدد المركبات/.test(t),
+    label: 'إحصاء المركبات',
+    handler: async () => {
+      const r = await axios.get(`${API}/api/vehicles?limit=200`);
+      const all = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.vehicles || [];
+      const inProgress = all.filter(v => ['in_progress','open','new'].includes(v.status)).length;
+      const completed = all.filter(v => ['completed','delivered'].includes(v.status)).length;
+      return `🚗 **المركبات في النظام:**\n\n` +
+        `📊 الإجمالي: **${all.length}** مركبة\n` +
+        `🔧 قيد الصيانة: **${inProgress}**\n` +
+        `✅ مكتملة: **${completed}**`;
+    },
+  },
+  {
+    match: (t) => /قائمة الموردين|الموردون|أرني الموردين|ارني الموردين/.test(t),
+    label: 'قائمة الموردين',
+    handler: async () => {
+      const r = await axios.get(`${API}/api/suppliers`);
+      const sup = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.suppliers || [];
+      const real = sup.filter(s => !String(s.id).startsWith('acc-')).slice(0, 8);
+      return `🏢 **الموردون الرئيسيون (${real.length}):**\n\n` +
+        real.map(s => `• ${s.name}${s.phone ? ` — ${s.phone}` : ''}`).join('\n');
+    },
+  },
+  {
+    match: (t) => /عدد العملاء|قائمة العملاء|كم عميل/.test(t),
+    label: 'إحصاء العملاء',
+    handler: async () => {
+      const r = await axios.get(`${API}/api/customers?limit=200`);
+      const cust = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.customers || [];
+      return `👥 **العملاء:** ${cust.length} عميل مسجل في النظام.`;
+    },
+  },
+  {
+    match: (t) => /قائمة القيود|آخر قيود|اخر قيود|القيود الأخيرة/.test(t),
+    label: 'آخر القيود',
+    handler: async () => {
+      const r = await axios.get(`${API}/api/finance/journal-entries?workshop_id=${WID}&limit=5`);
+      const entries = Array.isArray(r.data) ? r.data : r.data?.entries || r.data?.data || [];
+      if (!entries.length) return 'لا توجد قيود.';
+      return `📒 **آخر 5 قيود:**\n\n` +
+        entries.map(e => `• ${String(e.date||'').slice(0,10)} | ${e.description?.slice(0,40)||'—'}`).join('\n');
+    },
+  },
+  {
+    match: (t) => /إحصائيات شاملة|لوحة التحكم|ملخص عام شامل/.test(t),
+    label: 'إحصائيات شاملة',
+    handler: async (finCtx) => {
+      const [opsR, custR, vehR] = await Promise.all([
+        axios.get(`${API}/api/operations?limit=200`),
+        axios.get(`${API}/api/customers?limit=200`),
+        axios.get(`${API}/api/vehicles?limit=200`),
+      ]);
+      const ops = Array.isArray(opsR.data) ? opsR.data : opsR.data?.data || opsR.data?.operations || [];
+      const cust = Array.isArray(custR.data) ? custR.data : custR.data?.data || custR.data?.customers || [];
+      const veh = Array.isArray(vehR.data) ? vehR.data : vehR.data?.data || vehR.data?.vehicles || [];
+      return `📊 **لوحة التحكم الشاملة:**\n\n` +
+        `💰 الإيرادات: ${finCtx?.revenue.toLocaleString('ar-SA')||'—'} ر.س\n` +
+        `📉 المصروفات: ${finCtx?.expenses.toLocaleString('ar-SA')||'—'} ر.س\n` +
+        `📈 صافي: ${finCtx?.net.toLocaleString('ar-SA')||'—'} ر.س\n\n` +
+        `🚗 المركبات: ${veh.length}\n` +
+        `👥 العملاء: ${cust.length}\n` +
+        `📑 العمليات: ${ops.length}\n` +
+        `⚠️ تنبيهات: ${finCtx?.alerts?.length||0}`;
+    },
+  },
+];
+
+async function runAdminCommand(text, finCtx) {
+  const t = text.trim();
+  const pattern = ADMIN_PATTERNS.find(p => p.match(t));
+  if (!pattern) return null;
+  try {
+    return await pattern.handler(finCtx);
+  } catch (e) {
+    return `تعذر جلب بيانات ${pattern.label}: ${e?.message || 'خطأ'}`;
+  }
+}
 const TABS = [
   { id: 'assistant', label: 'المساعد', icon: MessageSquare },
   { id: 'auditor',   label: 'المدقق',  icon: ShieldCheck  },
@@ -333,9 +458,16 @@ export default function UnifiedBotWidget() {
         setFMessages(prev => [...prev, { role: 'assistant', content: '✅ انتقلت لتبويب الإنشاء — اختر نوع العملية.' }]);
         setLoading(false); return;
       }
-      // إضافة السياق المالي الفعلي مع الرسالة
+      // ── أوامر إدارية مباشرة (بدون LLM) ──────────────────────────────────
+      const adminReply = await runAdminCommand(text, finContext);
+      if (adminReply) {
+        setFMessages(prev => [...prev, { role: 'assistant', content: adminReply }]);
+        setLoading(false); return;
+      }
+
+      // إضافة السياق المالي الفعلي مع الرسالة للـ LLM
       const contextNote = finContext
-        ? `[بيانات النظام — الإيرادات: ${finContext.revenue.toLocaleString('ar-SA')} ر.س | المصروفات: ${finContext.expenses.toLocaleString('ar-SA')} ر.س | صافي: ${finContext.net.toLocaleString('ar-SA')} ر.س | راكان: ${finContext.rakanRev.toLocaleString('ar-SA')} ر.س]\n`
+        ? `[بيانات مباشرة من النظام: إيرادات=${finContext.revenue.toLocaleString('ar-SA')} ر.س | مصروفات=${finContext.expenses.toLocaleString('ar-SA')} ر.س | صافي=${finContext.net.toLocaleString('ar-SA')} ر.س | راكان=${finContext.rakanRev.toLocaleString('ar-SA')} ر.س | تنبيهات=${finContext.alerts.map(a=>a.title).join(',')||'لا تنبيهات'}]\nالسؤال: `
         : '';
       const r = await axios.post(`${API}/api/finance-bot/chat`, {
         message: contextNote + text,
@@ -466,13 +598,23 @@ export default function UnifiedBotWidget() {
       {/* ─── نافذة البوت ──────────────────────────────────────────────── */}
       {open && (
         <div
-          className="fixed z-[74] left-4 bottom-36 lg:bottom-20 lg:left-auto lg:right-6 w-[92vw] max-w-[420px] rounded-2xl shadow-2xl border border-slate-700/60 overflow-hidden flex flex-col"
-          style={{ height: '580px', background: 'rgba(2,6,23,0.97)', backdropFilter: 'blur(20px)' }}
+          className="fixed z-[74] left-4 bottom-36 lg:bottom-20 lg:left-auto lg:right-6 w-[92vw] max-w-[420px] rounded-[28px] overflow-hidden flex flex-col"
+          style={{
+            height: '580px',
+            background: 'linear-gradient(145deg, rgba(6,10,30,0.98) 0%, rgba(2,6,23,0.98) 100%)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            border: '1px solid rgba(56,189,248,0.15)',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)',
+          }}
           data-testid="unified-bot-panel"
         >
           {/* رأس */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800/60 flex-shrink-0"
-            style={{ background: 'rgba(15,23,42,0.9)' }}>
+          <div className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+            style={{
+              background: 'linear-gradient(135deg, rgba(14,165,233,0.12) 0%, rgba(99,102,241,0.12) 100%)',
+              borderBottom: '1px solid rgba(56,189,248,0.12)',
+            }}>
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-xl flex items-center justify-center"
                 style={{ background: 'linear-gradient(135deg,#0ea5e9,#6366f1)' }}>
@@ -508,10 +650,21 @@ export default function UnifiedBotWidget() {
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
                 {messages.map((m, i) => (
                   <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className="max-w-[88%] rounded-xl px-3 py-2 text-[11px] leading-relaxed"
+                    <div className="max-w-[88%] px-3.5 py-2.5 text-[11px] leading-relaxed"
                       style={m.role === 'user'
-                        ? { background: 'rgba(14,165,233,0.2)', color: 'rgba(186,230,253,0.95)', borderRadius:'14px 14px 4px 14px' }
-                        : { background: 'rgba(30,41,59,0.8)', color: 'rgba(226,232,240,0.92)', borderRadius:'14px 14px 14px 4px' }}>
+                        ? {
+                            background: 'linear-gradient(135deg,rgba(14,165,233,0.22),rgba(99,102,241,0.18))',
+                            color: 'rgba(186,230,253,0.95)',
+                            borderRadius: '18px 18px 4px 18px',
+                            border: '1px solid rgba(56,189,248,0.2)',
+                          }
+                        : {
+                            background: 'rgba(255,255,255,0.05)',
+                            color: 'rgba(226,232,240,0.92)',
+                            borderRadius: '18px 18px 18px 4px',
+                            border: '1px solid rgba(255,255,255,0.07)',
+                          }
+                      }>
                       {m.content}
                       {m.contradictions?.length > 0 && (
                         <div className="mt-1.5 rounded bg-amber-500/10 border border-amber-500/30 p-1.5 text-[10px] text-amber-300">
@@ -667,7 +820,7 @@ export default function UnifiedBotWidget() {
                               style={{ background: 'rgba(15,23,42,0.99)' }}>
                               {servicesCatalog
                                 .filter(s => !itemSearch || s.name?.toLowerCase().includes(itemSearch.toLowerCase()))
-                                .slice(0, 20)
+                                .slice(0, 50)
                                 .map(s => (
                                   <button key={s.id} type="button"
                                     onClick={() => {
@@ -712,7 +865,7 @@ export default function UnifiedBotWidget() {
                               style={{ background: 'rgba(15,23,42,0.99)' }}>
                               {partsCatalog
                                 .filter(p => !itemSearch || p.name?.toLowerCase().includes(itemSearch.toLowerCase()))
-                                .slice(0, 20)
+                                .slice(0, 50)
                                 .map(p => (
                                   <button key={p.id} type="button"
                                     onClick={() => {

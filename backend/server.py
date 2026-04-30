@@ -3386,7 +3386,7 @@ async def chat_with_ai(chat_request: ChatRequest):
             api_key=llm_key,
             session_id=session_id,
             system_message="أنت مساعد ذكي لورشة سيارات.",
-        ).with_model("anthropic", "claude-sonnet-4.5-20250929")
+        ).with_model("anthropic", "claude-sonnet-4-5-20250929")
 
         response = await chat.send_message(UserMessage(text=chat_request.message))
         return ChatResponse(response=response, sessionId=session_id)

@@ -22,7 +22,25 @@ const ACCOUNTS = {
   '029': 'فرامل وتعليق','030': 'تكلفة الخدمات','035': 'المصروفات التشغيلية',
   '036': 'مصروفات عامة','037': 'رواتب','042': 'ايراد قطع الورشه',
   '2101': 'الموردون (آجل)', '211': 'فروقات ترحيل',
+  '043': 'قطع غيار راكان (شراء)', '044': 'قطع غيار راكان (بيع)',
+  '053': 'رسوم شحن راكان',
 };
+
+// حسابات خاصة تظهر في قائمة الاختيار
+const SPECIAL_ACCOUNTS = [
+  { code: '042', name: 'ايراد قطع الورشه', group: 'الورشة' },
+  { code: '027', name: 'إيرادات خدمات ميكانيكية', group: 'الورشة' },
+  { code: '028', name: 'إيرادات إصلاح محركات', group: 'الورشة' },
+  { code: '029', name: 'إيرادات فرامل وتعليق', group: 'الورشة' },
+  { code: '043', name: 'قطع غيار راكان (شراء)', group: 'راكان' },
+  { code: '044', name: 'قطع غيار راكان (بيع)', group: 'راكان' },
+  { code: '053', name: 'رسوم شحن راكان', group: 'راكان' },
+  { code: '035', name: 'المصروفات التشغيلية', group: 'مصروفات' },
+  { code: '036', name: 'مصروفات عامة وإدارية', group: 'مصروفات' },
+  { code: '037', name: 'رواتب', group: 'مصروفات' },
+  { code: '005', name: 'العملاء (ذمم مدينة)', group: 'حسابات' },
+  { code: '2101', name: 'الموردون (آجل)', group: 'حسابات' },
+];
 
 const PAYMENT_ACCOUNT = { bank: '004', cash: '003', pos: '006', credit: '005' };
 
@@ -157,8 +175,26 @@ export default function UnifiedBotWidget() {
   const [createResult, setCreateResult]          = useState(null);
   const [createMode, setCreateMode]              = useState('smart'); // 'smart' | 'manual'
 
+  // vehicle + account linking
+  const [vehicles, setVehicles]               = useState([]);
+  const [vehicleSearch, setVehicleSearch]     = useState('');
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [vehicleDropOpen, setVehicleDropOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null); // override credit account
+
   const messagesEndRef = useRef(null);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aMessages, fMessages, tab]);
+
+  // جلب المركبات عند فتح تبويب الإنشاء
+  useEffect(() => {
+    if (tab !== 'create' || vehicles.length) return;
+    axios.get(`${API}/api/vehicles?limit=200`)
+      .then(r => {
+        const list = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.vehicles || [];
+        setVehicles(list);
+      })
+      .catch(() => {});
+  }, [tab, vehicles.length]);
 
   // auto-detect template from description
   useEffect(() => {
@@ -180,8 +216,22 @@ export default function UnifiedBotWidget() {
     }
     if (!currentTemplate || !amount) return [];
     const pm = currentTemplate.forcePayment || paymentMethod;
-    return currentTemplate.getLines(pm, parseFloat(amount) || 0);
-  }, [currentTemplate, paymentMethod, amount, createMode, customDebit, customCredit]);
+    const lines = currentTemplate.getLines(pm, parseFloat(amount) || 0);
+    // إذا تم اختيار حساب خاص → نُبدّل سطر الدائن (الإيراد/المصروف)
+    if (selectedAccount) {
+      return lines.map((l, i) => {
+        // آخر سطر عادةً هو الدائن للإيراد أو المدين للمصروف
+        if (i === 1 && l.credit > 0) {
+          return { ...l, account: selectedAccount.code, name: selectedAccount.name };
+        }
+        if (i === 0 && l.debit > 0 && currentTemplate.opType !== 'sale') {
+          return { ...l, account: selectedAccount.code, name: selectedAccount.name };
+        }
+        return l;
+      });
+    }
+    return lines;
+  }, [currentTemplate, paymentMethod, amount, createMode, customDebit, customCredit, selectedAccount]);
 
   const isBalanced = useMemo(() => {
     const d = previewLines.reduce((s, l) => s + l.debit, 0);
@@ -266,8 +316,13 @@ export default function UnifiedBotWidget() {
           type: currentTemplate.opType,
           paymentMethod: pm,
           paymentStatus: pm === 'credit' ? 'credit' : 'paid',
-          partnerName, partnerType: currentTemplate.opType === 'purchase' ? 'supplier' : 'customer',
+          partnerName: partnerName || selectedVehicle?.customerName,
+          partnerType: currentTemplate.opType === 'purchase' ? 'supplier' : 'customer',
           scope: 'workshop', date, total: amt, subtotal: amt,
+          // ربط المركبة إذا تم اختيارها
+          ...(selectedVehicle && { vehicleId: selectedVehicle.id, vehicleInfo: `${selectedVehicle.plateNumber} - ${selectedVehicle.customerName}` }),
+          // الحساب المحاسبي المحدد
+          ...(selectedAccount && { accountingAccountCode: selectedAccount.code }),
           items: [{ name: description || currentTemplate.label, itemType: 'service', qty: 1, price: amt, total: amt }],
         });
       }
@@ -464,6 +519,92 @@ export default function UnifiedBotWidget() {
                         placeholder="اترك فارغاً لقيد فقط"
                         className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
                         style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
+                    </div>
+
+                    {/* ربط مركبة حالية */}
+                    <div>
+                      <label className="text-[10px] text-slate-400 mb-1 block">ربط مركبة (اختياري)</label>
+                      <div className="relative">
+                        <input
+                          value={selectedVehicle
+                            ? `${selectedVehicle.plateNumber} — ${selectedVehicle.customerName}`
+                            : vehicleSearch}
+                          onChange={e => { setVehicleSearch(e.target.value); setSelectedVehicle(null); setVehicleDropOpen(true); }}
+                          onFocus={() => setVehicleDropOpen(true)}
+                          placeholder="ابحث برقم اللوحة أو اسم العميل..."
+                          className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100 pr-7"
+                          style={{ background: 'rgba(30,41,59,0.8)', border: `1px solid ${selectedVehicle ? 'rgba(56,189,248,0.5)' : 'rgba(71,85,105,0.5)'}` }}
+                          data-testid="vehicle-search-input"
+                        />
+                        {selectedVehicle && (
+                          <button type="button" onClick={() => { setSelectedVehicle(null); setVehicleSearch(''); setPartnerName(''); }}
+                            className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+                            <X size={11} />
+                          </button>
+                        )}
+                        {vehicleDropOpen && !selectedVehicle && (
+                          <div className="absolute top-full left-0 right-0 mt-0.5 rounded-lg border border-slate-700 max-h-36 overflow-y-auto z-50"
+                            style={{ background: 'rgba(15,23,42,0.98)' }}>
+                            {vehicles
+                              .filter(v => {
+                                const q = vehicleSearch.toLowerCase();
+                                return !q || v.plateNumber?.toLowerCase().includes(q) || v.customerName?.toLowerCase().includes(q);
+                              })
+                              .slice(0, 15)
+                              .map(v => (
+                                <button key={v.id} type="button"
+                                  onClick={() => { setSelectedVehicle(v); setVehicleSearch(''); setVehicleDropOpen(false); setPartnerName(v.customerName || ''); }}
+                                  className="w-full text-right px-2.5 py-1.5 text-[11px] text-slate-200 hover:bg-sky-500/15 flex justify-between items-center"
+                                  data-testid={`vehicle-option-${v.id}`}>
+                                  <span className="text-slate-400 text-[10px]">{v.customerName}</span>
+                                  <span className="font-medium text-sky-300">{v.plateNumber}</span>
+                                </button>
+                              ))}
+                            {vehicles.filter(v => {
+                              const q = vehicleSearch.toLowerCase();
+                              return !q || v.plateNumber?.toLowerCase().includes(q) || v.customerName?.toLowerCase().includes(q);
+                            }).length === 0 && (
+                              <div className="px-2.5 py-2 text-[10px] text-slate-500">لا توجد نتائج</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {selectedVehicle && (
+                        <div className="mt-1 text-[10px] text-sky-400 flex items-center gap-1">
+                          ✓ مرتبط: {selectedVehicle.plateNumber} — {selectedVehicle.brand} {selectedVehicle.model}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* اختيار حساب خاص (override) */}
+                    <div>
+                      <label className="text-[10px] text-slate-400 mb-1 block">حساب خاص (اختياري — يُبدّل حساب الإيراد/المصروف)</label>
+                      <select
+                        value={selectedAccount?.code || ''}
+                        onChange={e => {
+                          const acc = SPECIAL_ACCOUNTS.find(a => a.code === e.target.value);
+                          setSelectedAccount(acc || null);
+                        }}
+                        className="w-full rounded-lg px-2 py-1.5 text-[11px] text-slate-100"
+                        style={{ background: 'rgba(30,41,59,0.8)', border: `1px solid ${selectedAccount ? 'rgba(167,139,250,0.5)' : 'rgba(71,85,105,0.5)'}` }}
+                        data-testid="special-account-select"
+                      >
+                        <option value="">الحساب الافتراضي من النموذج</option>
+                        {Object.entries(
+                          SPECIAL_ACCOUNTS.reduce((g, a) => ({ ...g, [a.group]: [...(g[a.group]||[]), a] }), {})
+                        ).map(([group, accs]) => (
+                          <optgroup key={group} label={group}>
+                            {accs.map(a => (
+                              <option key={a.code} value={a.code}>[{a.code}] {a.name}</option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                      {selectedAccount && (
+                        <div className="mt-1 text-[10px] text-violet-400 flex items-center gap-1">
+                          ✓ مُبدَّل إلى: [{selectedAccount.code}] {selectedAccount.name}
+                        </div>
+                      )}
                     </div>
                   </>
                 ) : (

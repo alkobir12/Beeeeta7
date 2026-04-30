@@ -88,7 +88,7 @@ const Sidebar = ({
         { path: '/accounting/comprehensive', label: `📊 ${t('nav.financial_statements')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/accounting/journal-entries', label: `📖 ${t('nav.journal')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/finance/taxes', label: t('nav.taxes'), enabled: true, permission: { module: 'reports', action: 'view' } },
-        { path: '/ai-financial', label: '🤖 المساعد الذكي الموحد', enabled: true, permission: { module: 'reports', action: 'view' } },
+        // المساعد الذكي متاح عبر البوت العائم — أُزيل من القائمة لتخفيف الموقع
         // تم دمج تدقيق النظام داخل صفحة التحليل، لذلك لا نعرض مدخل منفصل له في القائمة
         // { path: '/system-audit', label: i18n.language === 'ar' ? '🛡️ تدقيق النظام' : '🛡️ System Audit', enabled: true },
       ]

@@ -6,7 +6,7 @@
  */
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
-  Bot, X, MessageSquare, ShieldCheck, Plus, Send, Loader,
+  Bot, X, MessageSquare, Plus, Send, Loader,
   FileText, Wrench, Zap, CreditCard, ShoppingBag, DollarSign,
   Users, Package, TrendingUp, AlertCircle, CheckCircle, ChevronDown
 } from 'lucide-react';
@@ -278,7 +278,6 @@ async function runAdminCommand(text, finCtx) {
 }
 const TABS = [
   { id: 'assistant', label: 'المساعد', icon: MessageSquare },
-  { id: 'auditor',   label: 'المدقق',  icon: ShieldCheck  },
   { id: 'create',    label: 'إنشاء',   icon: Zap          },
   { id: 'quick',     label: 'فوري',    icon: DollarSign   },
 ];
@@ -319,6 +318,7 @@ export default function UnifiedBotWidget() {
 
   // vehicle + account linking
   const [vehicles, setVehicles]               = useState([]);
+  const [createDataLoaded, setCreateDataLoaded] = useState(false);
   const [vehicleSearch, setVehicleSearch]     = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [vehicleDropOpen, setVehicleDropOpen] = useState(false);
@@ -327,6 +327,7 @@ export default function UnifiedBotWidget() {
   // services + parts catalog
   const [servicesCatalog, setServicesCatalog] = useState([]);
   const [partsCatalog, setPartsCatalog]       = useState([]);
+  const [recentOps, setRecentOps]             = useState([]);
   const [itemSearch, setItemSearch]           = useState('');
   const [itemDropOpen, setItemDropOpen]       = useState(false);
 
@@ -337,7 +338,7 @@ export default function UnifiedBotWidget() {
   const [finContext, setFinContext] = useState(null);
 
   useEffect(() => {
-    if (tab !== 'auditor' || finContext) return;
+    if (tab !== 'quick' || finContext) return;
     const load = async () => {
       try {
         const [isR, alertsR, rakanR, tbR] = await Promise.all([
@@ -379,11 +380,11 @@ export default function UnifiedBotWidget() {
       }
     };
     load();
-  }, [tab]);
+  }, [tab, finContext]);
 
   // جلب المركبات عند فتح تبويب الإنشاء
   useEffect(() => {
-    if (tab !== 'create' || vehicles.length) return;
+    if (tab !== 'create' || createDataLoaded) return;
     axios.get(`${API}/api/vehicles?limit=200`)
       .then(r => {
         const list = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.vehicles || [];
@@ -401,7 +402,13 @@ export default function UnifiedBotWidget() {
         const list = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.parts || [];
         setPartsCatalog(list.filter(p => Number(p.quantity || 0) > 0));
       }).catch(() => {});
-  }, [tab, vehicles.length]);
+    axios.get(`${API}/api/operations?limit=120`)
+      .then(r => {
+        const list = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.operations || [];
+        setRecentOps(list);
+      }).catch(() => {});
+    setCreateDataLoaded(true);
+  }, [tab, createDataLoaded]);
 
   // auto-detect template from description
   useEffect(() => {
@@ -410,7 +417,34 @@ export default function UnifiedBotWidget() {
     if (guess && !selectedTemplate) setSelectedTemplate(guess);
   }, [description]);
 
+  useEffect(() => {
+    if (tab !== 'create' || recentOps.length > 0) return;
+    axios.get(`${API}/api/operations?limit=120`)
+      .then(r => {
+        const list = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.operations || [];
+        setRecentOps(list);
+      })
+      .catch(() => {});
+  }, [tab, recentOps.length]);
+
   const currentTemplate = useMemo(() => SMART_TEMPLATES.find(t => t.id === selectedTemplate), [selectedTemplate]);
+
+  const templateRecentMap = useMemo(() => {
+    const isPartsLike = (op) => /قطع|part/i.test(String(op?.notes || op?.description || '')) || String(op?.accountingAccountCode || '').trim() === '042';
+    const isSalaryLike = (op) => /راتب|رواتب|salary/i.test(String(op?.notes || op?.description || '')) || String(op?.accountingAccountCode || '').trim() === '037';
+    const rows = Array.isArray(recentOps) ? recentOps : [];
+
+    const pick = (fn) => rows.filter(fn).slice(0, 3);
+
+    return {
+      service_sale: pick(op => ['sale', 'service'].includes(String(op?.type || '').toLowerCase()) && !isPartsLike(op)),
+      parts_sale: pick(op => ['sale', 'service'].includes(String(op?.type || '').toLowerCase()) && isPartsLike(op)),
+      credit_sale: pick(op => ['sale', 'service'].includes(String(op?.type || '').toLowerCase()) && String(op?.paymentMethod || '').toLowerCase() === 'credit'),
+      purchase: pick(op => String(op?.type || '').toLowerCase() === 'purchase'),
+      expense: pick(op => ['expense', 'payment_order'].includes(String(op?.type || '').toLowerCase()) && !isSalaryLike(op)),
+      salary: pick(op => ['expense', 'payment_order'].includes(String(op?.type || '').toLowerCase()) && isSalaryLike(op)),
+    };
+  }, [recentOps]);
 
   const previewLines = useMemo(() => {
     if (createMode === 'manual') {
@@ -552,32 +586,54 @@ export default function UnifiedBotWidget() {
     try {
       const amt = parseFloat(amount);
       const pm  = currentTemplate?.forcePayment || paymentMethod;
+      const linkedPartnerName = (partnerName || selectedVehicle?.customerName || '').trim();
+
+      if (currentTemplate?.opType === 'sale' && !linkedPartnerName && !selectedVehicle) {
+        setCreateResult({ ok: false, msg: 'عملية البيع تتطلب عميلًا أو مركبة للربط.' });
+        setLoading(false);
+        return;
+      }
+
+      if (currentTemplate?.opType === 'purchase' && !linkedPartnerName) {
+        setCreateResult({ ok: false, msg: 'عملية الشراء تتطلب اسم المورد للربط.' });
+        setLoading(false);
+        return;
+      }
 
       // إنشاء القيد المحاسبي
       await axios.post(`${API}/api/finance/journal-entries?workshop_id=${WID}`, {
         workshop_id: WID,
         date,
-        description: description || currentTemplate?.desc || 'قيد يدوي',
+        description: `[BOT_CREATE:${currentTemplate?.id || 'manual'}] ${description || currentTemplate?.desc || 'قيد يدوي'}`,
         lines: previewLines.map(l => ({ account: l.account, account_name: l.name, debit: l.debit, credit: l.credit })),
         total: amt,
         source: 'smart_bot',
       });
 
-      // إذا كانت عملية بيع/شراء → إنشاء عملية أيضاً
-      if (currentTemplate && currentTemplate.opType !== 'expense' && partnerName) {
+      // إنشاء عملية أيضاً مع ربط متوافق مع الصفحات
+      if (currentTemplate) {
+        const botOriginalType = currentTemplate.id === 'salary' ? 'salary' : currentTemplate.id;
         await axios.post(`${API}/api/operations`, {
           workshopId: WID, workshop_id: WID,
           type: currentTemplate.opType,
+          originalType: botOriginalType,
           paymentMethod: pm,
           paymentStatus: pm === 'credit' ? 'credit' : 'paid',
-          partnerName: partnerName || selectedVehicle?.customerName,
+          partnerName: linkedPartnerName || (currentTemplate.opType === 'expense' ? 'مصروف عام' : ''),
           partnerType: currentTemplate.opType === 'purchase' ? 'supplier' : 'customer',
-          scope: 'workshop', date, total: amt, subtotal: amt,
+          scope: selectedVehicle ? 'vehicle' : 'workshop', date, total: amt, subtotal: amt,
           // ربط المركبة إذا تم اختيارها
           ...(selectedVehicle && { vehicleId: selectedVehicle.id, vehicleInfo: `${selectedVehicle.plateNumber} - ${selectedVehicle.customerName}` }),
           // الحساب المحاسبي المحدد
           ...(selectedAccount && { accountingAccountCode: selectedAccount.code }),
-          items: [{ name: description || currentTemplate.label, itemType: 'service', qty: 1, price: amt, total: amt }],
+          notes: `[BOT_TEMPLATE:${currentTemplate.id}] ${description || currentTemplate.desc || ''}`.trim(),
+          items: [{
+            name: description || currentTemplate.label,
+            itemType: currentTemplate.opType === 'purchase' ? 'supplier' : (currentTemplate.id === 'parts_sale' ? 'part' : 'service'),
+            qty: 1,
+            price: amt,
+            total: amt,
+          }],
         });
       }
 
@@ -591,7 +647,7 @@ export default function UnifiedBotWidget() {
   const handleSend = (e) => {
     e?.preventDefault();
     if (tab === 'assistant') sendAssistant(input);
-    else if (tab === 'auditor') sendAuditor(input);
+    else if (tab === 'quick') sendAuditor(input);
   };
 
   const messages = tab === 'assistant' ? aMessages : fMessages;
@@ -668,6 +724,45 @@ export default function UnifiedBotWidget() {
           {tab !== 'create' ? (
             <>
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {tab === 'quick' && (
+                  <div className="rounded-xl border border-slate-700/70 bg-slate-900/55 p-2.5 space-y-2" data-testid="quick-merged-panel">
+                    <div className="text-[10px] text-slate-300 font-semibold">فوري + تدقيق (مُدمج)</div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {PAYMENT_METHODS.map(pm => (
+                        <button key={pm.v} type="button" onClick={() => setQuickPM(pm.v)}
+                          className={`py-1.5 rounded-lg border text-[10px] ${quickPM===pm.v?'border-sky-500/60 bg-sky-500/20 text-sky-200':'border-slate-700 text-slate-500 hover:text-slate-200'}`}
+                          data-testid={`quick-merged-pm-${pm.v}`}>
+                          {pm.l}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <input value={quickDesc} onChange={e => setQuickDesc(e.target.value)}
+                        placeholder="وصف فوري (اختياري)"
+                        className="w-full rounded-lg px-2 py-1.5 text-[10px] text-slate-100"
+                        style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }}
+                        data-testid="quick-merged-desc" />
+                      <input type="number" min="0" step="0.01" value={quickAmount}
+                        onChange={e => setQuickAmount(e.target.value)}
+                        placeholder="المبلغ"
+                        className="w-full rounded-lg px-2 py-1.5 text-[10px] text-slate-100"
+                        style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(34,197,94,0.45)' }}
+                        data-testid="quick-merged-amount" />
+                    </div>
+                    <button type="button" onClick={handleQuickOp} disabled={quickLoading || !quickAmount}
+                      className="w-full rounded-lg py-1.5 text-[11px] font-semibold text-white disabled:opacity-40"
+                      style={{ background: quickAmount&&!quickLoading?'linear-gradient(135deg,#22c55e,#16a34a)':'rgba(71,85,105,0.5)' }}
+                      data-testid="quick-merged-submit">
+                      {quickLoading ? 'جارٍ التسجيل...' : '⚡ تسجيل فوري الآن'}
+                    </button>
+                    {quickResult && (
+                      <div className={`rounded-lg p-1.5 text-[10px] text-center ${quickResult.ok?'bg-green-500/10 border border-green-500/30 text-green-300':'bg-red-500/10 border border-red-500/30 text-red-300'}`}
+                        data-testid="quick-merged-result">
+                        {quickResult.msg}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {messages.map((m, i) => (
                   <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className="max-w-[88%] px-3.5 py-2.5 text-[11px] leading-relaxed"
@@ -712,7 +807,7 @@ export default function UnifiedBotWidget() {
               </div>
               <form onSubmit={handleSend} className="flex gap-2 p-3 border-t border-slate-800/60 flex-shrink-0">
                 <input value={input} onChange={e => setInput(e.target.value)}
-                  placeholder={tab==='auditor' ? '"أنشئ قيد" أو راجع الحسابات...' : 'اسأل عن أي شيء...'}
+                  placeholder={tab==='quick' ? '"أنشئ قيد" أو راجع الحسابات...' : 'اسأل عن أي شيء...'}
                   className="flex-1 rounded-xl px-3 py-2 text-[11px] text-slate-100 outline-none"
                   style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }}
                   disabled={loading} data-testid="bot-input" />
@@ -801,6 +896,7 @@ export default function UnifiedBotWidget() {
                       <div className="grid grid-cols-3 gap-1.5">
                         {SMART_TEMPLATES.map(t => {
                           const Icon = t.icon;
+                          const recentForTemplate = templateRecentMap[t.id] || [];
                           return (
                             <button key={t.id} type="button"
                               onClick={() => { setSelectedTemplate(t.id); setCreateResult(null); setItemSearch(''); setItemDropOpen(false); if (t.forcePayment) setPaymentMethod(t.forcePayment); }}
@@ -813,11 +909,43 @@ export default function UnifiedBotWidget() {
                               data-testid={`template-${t.id}`}>
                               <Icon size={14} />
                               <span>{t.label}</span>
+                              <span className="text-[9px] text-slate-400 mt-0.5" data-testid={`template-recent-count-${t.id}`}>
+                                آخر {recentForTemplate.length} عمليات
+                              </span>
                             </button>
                           );
                         })}
                       </div>
                     </div>
+
+                    {selectedTemplate && (
+                      <div className="rounded-xl border border-slate-700/70 bg-slate-900/45 p-2" data-testid="template-recent-operations-list">
+                        <div className="text-[10px] text-slate-400 mb-1">آخر العمليات لنفس النوع:</div>
+                        {(templateRecentMap[selectedTemplate] || []).length === 0 ? (
+                          <div className="text-[10px] text-slate-500" data-testid="template-recent-empty">
+                            لا توجد عمليات سابقة لهذا النوع بعد.
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            {(templateRecentMap[selectedTemplate] || []).map((op, idx) => (
+                              <button
+                                key={`recent-op-${op.id || idx}`}
+                                type="button"
+                                onClick={() => {
+                                  setAmount(String(op.total || ''));
+                                  setPartnerName(op.partnerName || '');
+                                  setDescription(op.notes || op.description || '');
+                                }}
+                                className="w-full text-right rounded-lg px-2 py-1 text-[10px] text-slate-200 hover:bg-sky-500/10 border border-transparent hover:border-sky-500/20"
+                                data-testid={`template-recent-op-${idx}`}
+                              >
+                                {Number(op.total || 0).toLocaleString('ar-SA')} ر.س • {op.partnerName || 'بدون طرف'} • {String(op.date || op.createdAt || '').slice(0, 10)}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* ── قائمة الخدمات عند "بيع خدمة" ── */}
                     {selectedTemplate === 'service_sale' && (

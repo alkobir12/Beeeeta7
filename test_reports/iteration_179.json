@@ -1,0 +1,41 @@
+{
+  "summary": "Tested UnifiedBotWidget merged auditor feature and recent operations display. All features working correctly: 3 tabs only (المساعد, إنشاء, فوري), merged quick+auditor panel in فوري tab, template cards with recent operation counts, recent operations list per template, and create operation regression.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "UnifiedBotWidget.jsx: TABS array correctly defines only 3 tabs (assistant, create, quick) - no separate auditor tab",
+    "فوري tab: quick-merged-panel correctly combines quick action form with auditor chat messages",
+    "إنشاء tab: template-recent-count-* shows recent operation count for each template type",
+    "template-recent-operations-list appears when template is selected, shows empty message or clickable recent ops",
+    "handleCreate correctly sends payload with originalType, vehicleId, vehicleInfo, and notes with BOT_TEMPLATE tag"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100%"
+  },
+  "test_credentials": "Username: مدير",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "UnifiedBotWidget merged auditor feature fully tested. Only 3 tabs exist (المساعد, إنشاء, فوري). فوري tab has merged quick action panel + auditor messages. إنشاء tab shows recent operation counts per template and displays recent operations list when template is selected.",
+  "features_tested": {
+    "tabs_structure": "PASS - Only 3 tabs: bot-tab-assistant, bot-tab-create, bot-tab-quick (no separate auditor tab)",
+    "merged_panel_in_quick_tab": "PASS - data-testid quick-merged-panel exists with payment methods, desc, amount, submit",
+    "auditor_messages_from_quick_tab": "PASS - Can send auditor commands like 'الوضع العام' and 'الذمم' from فوري tab",
+    "template_recent_counts": "PASS - All 6 templates show template-recent-count-* with 'آخر X عمليات' text",
+    "template_recent_operations_list": "PASS - data-testid template-recent-operations-list appears after selecting template",
+    "template_recent_empty_message": "PASS - Shows 'لا توجد عمليات سابقة لهذا النوع بعد.' when no recent ops",
+    "create_operation_regression": "PASS - Can fill form and see balanced entry preview (د 200 / ء 200)",
+    "payload_compatibility": "PASS - Code includes originalType, vehicleId, vehicleInfo, notes with BOT_TEMPLATE tag"
+  }
+}

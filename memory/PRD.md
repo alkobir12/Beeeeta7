@@ -439,6 +439,28 @@
 - Desktop 1920x1080: PASS (النافذة أسفل يسار كما طُلب).
 - Close button + Tabs + z-index: PASS.
 
+### Mobile Chat Input Overlap Fix (Unified Bot) — 10 May 2026
+
+**مشكلة جديدة من المستخدم:**
+- الدردشة لا تعمل على الجوال لأن زر البوت العائم كان يغطي خانة إدخال الرسائل.
+
+**الإصلاح المطبق:**
+1. إخفاء زر البوت العائم عند فتح النافذة:
+   - تطبيق شرط render: `!open && (...)` على `unified-bot-trigger`.
+2. التأكد من إمكانية الإغلاق وإعادة الظهور:
+   - زر `unified-bot-close` داخل النافذة يغلق panel.
+   - trigger يعود للظهور بعد الإغلاق.
+3. تحسين قابلية الاختبار:
+   - إضافة `data-testid="unified-bot-close"`.
+
+**الاختبار:**
+- تقرير: `/app/test_reports/iteration_182.json`
+- Frontend: **100% (5/5)**
+- النتيجة: **FIXED**
+  - trigger يختفي عند فتح panel
+  - input قابل للكتابة والإرسال على الجوال
+  - لا توجد Regression على الديسكتوب.
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

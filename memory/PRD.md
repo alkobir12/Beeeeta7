@@ -290,6 +290,35 @@
 - Backend: **PASS 100%**
 - Frontend: تم التحقق من ظهور مكونات العمليات بالكامل، وباقي العناصر مثبتة في الكود مع data-testid.
 
+### Interpretive Rule Update (دخل/خرج) — 10 May 2026
+
+**طلب المستخدم:**
+- "الذي دخل لك = مدين"
+- "الذي خرج منك = دائن"
+- تطبيق القاعدة في صفحة إنشاء قيد وتحديث بلوك تفسير القيد في العمليات.
+
+**ما تم تنفيذه:**
+1. **Operations.jsx**
+   - تحديث `operation-journal-explanation-card` لإظهار القاعدتين النصيتين بشكل ثابت.
+   - سطور المعاينة أصبحت تعرض: `side + account + flow` حيث flow = `دخل لك / خرج منك`.
+   - تحسين الصياغة التفسيرية خصوصاً في الشراء:
+     - المشتريات = مدين
+     - الصندوق/البنك أو الذمم = دائن
+
+2. **JournalEntries.jsx (Modal إنشاء قيد)**
+   - إضافة بطاقة جديدة `entry-explanation-rule-card` داخل نموذج الإنشاء.
+   - تعرض:
+     - القاعدتين النصيتين
+     - سطر مدين وسطر دائن مع الحساب الملتقط من مدخلات المستخدم.
+
+3. **إصلاح تحذير منخفض من الاختبار**
+   - تمت معالجة ملاحظة `Maximum update depth exceeded` في `Operations.jsx` عبر تثبيت dependency الفحص إلى `activeOpsIdsKey` بدلاً من الكائنات المباشرة.
+
+**الاختبار:**
+- تقرير: `/app/test_reports/iteration_178.json`
+- النتيجة: Frontend **PASS 100%**
+- تمت مراجعة logs بعد الإصلاح، ولم يعد يظهر تحذير Maximum update depth.
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

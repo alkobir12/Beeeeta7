@@ -917,8 +917,13 @@ const Operations = () => {
     [activeTotalPages]
   );
 
+  const activeOpsIdsKey = useMemo(
+    () => (activeOps || []).map((op) => String(op?.id || '')).filter(Boolean).join(','),
+    [activeOps]
+  );
+
   useEffect(() => {
-    const opIds = (activeOps || []).map((op) => String(op?.id || '')).filter(Boolean);
+    const opIds = activeOpsIdsKey ? activeOpsIdsKey.split(',') : [];
     if (!opIds.length) {
       setIntegrityMap({});
       setIntegritySummary({ total: 0, ok: 0, warnings: 0, duplicates: 0 });
@@ -955,7 +960,7 @@ const Operations = () => {
     return () => {
       mounted = false;
     };
-  }, [activeOps, workshopId]);
+  }, [activeOpsIdsKey, workshopId]);
 
   useEffect(() => {
     if (!expandedOperationId) return;

@@ -1642,7 +1642,6 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
             <div className="space-y-1 text-xs" style={{ color: styles.textSecondary }}>
               <div data-testid="entry-explanation-rule-core-0">• الذي دخل لك = مدين</div>
               <div data-testid="entry-explanation-rule-core-1">• الذي خرج منك = دائن</div>
-              <div data-testid="entry-explanation-rule-example">• {entryRuleSummary.example}</div>
             </div>
             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
               {entryRuleSummary.rows.map((row, idx) => (

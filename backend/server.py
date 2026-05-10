@@ -104,6 +104,7 @@ from routes_smart_inventory import (
 
 from routes_alkabeer_bot import router as alkabeer_bot_router
 from routes_moltbot import router as moltbot_router
+from routes_nlp_page_assistant import router as nlp_page_assistant_router, set_db as set_db_nlp_page_assistant
 # Provider mode
 DB_PROVIDER = os.environ.get("DB_PROVIDER", "mongo").lower()
 SUPPLIERS_TABLE_AVAILABLE = True
@@ -326,6 +327,7 @@ set_db_advanced(db)
 set_db_finance(db)
 set_db_invoices(db)
 set_db_smart_inventory(db)
+set_db_nlp_page_assistant(db)
 
 # Initialize WhatsApp service (optional)
 try:
@@ -532,6 +534,7 @@ app.include_router(stitch_router)
 app.include_router(invoices_router)
 app.include_router(alkabeer_bot_router)
 app.include_router(moltbot_router)
+app.include_router(nlp_page_assistant_router)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")

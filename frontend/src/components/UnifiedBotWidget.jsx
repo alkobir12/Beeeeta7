@@ -330,6 +330,10 @@ export default function UnifiedBotWidget() {
   const [recentOps, setRecentOps]             = useState([]);
   const [itemSearch, setItemSearch]           = useState('');
   const [itemDropOpen, setItemDropOpen]       = useState(false);
+  const [pageSuggestion, setPageSuggestion]   = useState(null);
+  const [suggestionBusy, setSuggestionBusy]   = useState(false);
+  const contextTimerRef                        = useRef(null);
+  const lastContextKeyRef                      = useRef('');
 
   const messagesEndRef = useRef(null);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aMessages, fMessages, tab]);
@@ -652,6 +656,117 @@ export default function UnifiedBotWidget() {
 
   const messages = tab === 'assistant' ? aMessages : fMessages;
 
+  const collectPageContext = () => {
+    const fields = {};
+    document.querySelectorAll('input, select, textarea').forEach((el) => {
+      const key = el.getAttribute('data-testid') || el.getAttribute('name') || el.getAttribute('id');
+      if (!key) return;
+      const value = el.type === 'checkbox' ? Boolean(el.checked) : el.value;
+      if (value === undefined || value === null) return;
+      fields[key] = value;
+    });
+    return {
+      page: window.location.pathname,
+      fields,
+    };
+  };
+
+  const scheduleContextAnalysis = () => {
+    const path = window.location.pathname || '';
+    const isFinancialPath = /(operations|accounting|journal|finance|vehicle|suppliers|debts|invoices|inventory|accounts)/i.test(path);
+    if (!isFinancialPath) return;
+
+    if (contextTimerRef.current) {
+      clearTimeout(contextTimerRef.current);
+    }
+
+    contextTimerRef.current = setTimeout(async () => {
+      try {
+        const payload = collectPageContext();
+        const contextKey = `${payload.page}::${JSON.stringify(payload.fields).slice(0, 2000)}`;
+        if (lastContextKeyRef.current === contextKey) return;
+        lastContextKeyRef.current = contextKey;
+
+        const r = await axios.post(`${API}/api/nlp/page/context`, payload);
+        const suggestion = r?.data?.suggestion || null;
+        setPageSuggestion(suggestion);
+      } catch {
+        // ignore silently
+      }
+    }, 650);
+  };
+
+  const applyFieldValue = (fieldKey, value) => {
+    const selectors = [
+      `[data-testid="${fieldKey}"]`,
+      `[name="${fieldKey}"]`,
+      `#${fieldKey.replace(/([^a-zA-Z0-9_-])/g, '\\$1')}`,
+    ];
+    let target = null;
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        target = el;
+        break;
+      }
+    }
+    if (!target) return false;
+
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+      target.value = value;
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+      target.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+    return false;
+  };
+
+  const handleSuggestionDecision = async (accepted) => {
+    if (!pageSuggestion?.id || suggestionBusy) return;
+    setSuggestionBusy(true);
+    try {
+      const r = await axios.post(`${API}/api/nlp/page/apply_correction`, {
+        suggestion_id: pageSuggestion.id,
+        accepted,
+      });
+
+      if (accepted) {
+        const corrected = r?.data?.corrected_fields || {};
+        Object.entries(corrected).forEach(([key, val]) => {
+          applyFieldValue(key, val);
+        });
+        setFMessages((prev) => ([...prev, { role: 'assistant', content: '✅ تم تطبيق التصحيح المقترح بعد موافقتك.' }]));
+      }
+
+      setPageSuggestion(null);
+    } catch {
+      setFMessages((prev) => ([...prev, { role: 'assistant', content: '⚠️ تعذّر تطبيق التصحيح حالياً.' }]));
+    } finally {
+      setSuggestionBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    const onFieldChange = (event) => {
+      const target = event?.target;
+      if (!target || !['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return;
+      scheduleContextAnalysis();
+    };
+
+    document.addEventListener('input', onFieldChange, true);
+    document.addEventListener('change', onFieldChange, true);
+
+    if (open) {
+      scheduleContextAnalysis();
+    }
+
+    return () => {
+      document.removeEventListener('input', onFieldChange, true);
+      document.removeEventListener('change', onFieldChange, true);
+      if (contextTimerRef.current) clearTimeout(contextTimerRef.current);
+    };
+  }, [open, tab]);
+
   return (
     <>
       {/* ─── زر البوت ─────────────────────────────────────────────────── */}
@@ -674,7 +789,7 @@ export default function UnifiedBotWidget() {
       {/* ─── نافذة البوت ──────────────────────────────────────────────── */}
       {open && (
         <div
-          className="fixed z-[74] left-4 bottom-36 lg:bottom-20 lg:left-auto lg:right-6 w-[92vw] max-w-[420px] rounded-[28px] overflow-hidden flex flex-col"
+          className="fixed z-[74] left-4 bottom-36 lg:bottom-20 lg:left-auto lg:right-6 w-[92vw] max-w-[420px] rounded-[28px] overflow-hidden flex flex-col relative"
           style={{
             height: '580px',
             background: 'linear-gradient(145deg, rgba(6,10,30,0.98) 0%, rgba(2,6,23,0.98) 100%)',
@@ -1276,6 +1391,40 @@ export default function UnifiedBotWidget() {
                   ))}
                 </div>
               </form>
+            </div>
+          )}
+
+          {pageSuggestion && (
+            <div
+              className="absolute bottom-16 right-3 w-[88%] rounded-xl border border-slate-200 shadow-2xl p-3"
+              style={{ background: 'rgba(255,255,255,0.98)' }}
+              data-testid="page-suggestion-box"
+            >
+              <div className="text-[11px] font-semibold text-slate-800 mb-1">اقتراح تلقائي</div>
+              <div className="text-[11px] text-slate-700 mb-2" data-testid="page-suggestion-message">
+                {pageSuggestion.message}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSuggestionDecision(true)}
+                  disabled={suggestionBusy}
+                  className="flex-1 rounded-lg py-1.5 text-[11px] font-semibold text-white"
+                  style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)' }}
+                  data-testid="page-suggestion-apply"
+                >
+                  {suggestionBusy ? '...' : 'تطبيق'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSuggestionDecision(false)}
+                  disabled={suggestionBusy}
+                  className="flex-1 rounded-lg py-1.5 text-[11px] font-semibold text-slate-700 border border-slate-300"
+                  data-testid="page-suggestion-ignore"
+                >
+                  تجاهل
+                </button>
+              </div>
             </div>
           )}
         </div>

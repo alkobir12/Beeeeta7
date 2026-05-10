@@ -7,7 +7,7 @@ import sys
 import time
 from datetime import datetime
 
-BASE_URL = "https://accounting-auditor-1.preview.emergentagent.com/api"
+BASE_URL = "https://unified-bot-audit.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 PASS = "✅"
 FAIL = "❌"

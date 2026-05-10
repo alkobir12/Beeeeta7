@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Get backend URL from environment
-BACKEND_URL = "https://accounting-auditor-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://unified-bot-audit.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 # Test results tracking

@@ -4,7 +4,7 @@
 import requests
 import json
 
-API_URL = "https://accounting-auditor-1.preview.emergentagent.com/api"
+API_URL = "https://unified-bot-audit.preview.emergentagent.com/api"
 WID = "finmodule-sync"
 TOWDHEEB = ["توضيب", "تلميع مكينة", "توضيب مكينه"]
 

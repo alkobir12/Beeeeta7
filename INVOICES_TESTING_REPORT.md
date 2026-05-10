@@ -245,7 +245,7 @@ python3 /app/invoices_integration_test.py
 
 - Supabase Dashboard: https://kqjlyozhvwswooztccag.supabase.co
 - SQL Editor: https://kqjlyozhvwswooztccag.supabase.co/project/_/sql
-- Backend API: https://accounting-auditor-1.preview.emergentagent.com/api
+- Backend API: https://unified-bot-audit.preview.emergentagent.com/api
 
 ---
 

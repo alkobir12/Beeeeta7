@@ -1533,8 +1533,11 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                       <td className="px-4 py-3">
                         <div className="space-y-1.5" data-testid={`line-account-wrapper-${idx}`}>
                           <SmartAccountSelect
+                            entryType={smartOperationType}
+                            lineType={getLineFieldKey(line, idx)}
                             operationType={smartOperationType}
                             fieldKey={getLineFieldKey(line, idx)}
+                            description={formData.description}
                             includeAll={includeAllAccounts}
                             value={line.account_code}
                             onChange={(nextCode, account) => {

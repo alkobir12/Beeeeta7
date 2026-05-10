@@ -2474,8 +2474,11 @@ const Operations = () => {
                     <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>الحساب المحاسبي (القيد)</label>
                     <div className="space-y-2" data-testid="operations-smart-account-select-wrapper">
                       <SmartAccountSelect
+                        entryType={previewEffectiveType}
+                        lineType={smartAccountFieldKey}
                         operationType={previewEffectiveType}
                         fieldKey={smartAccountFieldKey}
+                        description={form.notes || form.description || ''}
                         includeAll={true}
                         value={selectedAccountingCode || form.accountingAccountId || ''}
                         onChange={(nextCode, acc) => {

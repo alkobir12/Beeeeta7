@@ -1624,7 +1624,85 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
               className="rounded-xl overflow-hidden"
               style={{ border: `1px solid ${styles.cardBorder}` }}
             >
-              <table className="w-full">
+              <div className="md:hidden p-2 space-y-2" data-testid="entry-lines-mobile-list">
+                {formData.lines.map((line, idx) => (
+                  <div
+                    key={`mobile-line-${idx}`}
+                    className="rounded-lg border p-2.5 space-y-2"
+                    style={{ borderColor: styles.cardBorder, backgroundColor: styles.cardBg }}
+                    data-testid={`entry-line-mobile-card-${idx}`}
+                  >
+                    <div className="space-y-1" data-testid={`line-account-wrapper-mobile-${idx}`}>
+                      <SmartAccountSelect
+                        entryType={smartOperationType}
+                        lineType={getLineFieldKey(line, idx)}
+                        operationType={smartOperationType}
+                        fieldKey={getLineFieldKey(line, idx)}
+                        description={formData.description}
+                        includeAll={includeAllAccounts}
+                        compact={true}
+                        value={line.account_code}
+                        onChange={(nextCode, account) => {
+                          setFormData((prev) => {
+                            const newLines = [...prev.lines];
+                            newLines[idx] = {
+                              ...newLines[idx],
+                              account_code: nextCode,
+                              account_name: account?.name || account?.name_ar || '',
+                            };
+                            return { ...prev, lines: newLines };
+                          });
+                        }}
+                        placeholder="اختر الحساب"
+                        data-testid={`line-account-mobile-${idx}`}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="number"
+                        value={line.debit || ''}
+                        onChange={(e) => updateLine(idx, 'debit', e.target.value)}
+                        placeholder="مدين"
+                        className="w-full px-2.5 py-2 rounded-lg text-xs text-center"
+                        style={{
+                          backgroundColor: styles.inputBg,
+                          border: `1px solid ${styles.inputBorder}`,
+                          color: styles.textPrimary,
+                        }}
+                        data-testid={`line-debit-mobile-${idx}`}
+                      />
+                      <input
+                        type="number"
+                        value={line.credit || ''}
+                        onChange={(e) => updateLine(idx, 'credit', e.target.value)}
+                        placeholder="دائن"
+                        className="w-full px-2.5 py-2 rounded-lg text-xs text-center"
+                        style={{
+                          backgroundColor: styles.inputBg,
+                          border: `1px solid ${styles.inputBorder}`,
+                          color: styles.textPrimary,
+                        }}
+                        data-testid={`line-credit-mobile-${idx}`}
+                      />
+                    </div>
+
+                    {formData.lines.length > 2 && (
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => removeLine(idx)}
+                          className="p-1.5 rounded-lg hover:bg-white/10 text-rose-300"
+                          data-testid={`remove-line-mobile-${idx}`}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <table className="hidden md:table w-full">
                 <thead style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)' }}>
                   <tr>
                     <th className="px-4 py-3 text-right text-xs font-semibold" style={{ color: styles.textSecondary }}>الحساب</th>

@@ -767,13 +767,17 @@ export default function UnifiedBotWidget() {
     };
   }, [open, tab]);
 
+  const forceOpenBotPanel = () => {
+    setOpen(true);
+  };
+
   return (
     <>
       {/* ─── زر البوت ─────────────────────────────────────────────────── */}
-      <div className="fixed z-[75] left-4 bottom-20 lg:bottom-6 lg:left-auto lg:right-6" data-testid="unified-bot-trigger">
+      <div className="fixed z-[2147483000] left-4 bottom-20 lg:bottom-6 lg:left-auto lg:right-6" data-testid="unified-bot-trigger">
         <button
           type="button"
-          onClick={() => setOpen(v => !v)}
+          onClick={forceOpenBotPanel}
           className="relative w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 border"
           style={{
             background: open ? 'rgba(239,68,68,0.9)' : 'linear-gradient(135deg,#0ea5e9,#6366f1)',
@@ -789,7 +793,7 @@ export default function UnifiedBotWidget() {
       {/* ─── نافذة البوت ──────────────────────────────────────────────── */}
       {open && (
         <div
-          className="fixed z-[74] left-4 bottom-36 lg:bottom-20 lg:left-auto lg:right-6 w-[92vw] max-w-[420px] rounded-[28px] overflow-hidden flex flex-col relative"
+          className="fixed z-[2147482999] left-4 bottom-36 lg:bottom-20 lg:left-auto lg:right-6 w-[92vw] max-w-[420px] rounded-[28px] overflow-hidden flex flex-col relative pointer-events-auto"
           style={{
             height: '580px',
             background: 'linear-gradient(145deg, rgba(6,10,30,0.98) 0%, rgba(2,6,23,0.98) 100%)',

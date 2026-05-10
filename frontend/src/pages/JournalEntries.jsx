@@ -92,6 +92,13 @@ const sanitizeEntryText = (value = '') => {
     .trim();
 };
 
+const extractTagValue = (text = '', tag = '') => {
+  if (!tag) return '';
+  const rx = new RegExp(`\\[${tag}:([^\\]]+)\\]`, 'i');
+  const hit = String(text || '').match(rx);
+  return String(hit?.[1] || '').trim();
+};
+
 const resolveCurrentAccountCode = (rawCode = '', accountName = '', coaAccounts = []) => {
   const code = String(rawCode || '').trim();
   if (!code) return '';
@@ -1104,6 +1111,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
     transaction_type: entry?.transaction_type || 'manual',
     party_type: defaultPartyType,
     party_name: entry?.party_label && entry?.party_label !== 'مفتوح' ? entry.party_label : '',
+    vehicle_reference: extractTagValue(entry?.description || '', 'VEHICLE_REF') || entry?.vehicle_reference || '',
     lines: entry?.lines?.length > 0 ? entry.lines.map(l => ({
       account_code: l.account_code || l.account,
       account_name: l.account_name,
@@ -1153,13 +1161,17 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
 
   useEffect(() => {
     setFormData((prev) => {
-      if (prev.transaction_type === 'sale') {
+      if (['sale', 'sale_return', 'receipt_voucher'].includes(prev.transaction_type)) {
         if (prev.party_type === 'customer') return prev;
         return { ...prev, party_type: 'customer' };
       }
-      if (['purchase', 'expense'].includes(prev.transaction_type)) {
+      if (['purchase', 'purchase_return', 'expense'].includes(prev.transaction_type)) {
         if (prev.party_type === 'supplier') return prev;
         return { ...prev, party_type: 'supplier' };
+      }
+      if (prev.transaction_type === 'settlement') {
+        if (['customer', 'supplier'].includes(prev.party_type)) return prev;
+        return { ...prev, party_type: 'customer' };
       }
       if (prev.party_type === 'open') return prev;
       return { ...prev, party_type: 'open' };
@@ -1168,10 +1180,16 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
 
   const smartOperationType = useMemo(() => {
     if (formData.transaction_type === 'sale') return 'sale';
+    if (formData.transaction_type === 'sale_return') return 'sale';
     if (formData.transaction_type === 'purchase') return 'purchase';
+    if (formData.transaction_type === 'purchase_return') return 'purchase';
     if (formData.transaction_type === 'expense') return 'expense';
+    if (formData.transaction_type === 'receipt_voucher') return 'receipt';
+    if (formData.transaction_type === 'settlement') {
+      return formData.party_type === 'supplier' ? 'payment' : 'receipt';
+    }
     return 'sale';
-  }, [formData.transaction_type]);
+  }, [formData.transaction_type, formData.party_type]);
 
   const includeAllAccounts = ['manual', 'other'].includes(formData.transaction_type);
   const partyOptions = formData.party_type === 'customer' ? customers : formData.party_type === 'supplier' ? suppliers : [];
@@ -1280,22 +1298,55 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
       alert('يرجى إدخال مبالغ للقيد');
       return;
     }
+
+    const txType = String(formData.transaction_type || '').trim();
     const partyName = String(formData.party_name || '').trim();
+    const vehicleRef = String(formData.vehicle_reference || '').trim();
+
+    if (['sale', 'sale_return'].includes(txType) && !partyName && !vehicleRef) {
+      alert('قيد البيع/مرتجع البيع يتطلب ربطه بعميل أو مرجع مركبة.');
+      return;
+    }
+
+    if (['purchase', 'purchase_return', 'expense'].includes(txType) && !partyName) {
+      alert('قيد الشراء/المصروف يتطلب تحديد المورد.');
+      return;
+    }
+
+    if (txType === 'receipt_voucher' && !vehicleRef) {
+      alert('سند القبض يتطلب مرجع مركبة (مثل رقم اللوحة أو رقم الزيارة).');
+      return;
+    }
+
+    if (txType === 'settlement') {
+      if (!partyName) {
+        alert('التسوية تتطلب تحديد عميل أو مورد.');
+        return;
+      }
+      if (!['customer', 'supplier'].includes(formData.party_type)) {
+        alert('التسوية يجب أن تكون مرتبطة بعميل أو مورد.');
+        return;
+      }
+    }
+
     const inferredPartyType =
-      formData.transaction_type === 'sale'
+      ['sale', 'sale_return', 'receipt_voucher'].includes(formData.transaction_type)
         ? 'customer'
-        : ['purchase', 'expense'].includes(formData.transaction_type)
+        : ['purchase', 'purchase_return', 'expense'].includes(formData.transaction_type)
           ? 'supplier'
           : (formData.party_type || 'open');
 
     const cleanDescription = String(formData.description || '')
       .replace(/\[PARTY:[^\]]+\]/g, '')
       .replace(/\[PARTY_TYPE:[^\]]+\]/g, '')
+      .replace(/\[VEHICLE_REF:[^\]]+\]/g, '')
       .trim();
 
-    const finalDescription = partyName
-      ? `${cleanDescription} [PARTY:${partyName}] [PARTY_TYPE:${inferredPartyType}]`.trim()
-      : cleanDescription;
+    const finalDescription = [
+      cleanDescription,
+      partyName ? `[PARTY:${partyName}] [PARTY_TYPE:${inferredPartyType}]` : '',
+      vehicleRef ? `[VEHICLE_REF:${vehicleRef}]` : '',
+    ].filter(Boolean).join(' ').trim();
 
     onSave({
       ...formData,
@@ -1400,10 +1451,15 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                   border: `1px solid ${styles.inputBorder}`,
                   color: styles.textPrimary
                 }}
+                data-testid="entry-transaction-type-select"
               >
                 <option value="manual">قيد يدوي عام</option>
-                <option value="purchase">شراء / مصروف</option>
-                <option value="sale">بيع / إيراد</option>
+                <option value="purchase">شراء</option>
+                <option value="purchase_return">مرتجع شراء</option>
+                <option value="sale">بيع</option>
+                <option value="sale_return">مرتجع بيع</option>
+                <option value="receipt_voucher">سند قبض (مرتبط بمركبة)</option>
+                <option value="settlement">تسوية (عميل/مورد)</option>
                 <option value="expense">مصاريف تشغيلية</option>
                 <option value="other">أخرى</option>
               </select>
@@ -1413,6 +1469,26 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
               <label className="block text-sm font-medium mb-2" style={{ color: styles.textPrimary }}>
                 {formData.party_type === 'customer' ? 'العميل' : formData.party_type === 'supplier' ? 'المورد' : 'الطرف'}
               </label>
+              {formData.transaction_type === 'settlement' && (
+                <div className="flex gap-2 mb-2">
+                  <button
+                    type="button"
+                    className={`px-3 py-1 rounded-lg text-xs border ${formData.party_type === 'customer' ? 'bg-blue-500/20 border-blue-400/40 text-blue-100' : 'border-slate-500/40 text-slate-300'}`}
+                    onClick={() => setFormData((prev) => ({ ...prev, party_type: 'customer', party_name: '' }))}
+                    data-testid="entry-settlement-party-customer"
+                  >
+                    عميل
+                  </button>
+                  <button
+                    type="button"
+                    className={`px-3 py-1 rounded-lg text-xs border ${formData.party_type === 'supplier' ? 'bg-blue-500/20 border-blue-400/40 text-blue-100' : 'border-slate-500/40 text-slate-300'}`}
+                    onClick={() => setFormData((prev) => ({ ...prev, party_type: 'supplier', party_name: '' }))}
+                    data-testid="entry-settlement-party-supplier"
+                  >
+                    مورد
+                  </button>
+                </div>
+              )}
               <input
                 type="text"
                 list={`journal-party-options-${formData.party_type}`}
@@ -1442,6 +1518,25 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                   <option key={row.id || row.name} value={row.name} />
                 ))}
               </datalist>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: styles.textPrimary }}>
+                مرجع المركبة
+              </label>
+              <input
+                type="text"
+                value={formData.vehicle_reference || ''}
+                onChange={(e) => setFormData((prev) => ({ ...prev, vehicle_reference: e.target.value }))}
+                placeholder="مثال: اللوحة 10560 أو رقم زيارة"
+                className="w-full px-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                style={{
+                  backgroundColor: styles.inputBg,
+                  border: `1px solid ${styles.inputBorder}`,
+                  color: styles.textPrimary,
+                }}
+                data-testid="entry-vehicle-reference-input"
+              />
             </div>
           </div>
 

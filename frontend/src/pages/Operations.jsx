@@ -1874,6 +1874,43 @@ const Operations = () => {
   const isPurchaseLikeType = PURCHASE_LIKE_TYPES.has(form.type);
   const showVehicleLinking = isSaleLikeType || isReceiptVoucherType || form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN;
   const showCustomerLinking = isSaleLikeType || isReceiptVoucherType || form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN;
+  const operationTypeLabel = OPERATION_TYPE_OPTIONS.find((opt) => opt.value === form.type)?.label || form.type;
+  const settlementAccountCode =
+    form.paymentMethod === 'transfer' ? '004'
+      : form.paymentMethod === 'card' ? '006'
+        : '003';
+
+  const journalPreview = useMemo(() => {
+    const operationAccountCode = selectedAccountingCode || form.accountingAccountId || '';
+    const lines = [];
+    const reasons = [];
+
+    if (SALE_LIKE_TYPES.has(form.type)) {
+      const debitAccount = form.paymentMethod === 'credit' ? '005' : settlementAccountCode;
+      const creditAccount = operationAccountCode || '027';
+      lines.push({ side: 'مدين', account: debitAccount, reason: form.paymentMethod === 'credit' ? 'ذمم العملاء للعمليات الآجل' : 'طريقة الدفع المختارة' });
+      lines.push({ side: 'دائن', account: creditAccount, reason: 'حساب الإيراد المرتبط بنوع الحركة' });
+      reasons.push('بيع/مرتجع بيع: المدين من وسيلة الدفع أو ذمم العملاء، والدائن حساب الإيراد.');
+    } else if (PURCHASE_LIKE_TYPES.has(form.type) || form.type === 'expense') {
+      const debitAccount = operationAccountCode || '030';
+      const creditAccount = form.paymentMethod === 'credit' ? '2101' : settlementAccountCode;
+      lines.push({ side: 'مدين', account: debitAccount, reason: 'حساب المصروف/الأصل المختار في تبويب الربط' });
+      lines.push({ side: 'دائن', account: creditAccount, reason: form.paymentMethod === 'credit' ? 'ذمم الموردين للشراء الآجل' : 'طريقة الدفع المختارة' });
+      reasons.push('شراء/مصروف: المدين حساب الشراء/المصروف، والدائن طريقة الدفع أو ذمم الموردين.');
+    } else if (isPaymentOrderLikeType) {
+      if (form.partnerType === 'supplier') {
+        lines.push({ side: 'مدين', account: '2101', reason: 'إقفال ذمم المورد' });
+        lines.push({ side: 'دائن', account: settlementAccountCode, reason: 'طريقة الدفع المختارة' });
+        reasons.push('تسوية مورد: مدين ذمم المورد ودائن حساب الدفع.');
+      } else {
+        lines.push({ side: 'مدين', account: settlementAccountCode, reason: 'طريقة التحصيل المختارة' });
+        lines.push({ side: 'دائن', account: '005', reason: 'إقفال ذمم العميل' });
+        reasons.push('سند قبض/تسوية عميل: مدين حساب التحصيل ودائن ذمم العملاء.');
+      }
+    }
+
+    return { lines, reasons };
+  }, [form.type, form.paymentMethod, form.partnerType, form.accountingAccountId, selectedAccountingCode, settlementAccountCode, isPaymentOrderLikeType]);
   const canMoveToLinkingTab = Boolean(form.type && form.date);
   const canMoveToItemsTab = Boolean(form.accountingAccountId);
 
@@ -3069,12 +3106,53 @@ const Operations = () => {
               </div>
 
               <div className="mt-2 space-y-1 text-xs text-slate-500">
-                {form.items.length === 0 && (
+                <div
+                  className="mt-2 rounded-xl border border-cyan-400/25 bg-cyan-500/10 p-3 text-[11px]"
+                  data-testid="operation-journal-explanation-card"
+                >
+                  <div className="font-semibold text-cyan-100 mb-2" data-testid="operation-journal-explanation-title">
+                    تفسير القيد المتوقع • {operationTypeLabel}
+                  </div>
+                  {journalPreview.lines.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {journalPreview.lines.map((line, idx) => (
+                        <div key={`journal-preview-${idx}`} className="flex flex-wrap items-center justify-between gap-2 text-cyan-50" data-testid={`operation-journal-preview-line-${idx}`}>
+                          <span>{line.side}</span>
+                          <span className="font-mono">{line.account}</span>
+                          <span className="text-cyan-200/80">{line.reason}</span>
+                        </div>
+                      ))}
+                      {journalPreview.reasons.map((reason, idx) => (
+                        <div key={`journal-reason-${idx}`} className="text-cyan-200/90" data-testid={`operation-journal-preview-reason-${idx}`}>
+                          • {reason}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-cyan-200/80" data-testid="operation-journal-explanation-empty">
+                      اختر نوع الحركة والحساب لإظهار تفسير القيد.
+                    </div>
+                  )}
+                </div>
+
+                {!isPaymentOrderLikeType && form.items.length === 0 && (
                   <div>{t('operations.items_required') || 'أضف عنصر واحد على الأقل قبل الحفظ'}</div>
+                )}
+
+                {isPaymentOrderLikeType && !(Number(form.paymentAmount) > 0) && (
+                  <div>أدخل مبلغ السداد قبل الحفظ.</div>
                 )}
 
                 {missingVehicleForVehicleKind && (
                   <div>{t('operations.select_vehicle_required') || 'اختر مركبة أولاً'}</div>
+                )}
+
+                {missingVehicleForReceiptVoucher && (
+                  <div>سند القبض يتطلب ربط العملية بمركبة.</div>
+                )}
+
+                {missingPartnerForSettlement && (
+                  <div>التسوية تتطلب اختيار عميل أو مورد.</div>
                 )}
 
                 {missingCustomerOrVehicleForRakan && (

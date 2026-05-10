@@ -1927,32 +1927,33 @@ const Operations = () => {
     const operationAccountCode = selectedAccountingCode || form.accountingAccountId || '';
     const lines = [];
     const reasons = [];
+    const coreRules = ['الذي دخل لك = مدين', 'الذي خرج منك = دائن'];
 
     if (SALE_LIKE_TYPES.has(form.type)) {
       const debitAccount = form.paymentMethod === 'credit' ? '005' : settlementAccountCode;
       const creditAccount = operationAccountCode || '027';
-      lines.push({ side: 'مدين', account: debitAccount, reason: form.paymentMethod === 'credit' ? 'ذمم العملاء للعمليات الآجل' : 'طريقة الدفع المختارة' });
-      lines.push({ side: 'دائن', account: creditAccount, reason: 'حساب الإيراد المرتبط بنوع الحركة' });
-      reasons.push('بيع/مرتجع بيع: المدين من وسيلة الدفع أو ذمم العملاء، والدائن حساب الإيراد.');
+      lines.push({ side: 'مدين', account: debitAccount, flow: 'دخل لك', reason: form.paymentMethod === 'credit' ? 'دخل لك كذمم عملاء' : 'دخل لك كطريقة تحصيل' });
+      lines.push({ side: 'دائن', account: creditAccount, flow: 'خرج منك', reason: 'خرج منك كإيراد/خدمة' });
+      reasons.push('بيع/مرتجع بيع: ما دخل لك يُسجل مدينًا، وما خرج منك (الإيراد) يُسجل دائنًا.');
     } else if (PURCHASE_LIKE_TYPES.has(form.type) || form.type === 'expense') {
       const debitAccount = operationAccountCode || '030';
       const creditAccount = form.paymentMethod === 'credit' ? '2101' : settlementAccountCode;
-      lines.push({ side: 'مدين', account: debitAccount, reason: 'حساب المصروف/الأصل المختار في تبويب الربط' });
-      lines.push({ side: 'دائن', account: creditAccount, reason: form.paymentMethod === 'credit' ? 'ذمم الموردين للشراء الآجل' : 'طريقة الدفع المختارة' });
-      reasons.push('شراء/مصروف: المدين حساب الشراء/المصروف، والدائن طريقة الدفع أو ذمم الموردين.');
+      lines.push({ side: 'مدين', account: debitAccount, flow: 'دخل لك', reason: 'دخل لك كمشتريات/مصروف مستلم' });
+      lines.push({ side: 'دائن', account: creditAccount, flow: 'خرج منك', reason: form.paymentMethod === 'credit' ? 'خرج منك كالتزام مورد' : 'خرج منك من الصندوق/البنك' });
+      reasons.push('شراء/مصروف: المشتريات مدين (دخل لك)، والصندوق/البنك أو ذمم المورد دائن (خرج منك).');
     } else if (isPaymentOrderLikeType) {
       if (form.partnerType === 'supplier') {
-        lines.push({ side: 'مدين', account: '2101', reason: 'إقفال ذمم المورد' });
-        lines.push({ side: 'دائن', account: settlementAccountCode, reason: 'طريقة الدفع المختارة' });
-        reasons.push('تسوية مورد: مدين ذمم المورد ودائن حساب الدفع.');
+        lines.push({ side: 'مدين', account: '2101', flow: 'دخل لك', reason: 'دخل لك كتخفيض التزام المورد' });
+        lines.push({ side: 'دائن', account: settlementAccountCode, flow: 'خرج منك', reason: 'خرج منك من وسيلة الدفع' });
+        reasons.push('تسوية مورد: الذي دخل لك (إغلاق ذمم المورد) مدين، والذي خرج منك (دفع) دائن.');
       } else {
-        lines.push({ side: 'مدين', account: settlementAccountCode, reason: 'طريقة التحصيل المختارة' });
-        lines.push({ side: 'دائن', account: '005', reason: 'إقفال ذمم العميل' });
-        reasons.push('سند قبض/تسوية عميل: مدين حساب التحصيل ودائن ذمم العملاء.');
+        lines.push({ side: 'مدين', account: settlementAccountCode, flow: 'دخل لك', reason: 'دخل لك كتحصيل نقدي/بنكي' });
+        lines.push({ side: 'دائن', account: '005', flow: 'خرج منك', reason: 'خرج منك كإقفال ذمم عميل' });
+        reasons.push('سند قبض/تسوية عميل: التحصيل داخل = مدين، إقفال ذمم العميل خارج = دائن.');
       }
     }
 
-    return { lines, reasons };
+    return { lines, reasons, coreRules };
   }, [form.type, form.paymentMethod, form.partnerType, form.accountingAccountId, selectedAccountingCode, settlementAccountCode, isPaymentOrderLikeType]);
   const canMoveToLinkingTab = Boolean(form.type && form.date);
   const canMoveToItemsTab = Boolean(form.accountingAccountId);
@@ -3156,12 +3157,20 @@ const Operations = () => {
                   <div className="font-semibold text-cyan-100 mb-2" data-testid="operation-journal-explanation-title">
                     تفسير القيد المتوقع • {operationTypeLabel}
                   </div>
+                  <div className="mb-2 space-y-1" data-testid="operation-journal-core-rule">
+                    {(journalPreview.coreRules || []).map((rule, idx) => (
+                      <div key={`core-rule-${idx}`} className="text-cyan-100/95" data-testid={`operation-journal-core-rule-${idx}`}>
+                        • {rule}
+                      </div>
+                    ))}
+                  </div>
                   {journalPreview.lines.length > 0 ? (
                     <div className="space-y-1.5">
                       {journalPreview.lines.map((line, idx) => (
                         <div key={`journal-preview-${idx}`} className="flex flex-wrap items-center justify-between gap-2 text-cyan-50" data-testid={`operation-journal-preview-line-${idx}`}>
                           <span>{line.side}</span>
                           <span className="font-mono">{line.account}</span>
+                          <span className="text-cyan-300/90">{line.flow}</span>
                           <span className="text-cyan-200/80">{line.reason}</span>
                         </div>
                       ))}

@@ -1259,6 +1259,44 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
     return idx % 2 === 0 ? 'debit' : 'credit';
   };
 
+  const debitLine = useMemo(
+    () => formData.lines.find((l) => Number(l?.debit || 0) > 0 && String(l?.account_code || '').trim()) || null,
+    [formData.lines]
+  );
+
+  const creditLine = useMemo(
+    () => formData.lines.find((l) => Number(l?.credit || 0) > 0 && String(l?.account_code || '').trim()) || null,
+    [formData.lines]
+  );
+
+  const resolveLineAccountLabel = (line) => {
+    if (!line) return 'غير محدد';
+    const code = String(line.account_code || '').trim();
+    const acc = coaAccounts.find((a) => String(a.code) === code);
+    const name = line.account_name || acc?.name_ar || acc?.name || '';
+    return code ? `[${code}] ${name || 'حساب'}` : 'غير محدد';
+  };
+
+  const entryRuleSummary = useMemo(() => {
+    const rows = [
+      { side: 'مدين', flow: 'الذي دخل لك', account: resolveLineAccountLabel(debitLine) },
+      { side: 'دائن', flow: 'الذي خرج منك', account: resolveLineAccountLabel(creditLine) },
+    ];
+
+    let example = 'قاعدة تفسيرية عامة.';
+    if (['purchase', 'purchase_return', 'expense'].includes(formData.transaction_type)) {
+      example = 'مثال الشراء: المشتريات = مدين، الصندوق/البنك = دائن.';
+    } else if (['sale', 'sale_return'].includes(formData.transaction_type)) {
+      example = 'مثال البيع: الصندوق/البنك أو العميل = مدين، الإيراد = دائن.';
+    } else if (formData.transaction_type === 'receipt_voucher') {
+      example = 'مثال سند القبض: التحصيل = مدين، ذمم العملاء = دائن.';
+    } else if (formData.transaction_type === 'settlement') {
+      example = 'مثال التسوية: طبّق قاعدة دخل/خرج حسب الطرف المختار.';
+    }
+
+    return { rows, example };
+  }, [debitLine, creditLine, formData.transaction_type, coaAccounts]);
+
   const addLine = () => {
     setFormData(prev => ({
       ...prev,
@@ -1590,6 +1628,39 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                 }}
                 data-testid="entry-vehicle-reference-input"
               />
+            </div>
+          </div>
+
+          <div
+            className="rounded-xl p-4"
+            style={{ border: `1px solid ${styles.cardBorder}`, backgroundColor: 'rgba(37,99,235,0.10)' }}
+            data-testid="entry-explanation-rule-card"
+          >
+            <div className="text-sm font-semibold mb-2" style={{ color: styles.textPrimary }} data-testid="entry-explanation-rule-title">
+              تفسير القيد حسب المدخلات
+            </div>
+            <div className="space-y-1 text-xs" style={{ color: styles.textSecondary }}>
+              <div data-testid="entry-explanation-rule-core-0">• الذي دخل لك = مدين</div>
+              <div data-testid="entry-explanation-rule-core-1">• الذي خرج منك = دائن</div>
+              <div data-testid="entry-explanation-rule-example">• {entryRuleSummary.example}</div>
+            </div>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+              {entryRuleSummary.rows.map((row, idx) => (
+                <div
+                  key={`entry-rule-row-${idx}`}
+                  className="rounded-lg px-3 py-2"
+                  style={{
+                    backgroundColor: row.side === 'مدين' ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.10)',
+                    border: `1px solid ${row.side === 'مدين' ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.35)'}`,
+                    color: styles.textPrimary,
+                  }}
+                  data-testid={`entry-explanation-rule-line-${idx}`}
+                >
+                  <div className="font-semibold">{row.side}</div>
+                  <div>{row.flow}</div>
+                  <div className="font-mono text-[11px]" style={{ color: styles.textSecondary }}>{row.account}</div>
+                </div>
+              ))}
             </div>
           </div>
 

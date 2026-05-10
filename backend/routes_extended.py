@@ -1343,9 +1343,9 @@ def _build_operation_journal_entry(
 
     # Choose cash/bank/pos code for non-credit payments (أكواد جديدة)
     cash_code = "003"
-    if payment_method in ("transfer", "bank", "card", "mada", "visa", "mastercard"):
+    if payment_method in ("transfer", "bank", "تحويل", "بنك"):
         cash_code = "004"
-    elif payment_method in ("pos", "نقاط بيع", "نقاط_بيع", "point_of_sale"):
+    elif payment_method in ("pos", "card", "mada", "visa", "mastercard", "نقاط بيع", "نقاط_بيع", "point_of_sale", "بطاقة", "بطاقه", "شبكة"):
         cash_code = "006"
 
     chart_account_ref_map = chart_account_ref_map or {}
@@ -1631,8 +1631,8 @@ def _build_operation_journal_entry(
                     "credit": 0,
                 },
                 {
-                    "account": "1103",
-                    "account_name": ACCOUNT_NAME_MAP.get("1103", "1103"),
+                    "account": "005",
+                    "account_name": ACCOUNT_NAME_MAP.get("005", "005"),
                     "debit": 0,
                     "credit": total,
                 },
@@ -2426,12 +2426,9 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
             or "cash"
         ).strip().lower()
 
-        bank_aliases = {
-            "bank", "transfer", "bank_transfer", "card", "mada", "visa", "mastercard",
-            "بطاقة", "بطاقه", "تحويل", "بنك", "شبكة",
-        }
+        bank_aliases = {"bank", "transfer", "bank_transfer", "تحويل", "بنك"}
         cash_aliases = {"cash", "نقد", "نقدي", "كاش"}
-        pos_aliases  = {"pos", "نقاط بيع", "نقاط_بيع", "point_of_sale"}
+        pos_aliases  = {"pos", "card", "mada", "visa", "mastercard", "بطاقة", "بطاقه", "شبكة", "نقاط بيع", "نقاط_بيع", "point_of_sale"}
 
         if requested_method_raw in pos_aliases:
             settlement_method = "pos"
@@ -2850,6 +2847,29 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
         payload["type"] = _infer_operation_type_from_account(
             payload.get("type"), accounting_meta.get("type")
         )
+
+        op_type = str(payload.get("type") or "").lower()
+        original_type = str(payload.get("originalType") or payload.get("original_type") or "").lower()
+        partner_type = str(payload.get("partnerType") or payload.get("partner_type") or "").lower()
+        has_partner = bool(payload.get("partnerId") or payload.get("partner_id") or payload.get("partnerName") or payload.get("partner_name"))
+        has_vehicle = bool(payload.get("vehicleId") or payload.get("vehicle_id"))
+
+        if op_type in {"sale", "sale_return"} and not (has_vehicle or has_partner):
+            raise HTTPException(status_code=400, detail="عمليات البيع/مرتجع البيع تتطلب ربطاً بمركبة أو عميل")
+
+        if op_type in {"purchase", "purchase_return"} and not has_partner:
+            raise HTTPException(status_code=400, detail="عمليات الشراء/مرتجع الشراء تتطلب اختيار مورد")
+
+        if op_type == "payment_order" and original_type == "receipt_voucher":
+            if not has_vehicle:
+                raise HTTPException(status_code=400, detail="سند القبض يجب أن يكون مرتبطاً بمركبة")
+            payload["partnerType"] = "customer"
+            payload["partner_type"] = "customer"
+
+        if op_type == "payment_order" and original_type == "settlement":
+            if not has_partner or partner_type not in {"customer", "supplier"}:
+                raise HTTPException(status_code=400, detail="التسوية يجب أن تكون مرتبطة بعميل أو مورد")
+
         payload["notes"] = _enrich_operation_notes(
             payload.get("notes"),
             is_rakan=is_rakan_by_account,

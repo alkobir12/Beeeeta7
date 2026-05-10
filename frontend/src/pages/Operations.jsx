@@ -43,19 +43,30 @@ const OPERATION_KIND_META = {
 const OPERATION_TYPE_OPTIONS = [
   { value: 'purchase', label: 'شراء' },
   { value: 'sale', label: 'بيع' },
-  { value: 'expense', label: 'مصروف نقدي' },
+  { value: 'receipt_voucher', label: 'سند قبض (مركبة)' },
+  { value: 'settlement', label: 'تسوية (عميل/مورد)' },
   { value: 'sale_return', label: 'مرتجع بيع' },
   { value: 'purchase_return', label: 'مرتجع شراء' },
   { value: 'payment_order', label: 'سداد مستحقات' },
+  { value: 'expense', label: 'مصروف نقدي' },
 ];
 
 const SALE_LIKE_TYPES = new Set(['sale', 'sale_return']);
 const PURCHASE_LIKE_TYPES = new Set(['purchase', 'purchase_return']);
+const PAYMENT_ORDER_LIKE_TYPES = new Set(['payment_order', 'receipt_voucher', 'settlement']);
+const RECEIPT_VOUCHER_TYPE = 'receipt_voucher';
+const SETTLEMENT_TYPE = 'settlement';
+
+const normalizeOperationTypeForBackend = (opType) => (
+  PAYMENT_ORDER_LIKE_TYPES.has(opType) ? 'payment_order' : opType
+);
 
 const defaultPartnerTypeForOperation = (opType, current = 'customer') => {
   if (SALE_LIKE_TYPES.has(opType)) return 'customer';
   if (PURCHASE_LIKE_TYPES.has(opType)) return 'supplier';
   if (opType === 'expense') return 'supplier';
+  if (opType === RECEIPT_VOUCHER_TYPE) return 'customer';
+  if (opType === SETTLEMENT_TYPE) return (current === 'supplier' ? 'supplier' : 'customer');
   if (opType === 'payment_order') return current || 'customer';
   return current || 'customer';
 };
@@ -64,7 +75,6 @@ const PAYMENT_METHOD_OPTIONS = [
   { value: 'cash', label: 'نقدي', icon: '💵' },
   { value: 'transfer', label: 'تحويل', icon: '🏦' },
   { value: 'card', label: 'بطاقة', icon: '💳' },
-  { value: 'wallet', label: 'محفظة', icon: '📱' },
   { value: 'credit', label: 'آجل', icon: '📄' },
 ];
 
@@ -599,7 +609,7 @@ const Operations = () => {
       if (SALE_LIKE_TYPES.has(form.type)) return accountType === 'revenue';
       if (PURCHASE_LIKE_TYPES.has(form.type)) return ['expense', 'asset', 'liability'].includes(accountType);
       if (form.type === 'expense') return ['expense', 'asset'].includes(accountType);
-      if (form.type === 'payment_order') return ['asset', 'liability', 'expense'].includes(accountType);
+      if (PAYMENT_ORDER_LIKE_TYPES.has(form.type)) return ['asset', 'liability', 'expense'].includes(accountType);
       return true;
     });
 
@@ -1539,9 +1549,12 @@ const Operations = () => {
         ? (activeVehicleId ? OPERATION_KIND_VEHICLE : OPERATION_KIND_WORKSHOP)
         : form.operationKind);
 
-    const effectiveType = form.type;
+    const selectedType = form.type;
+    const effectiveType = normalizeOperationTypeForBackend(selectedType);
     const requiresSupplier = PURCHASE_LIKE_TYPES.has(effectiveType);
-    const requiresCustomerOrVehicle = SALE_LIKE_TYPES.has(effectiveType);
+    const requiresCustomerOrVehicle = SALE_LIKE_TYPES.has(selectedType);
+    const requiresVehicleForReceiptVoucher = selectedType === RECEIPT_VOUCHER_TYPE;
+    const requiresPartnerForSettlement = selectedType === SETTLEMENT_TYPE;
 
     if (effectiveOperationKind === OPERATION_KIND_VEHICLE && !activeVehicleId) {
       const msg = 'عملية المركبة تتطلب اختيار مركبة';
@@ -1557,6 +1570,22 @@ const Operations = () => {
 
     if (requiresCustomerOrVehicle && !hasCustomerOrVehicle) {
       const msg = 'أنواع البيع ومرتجع البيع تتطلب اختيار عميل أو مركبة';
+      setCreateError(msg);
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
+      setIsSaving(false);
+      return;
+    }
+
+    if (requiresVehicleForReceiptVoucher && !activeVehicleId) {
+      const msg = 'سند القبض يتطلب ربط العملية بمركبة.';
+      setCreateError(msg);
+      toast({ title: t('common.error'), description: msg, variant: 'destructive' });
+      setIsSaving(false);
+      return;
+    }
+
+    if (requiresPartnerForSettlement && !hasCustomerOrVehicle && !hasSupplierLink) {
+      const msg = 'التسوية تتطلب ربط العملية بعميل أو مورد.';
       setCreateError(msg);
       toast({ title: t('common.error'), description: msg, variant: 'destructive' });
       setIsSaving(false);
@@ -1666,7 +1695,8 @@ const Operations = () => {
 
         // NOTE: avoid sending File objects in JSON payload
         paymentReceipt: null,
-        notes: `${form.notes || ''}${vehicleDetailsNote}`.trim(),
+        notes: `${selectedType === RECEIPT_VOUCHER_TYPE ? '[FLOW:RECEIPT_VOUCHER] ' : ''}${selectedType === SETTLEMENT_TYPE ? '[FLOW:SETTLEMENT] ' : ''}${form.notes || ''}${vehicleDetailsNote}`.trim(),
+        originalType: selectedType,
       };
 
       if (!editingOperationId) {
@@ -1686,6 +1716,7 @@ const Operations = () => {
 
         const candidateAmount = Number(cleanPayload?.total || cleanPayload?.paymentAmount || 0);
         const candidateType = normalizeDuplicateToken(cleanPayload?.type);
+        const candidateOriginalType = normalizeDuplicateToken(cleanPayload?.originalType || '');
         const candidatePartnerId = normalizeDuplicateToken(cleanPayload?.partnerId);
         const candidatePartnerName = normalizeDuplicateToken(cleanPayload?.partnerName);
         const candidateDate = toDateKey(cleanPayload?.opDate || cleanPayload?.date);
@@ -1704,6 +1735,11 @@ const Operations = () => {
 
           const sameType = normalizeDuplicateToken(op?.type) === candidateType;
           if (!sameType) return false;
+
+          const opOriginalType = normalizeDuplicateToken(op?.originalType || op?.original_type || '');
+          if (candidateOriginalType && opOriginalType && candidateOriginalType !== opOriginalType) {
+            return false;
+          }
 
           const opPlate = resolvePlateTokenFromOperation(op);
           if (candidatePlate && opPlate && candidatePlate !== opPlate) {
@@ -1796,8 +1832,15 @@ const Operations = () => {
   };
 
   const subtotal = form.items.reduce((s, it) => s + Number(it.total || (Number(it.quantity || 1) * Number(it.price || 0)) || 0), 0);
-  const previewEffectiveType = form.type;
-  const smartAccountFieldKey = SALE_LIKE_TYPES.has(previewEffectiveType) ? 'credit' : 'debit';
+  const previewEffectiveType = normalizeOperationTypeForBackend(form.type);
+  const isReceiptVoucherType = form.type === RECEIPT_VOUCHER_TYPE;
+  const isSettlementType = form.type === SETTLEMENT_TYPE;
+  const isPaymentOrderLikeType = PAYMENT_ORDER_LIKE_TYPES.has(form.type);
+  const smartAccountFieldKey = isSettlementType
+    ? (form.partnerType === 'supplier' ? 'credit' : 'debit')
+    : SALE_LIKE_TYPES.has(form.type)
+      ? 'credit'
+      : 'debit';
   const previewKind = isSelectedAccountingRakan
     ? OPERATION_KIND_RAKAN
     : (form.operationKind === OPERATION_KIND_RAKAN
@@ -1807,26 +1850,30 @@ const Operations = () => {
   const missingCustomerOrVehicleForRakan = previewKind === OPERATION_KIND_RAKAN
     && SALE_LIKE_TYPES.has(previewEffectiveType)
     && !(activeVehicleId || form.partnerId || form.partnerName);
-  const missingSupplierForPurchaseLike = PURCHASE_LIKE_TYPES.has(previewEffectiveType)
+  const missingSupplierForPurchaseLike = PURCHASE_LIKE_TYPES.has(form.type)
     && !(form.partnerId || form.partnerName);
-  const hasRequiredItems = form.type === 'payment_order'
+  const missingVehicleForReceiptVoucher = isReceiptVoucherType && !activeVehicleId;
+  const missingPartnerForSettlement = isSettlementType && !form.partnerId && !form.partnerName;
+  const hasRequiredItems = isPaymentOrderLikeType
     ? Number(form.paymentAmount) > 0
     : form.items.length > 0;
-  const missingPartnerForPayment = form.type === 'payment_order' && !form.partnerId && !form.partnerName;
+  const missingPartnerForPayment = (form.type === 'payment_order') && !form.partnerId && !form.partnerName;
   const submitDisabled = (
     !hasRequiredItems
     || !selectedBusinessAccount?.id
     || !form.accountingAccountId
     || missingVehicleForVehicleKind
+    || missingVehicleForReceiptVoucher
     || missingCustomerOrVehicleForRakan
     || missingSupplierForPurchaseLike
+    || missingPartnerForSettlement
     || missingPartnerForPayment
     || isSaving
   );
   const isSaleLikeType = SALE_LIKE_TYPES.has(form.type);
   const isPurchaseLikeType = PURCHASE_LIKE_TYPES.has(form.type);
-  const showVehicleLinking = isSaleLikeType || form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN;
-  const showCustomerLinking = isSaleLikeType || form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN;
+  const showVehicleLinking = isSaleLikeType || isReceiptVoucherType || form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN;
+  const showCustomerLinking = isSaleLikeType || isReceiptVoucherType || form.operationKind === OPERATION_KIND_VEHICLE || form.operationKind === OPERATION_KIND_RAKAN;
   const canMoveToLinkingTab = Boolean(form.type && form.date);
   const canMoveToItemsTab = Boolean(form.accountingAccountId);
 
@@ -2193,19 +2240,23 @@ const Operations = () => {
                         value={form.type}
                         onChange={(e) => {
                           const selectedType = e.target.value;
+                          const isReceiptType = selectedType === RECEIPT_VOUCHER_TYPE;
+                          const isPaymentOrderLike = PAYMENT_ORDER_LIKE_TYPES.has(selectedType);
                           const nextPartnerType = defaultPartnerTypeForOperation(selectedType, form.partnerType);
-                          const shouldResetVehicle = !(SALE_LIKE_TYPES.has(selectedType));
+                          const shouldKeepVehicle = SALE_LIKE_TYPES.has(selectedType) || isReceiptType;
                           setForm({
                             ...form,
                             type: selectedType,
+                            operationKind: isReceiptType ? OPERATION_KIND_VEHICLE : form.operationKind,
+                            scope: isReceiptType ? 'vehicle' : form.scope,
                             partnerType: nextPartnerType,
                             partnerId: '',
                             partnerName: '',
-                            vehicleId: shouldResetVehicle ? '' : form.vehicleId,
-                            visitId: shouldResetVehicle ? '' : form.visitId,
-                            items: selectedType === 'payment_order' ? [] : form.items,
-                            paymentStatus: selectedType === 'payment_order' ? 'paid' : form.paymentStatus,
-                            paymentAmount: selectedType === 'payment_order' ? '' : form.paymentAmount,
+                            vehicleId: shouldKeepVehicle ? form.vehicleId : '',
+                            visitId: shouldKeepVehicle ? form.visitId : '',
+                            items: isPaymentOrderLike ? [] : form.items,
+                            paymentStatus: isPaymentOrderLike ? 'paid' : form.paymentStatus,
+                            paymentAmount: isPaymentOrderLike ? '' : form.paymentAmount,
                           });
                           if (selectedType && form.date) {
                             window.setTimeout(() => setCreateFormTab('linking'), 120);
@@ -2397,7 +2448,7 @@ const Operations = () => {
                   {form.operationKind === OPERATION_KIND_WORKSHOP && !isSaleLikeType && (
                     <div className="space-y-2 md:col-span-2 lg:col-span-3">
                       <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>
-                        {form.type === 'payment_order'
+                        {isPaymentOrderLikeType
                           ? 'الجهة/المستفيد (إلزامي)'
                           : isPurchaseLikeType
                             ? 'المورد (إلزامي)'
@@ -2405,7 +2456,7 @@ const Operations = () => {
                               ? 'المستفيد/المورد (اختياري)'
                               : 'الجهة/المستفيد (اختياري)'}
                       </label>
-                      {form.type === 'payment_order' ? (
+                      {isPaymentOrderLikeType ? (
                         <div className="space-y-2">
                           <div className="flex flex-wrap gap-2">
                             <button
@@ -2413,6 +2464,7 @@ const Operations = () => {
                               className={`dash-btn ${form.partnerType === 'customer' ? 'dash-btn-primary' : 'dash-btn-secondary'}`}
                               onClick={() => setForm({ ...form, partnerType: 'customer', partnerId: '', partnerName: '' })}
                               data-testid="operation-partner-type-customer"
+                              disabled={isReceiptVoucherType}
                             >
                               عميل
                             </button>
@@ -2421,6 +2473,7 @@ const Operations = () => {
                               className={`dash-btn ${form.partnerType === 'supplier' ? 'dash-btn-primary' : 'dash-btn-secondary'}`}
                               onClick={() => setForm({ ...form, partnerType: 'supplier', partnerId: '', partnerName: '' })}
                               data-testid="operation-partner-type-supplier"
+                              disabled={isReceiptVoucherType}
                             >
                               مورد
                             </button>
@@ -2530,8 +2583,17 @@ const Operations = () => {
                       <option value="card">{t('operations.card')}</option>
                       <option value="transfer">{t('operations.transfer')}</option>
                       <option value="credit">{t('operations.credit')}</option>
-                      <option value="wallet">محفظة</option>
                     </select>
+                    {isReceiptVoucherType && (
+                      <p className="mt-1 text-[11px] text-amber-300" data-testid="operation-type-receipt-hint">
+                        سند القبض يجب ربطه بمركبة، ويتم توجيه الطرف تلقائياً كعميل.
+                      </p>
+                    )}
+                    {isSettlementType && (
+                      <p className="mt-1 text-[11px] text-amber-300" data-testid="operation-type-settlement-hint">
+                        التسوية تتطلب اختيار عميل أو مورد قبل الحفظ.
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -2543,7 +2605,7 @@ const Operations = () => {
                         operationType={previewEffectiveType}
                         fieldKey={smartAccountFieldKey}
                         description={form.notes || form.description || ''}
-                        includeAll={true}
+                        includeAll={false}
                         value={selectedAccountingCode || form.accountingAccountId || ''}
                         onChange={(nextCode, acc) => {
                           const normalizedCode = String(acc?.code || nextCode || '').trim();
@@ -2705,7 +2767,7 @@ const Operations = () => {
               </div>
 
               
-              {form.type === 'payment_order' ? (
+              {isPaymentOrderLikeType ? (
                 <div className="grid grid-cols-1 md:grid-cols-8 gap-3 items-end mb-4">
                   <div className="md:col-span-2">
                     <label className="text-xs mb-1 block" style={{ color: styles.textMuted }}>مبلغ السداد</label>
@@ -2811,7 +2873,7 @@ const Operations = () => {
               )}
 
               {/* Items Table */}
-              {form.type !== 'payment_order' && form.items.length > 0 && (
+              {!isPaymentOrderLikeType && form.items.length > 0 && (
                 <>
                   <div className="md:hidden space-y-3">
                     {form.items.map((it, idx) => (

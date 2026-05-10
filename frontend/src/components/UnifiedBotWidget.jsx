@@ -227,6 +227,22 @@ const ADMIN_PATTERNS = [
     },
   },
   {
+    match: (t) => /انظر.*قسم المالي|القسم المالي|اعرض البيانات المالية|بيانات مالية|نظرة عامة|النظرة العامة/.test(t),
+    label: 'نظرة مالية',
+    handler: async (finCtx) => {
+      if (!finCtx) return 'لا تزال البيانات تُحمَّل، انتظر لحظة ثم أعِد المحاولة.';
+      const margin = finCtx.revenue > 0 ? ((finCtx.net / finCtx.revenue) * 100).toFixed(1) : '0';
+      const balanced = Math.abs((finCtx.totalDebit||0) - (finCtx.totalCredit||0)) < 1;
+      return `📋 **البيانات المالية الحالية:**\n\n` +
+        `💰 الإيرادات: **${finCtx.revenue.toLocaleString('ar-SA')} ر.س**\n` +
+        `📉 المصروفات: **${finCtx.expenses.toLocaleString('ar-SA')} ر.س**\n` +
+        `📊 صافي الدخل: **${finCtx.net.toLocaleString('ar-SA')} ر.س** (${margin}%)\n` +
+        `🔧 إيرادات راكان: **${finCtx.rakanRev.toLocaleString('ar-SA')} ر.س**\n` +
+        `⚖️ الميزان: **${balanced ? '✅ متوازن' : `❌ يوجد فرق ${Math.abs((finCtx.totalDebit||0)-(finCtx.totalCredit||0)).toLocaleString('ar-SA')} ر.س`}**\n\n` +
+        (finCtx.alerts?.length ? `⚠️ تنبيهات: ${finCtx.alerts.map(a=>a.title).join(' | ')}` : '✅ لا تنبيهات');
+    },
+  },
+  {
     match: (t) => /إحصائيات شاملة|لوحة التحكم|ملخص عام شامل/.test(t),
     label: 'إحصائيات شاملة',
     handler: async (finCtx) => {
@@ -324,38 +340,42 @@ export default function UnifiedBotWidget() {
     if (tab !== 'auditor' || finContext) return;
     const load = async () => {
       try {
-        const [isR, alertsR, rakanR] = await Promise.all([
-          axios.get(`${API}/api/finance/reports/income-statement`),
-          axios.get(`${API}/api/finance/alerts?workshop_id=${WID}`),
-          axios.get(`${API}/api/inventory/rakan-analytics?days=90`),
+        const [isR, alertsR, rakanR, tbR] = await Promise.all([
+          axios.get(`${API}/api/finance/reports/income-statement`).catch(() => ({ data: {} })),
+          axios.get(`${API}/api/finance/alerts?workshop_id=${WID}`).catch(() => ({ data: {} })),
+          axios.get(`${API}/api/inventory/rakan-analytics?days=90`).catch(() => ({ data: {} })),
+          axios.get(`${API}/api/finance/reports/trial-balance?workshop_id=${WID}`).catch(() => ({ data: {} })),
         ]);
-        const totals = isR.data?.data?.totals || {};
-        const alerts = alertsR.data?.data?.alerts || [];
-        const rakan  = rakanR.data || {};
+        const totals   = isR.data?.data?.totals || {};
+        const alerts   = alertsR.data?.data?.alerts || [];
+        const rakan    = rakanR.data || {};
+        const tbTotals = tbR.data?.data?.totals || {};
         const ctx = {
-          revenue:  Number(totals.revenue  || 0),
-          expenses: Number(totals.expenses || 0),
-          net:      Number(totals.net_income || 0),
-          rakanRev: Number(rakan.revenue || 0),
+          revenue:  Number(totals.revenue   || 0),
+          expenses: Number(totals.expenses  || 0),
+          net:      Number(totals.net_income|| 0),
+          rakanRev: Number(rakan.revenue    || 0),
+          totalDebit:  Number(tbTotals.total_debit  || 0),
+          totalCredit: Number(tbTotals.total_credit || 0),
           alerts,
         };
         setFinContext(ctx);
-        // رسالة ترحيب مع بيانات فعلية
-        const alertSummary = alerts.length
-          ? `\n\n⚠️ تنبيهات نشطة: ${alerts.map(a => a.title).join('، ')}`
-          : '\n\n✅ لا توجد تنبيهات مالية حالياً.';
+        const margin   = ctx.revenue > 0 ? ((ctx.net / ctx.revenue) * 100).toFixed(1) : '0';
+        const balanced = Math.abs(ctx.totalDebit - ctx.totalCredit) < 1;
         setFMessages([{
           role: 'assistant',
-          content: `مرحباً! اطّلعت على بيانات النظام الآن:\n\n` +
-            `💰 إجمالي الإيرادات: ${ctx.revenue.toLocaleString('ar-SA')} ر.س\n` +
-            `📉 إجمالي المصروفات: ${ctx.expenses.toLocaleString('ar-SA')} ر.س\n` +
-            `📊 صافي الدخل: ${ctx.net.toLocaleString('ar-SA')} ر.س\n` +
-            `🔧 إيرادات راكان: ${ctx.rakanRev.toLocaleString('ar-SA')} ر.س` +
-            alertSummary +
-            `\n\nيمكنني مراجعة الحسابات أو كتابة "أنشئ قيد" للانتقال للإنشاء المباشر.`,
+          content:
+            `✅ اطّلعت على البيانات المالية الفعلية:\n\n` +
+            `💰 الإيرادات: **${ctx.revenue.toLocaleString('ar-SA')} ر.س**\n` +
+            `📉 المصروفات: **${ctx.expenses.toLocaleString('ar-SA')} ر.س**\n` +
+            `📊 صافي الدخل: **${ctx.net.toLocaleString('ar-SA')} ر.س** (هامش ${margin}%)\n` +
+            `🔧 إيرادات راكان: **${ctx.rakanRev.toLocaleString('ar-SA')} ر.س**\n` +
+            `⚖️ الميزان: **${balanced ? '✅ متوازن' : `❌ فرق ${Math.abs(ctx.totalDebit-ctx.totalCredit).toLocaleString('ar-SA')} ر.س`}**\n\n` +
+            (alerts.length ? `⚠️ **${alerts.length} تنبيه:** ${alerts.map(a=>a.title).join(' | ')}` : '✅ لا تنبيهات') +
+            `\n\n**أوامر سريعة:** اكتب الوضع العام | الذمم | العمليات الأخيرة | المركبات | الموردين | "أنشئ قيد"`,
         }]);
       } catch {
-        // keep default message on error
+        // keep default
       }
     };
     load();

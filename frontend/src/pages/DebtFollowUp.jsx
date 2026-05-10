@@ -259,10 +259,11 @@ export default function DebtFollowUp() {
       for (const line of lines) {
         const lineAmt = line.amount && line.amount > 0 ? line.amount : finalAmount;
         const methodLabel = { bank: 'بنك/تحويل', cash: 'نقد', pos: 'نقاط بيع' }[line.method] || line.method;
-        // توجيه حساب السداد حسب الوسيلة
         const cashAccountCode = line.method === 'pos' ? '006' : line.method === 'bank' ? '004' : '003';
         const payload = {
-          type: 'payment_order',
+          workshopId: process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync',
+          workshop_id: process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync',
+          type: row.entityType === 'supplier' ? 'expense' : 'payment_order',
           total: lineAmt,
           amount: lineAmt,
           paymentAmount: lineAmt,
@@ -274,11 +275,14 @@ export default function DebtFollowUp() {
           partnerId: row.id,
           partnerName: row.name,
           partnerPhone: row.phone || '',
-          partnerType: row.entityType,
-          notes: `أمر سداد/تحصيل (${methodLabel}) من متابعة الذمم - ${row.name}`,
+          partnerType: row.entityType === 'supplier' ? 'supplier' : 'customer',
+          scope: 'workshop',
+          notes: `أمر تحصيل/سداد (${methodLabel}) - ${row.name}`,
           items: [{
-            name: `سداد ذمم (${methodLabel}) - ${row.name}`,
+            name: `سداد ذمم (${methodLabel}) — ${row.name}`,
+            itemType: 'service',
             quantity: 1,
+            qty: 1,
             price: lineAmt,
             total: lineAmt,
             isCustom: true,
@@ -286,12 +290,14 @@ export default function DebtFollowUp() {
         };
         await api.post('/operations', payload);
       }
-      toast({ title: 'تم إنشاء أمر السداد بنجاح' });
+      toast({ title: '✅ تم إنشاء أمر السداد', description: `${finalAmount.toLocaleString('ar-SA')} ر.س — ${row.name}` });
       setManualAmounts((prev) => ({ ...prev, [rowId]: '' }));
       setConfirmPayRow(null);
       await fetchData();
-    } catch (_error) {
-      toast({ title: 'تعذر إنشاء أمر السداد', variant: 'destructive' });
+    } catch (err) {
+      console.error('createSettlementOrder error:', err);
+      const msg = err?.response?.data?.detail || err?.message || 'تعذر إنشاء أمر السداد';
+      toast({ title: '❌ خطأ في السداد', description: msg, variant: 'destructive' });
     } finally {
       setSavingRowId('');
       setConfirmPayLoading(false);

@@ -793,9 +793,11 @@ export default function UnifiedBotWidget() {
       {/* ─── نافذة البوت ──────────────────────────────────────────────── */}
       {open && (
         <div
-          className="fixed z-[2147482999] left-4 bottom-36 lg:bottom-20 lg:left-auto lg:right-6 w-[92vw] max-w-[420px] rounded-[28px] overflow-hidden flex flex-col relative pointer-events-auto"
+          className="fixed z-[2147482999] left-3 bottom-24 w-[92vw] max-w-[420px] lg:left-6 lg:bottom-20 lg:w-[420px] rounded-[28px] overflow-hidden flex flex-col pointer-events-auto"
           style={{
-            height: '580px',
+            height: 'min(72vh, 580px)',
+            maxHeight: 'calc(100dvh - 110px)',
+            bottom: 'calc(5.5rem + env(safe-area-inset-bottom, 0px))',
             background: 'linear-gradient(145deg, rgba(6,10,30,0.98) 0%, rgba(2,6,23,0.98) 100%)',
             backdropFilter: 'blur(40px) saturate(180%)',
             WebkitBackdropFilter: 'blur(40px) saturate(180%)',

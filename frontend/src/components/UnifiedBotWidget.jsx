@@ -499,21 +499,78 @@ export default function UnifiedBotWidget() {
     finally { setLoading(false); }
   }, [aMessages]);
 
+  const normalizeArabicText = (raw = '') => String(raw || '')
+    .toLowerCase()
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const parseCreateIntent = (raw = '') => {
+    const text = normalizeArabicText(raw);
+    const isCreate = /(انش|انشي|انشى|سجل|سوي).*(عمليه|عملية|بيع|شراء|مصروف|راتب)/.test(text);
+    if (!isCreate) return null;
+
+    let templateId = 'service_sale';
+    if (text.includes('شراء')) templateId = 'purchase';
+    else if (text.includes('راتب')) templateId = 'salary';
+    else if (text.includes('مصروف')) templateId = 'expense';
+    else if (text.includes('بيع') && /(قطع|قطعه|قطعة|غيار|part)/.test(text)) templateId = 'parts_sale';
+    else if (text.includes('بيع')) templateId = 'service_sale';
+
+    const amountMatch = raw.match(/(\d+(?:[\.,]\d+)?)/);
+    const amountVal = amountMatch ? String(amountMatch[1]).replace(',', '.') : '';
+
+    const onMatch = raw.match(/(?:على|لـ|ل)\s+([^\n،,]+)/i);
+    const partner = onMatch ? String(onMatch[1]).trim() : '';
+
+    return {
+      templateId,
+      amount: amountVal,
+      partnerName: partner,
+      description: raw.trim(),
+    };
+  };
+
   // ─── المدقق ──────────────────────────────────────────────────────────────
   const sendAuditor = useCallback(async (text) => {
     if (!text.trim()) return;
     setFMessages(prev => [...prev, { role: 'user', content: text }]);
     setInput(''); setLoading(true);
     try {
-      const lc = text.toLowerCase();
-      if (lc.includes('أنشئ قيد') || lc.includes('انشئ قيد')) {
+      const lc = normalizeArabicText(text);
+      if (lc.includes('انشئ قيد') || lc.includes('انشي قيد') || lc.includes('انشى قيد')) {
         setTab('create'); setCreateMode('smart');
         setFMessages(prev => [...prev, { role: 'assistant', content: '✅ انتقلت لتبويب الإنشاء الذكي — اختر نموذج العملية وأدخل المبلغ.' }]);
         setLoading(false); return;
       }
-      if (lc.includes('أنشئ عملية') || lc.includes('انشئ عملية')) {
+
+      const parsedCreate = parseCreateIntent(text);
+      if (parsedCreate) {
         setTab('create'); setCreateMode('smart');
-        setFMessages(prev => [...prev, { role: 'assistant', content: '✅ انتقلت لتبويب الإنشاء — اختر نوع العملية.' }]);
+        setSelectedTemplate(parsedCreate.templateId);
+        if (parsedCreate.amount) setAmount(parsedCreate.amount);
+        if (parsedCreate.partnerName) setPartnerName(parsedCreate.partnerName);
+        if (parsedCreate.description) setDescription(parsedCreate.description);
+
+        const missing = [];
+        if (!parsedCreate.amount) missing.push('المبلغ');
+        if (['purchase', 'parts_sale', 'service_sale', 'credit_sale'].includes(parsedCreate.templateId) && !parsedCreate.partnerName && !selectedVehicle) {
+          missing.push('الطرف (عميل/مورد أو مركبة)');
+        }
+
+        const templateLabel = SMART_TEMPLATES.find(t => t.id === parsedCreate.templateId)?.label || parsedCreate.templateId;
+        const summary = [
+          `🧾 ملخص قبل التنفيذ:`,
+          `• النوع: ${templateLabel}`,
+          `• الوصف: ${parsedCreate.description || '-'}`,
+          `• الطرف: ${parsedCreate.partnerName || 'غير محدد'}`,
+          `• المبلغ: ${parsedCreate.amount || 'غير محدد'}`,
+          missing.length ? `\n⚠️ النواقص: ${missing.join(' + ')}` : '\n✅ جاهز للتنفيذ. اضغط تنفيذ من تبويب إنشاء.',
+        ].join('\n');
+
+        setCreateResult({ ok: missing.length === 0, msg: summary });
         setLoading(false); return;
       }
       // ── أوامر إدارية مباشرة (بدون LLM) ──────────────────────────────────
@@ -936,7 +993,8 @@ export default function UnifiedBotWidget() {
                   disabled={loading} data-testid="bot-input" />
                 <button type="submit" disabled={loading || !input.trim()}
                   className="w-9 h-9 rounded-xl flex items-center justify-center disabled:opacity-40"
-                  style={{ background: 'rgba(14,165,233,0.25)', border: '1px solid rgba(14,165,233,0.4)' }}>
+                  style={{ background: 'rgba(14,165,233,0.25)', border: '1px solid rgba(14,165,233,0.4)' }}
+                  data-testid="bot-send">
                   <Send size={13} className="text-sky-300" />
                 </button>
               </form>

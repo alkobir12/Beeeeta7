@@ -98,6 +98,35 @@
   - استمرار عمل الفلترة الطرفية (عميل/مورد)
   - عدم وجود Regression في صفحة العمليات.
 
+### Supplier-Balance Payment Restore + Operation Duplicate Guard (10 May 2026)
+
+**1) استعادة ميزة السداد عبر رصيد المورد في ConfirmPaymentDialog**
+- إعادة إظهار خيار `supplier_balance` في نافذة تأكيد السداد.
+- عند عدم توفر `supplierId` مسبقاً، أصبح يمكن اختيار المورد مباشرة داخل النافذة.
+- تمرير `supplierId` المختار إلى callbacks لجميع المسارات (Operations / Debt / Vehicle).
+
+**2) ربط السداد عبر رصيد المورد بسجل حركة المورد**
+- إضافة endpoint جديد:
+  - `POST /api/smart-accounting/operations/{op_id}/confirm-via-supplier-balance`
+- هذا المسار يقوم بـ:
+  - إنشاء حركة سداد من رصيد المورد (`supplier_balance_payment` journal source)
+  - تحديث حالة العملية إلى `paid/partial` حسب المتبقي.
+- تحسين robustness في `supplier_balance_payment`:
+  - تحقق صريح من `supplier_id` (بدلاً من 500)
+  - معالجة بيئات لا تحتوي جدول `suppliers` بدون كسر endpoint.
+
+**3) تعزيز منع تكرار العمليات قبل الحفظ**
+- تطوير منطق كشف التكرار في `Operations.jsx` ليقارن أكثر من إشارة:
+  - النوع + المبلغ + الشريك + اللوحة + التاريخ + الفاتورة + توقيع البنود
+- إضافة استثناء ذكي: **نفس العميل مع لوحة مختلفة** لا يُعتبر تكراراً مباشراً.
+- عند الاشتباه، يظهر prompt تأكيد واضح قبل متابعة الحفظ.
+
+**الاختبار والتحقق**
+- تم تشغيل اختبارات backend المضافة:
+  - `pytest -q /app/backend/tests/test_supplier_balance_payment_iter171.py -q`
+  - النتيجة: PASS (مع warnings فقط داخل ملف الاختبار نفسه).
+- تم إصلاح خطأ 500 الذي ظهر أثناء اختبار endpoint الجديد.
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

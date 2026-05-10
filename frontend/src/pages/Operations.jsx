@@ -1225,6 +1225,44 @@ const Operations = () => {
     return detail || e?.response?.data?.message || e?.message || t('common.error') || 'حدث خطأ';
   };
 
+  const normalizeDuplicateToken = (value) => normalizeText(value).replace(/\s+/g, '');
+  const toDateKey = (value) => String(value || '').slice(0, 10);
+
+  const extractPlateFromText = (value) => {
+    const txt = String(value || '');
+    const m = txt.match(/(?:اللوحة|plate)\s*[:：]?\s*([^|\n\]]+)/i);
+    return normalizeDuplicateToken(m?.[1] || '');
+  };
+
+  const resolvePlateTokenFromOperation = (op) => {
+    return normalizeDuplicateToken(
+      op?.plateNumber
+      || op?.plate_number
+      || op?.vehiclePlate
+      || op?.vehicle_plate
+      || ''
+    ) || extractPlateFromText(op?.notes || '');
+  };
+
+  const buildItemsSignature = (items) => {
+    if (!Array.isArray(items) || items.length === 0) return '';
+    return items
+      .map((item) => {
+        const qty = Number(item?.quantity || item?.qty || 1);
+        const price = Number(item?.price || 0);
+        const total = Number(item?.total || (qty * price) || 0);
+        return [
+          normalizeDuplicateToken(item?.itemType || ''),
+          normalizeDuplicateToken(item?.itemId || item?.name || item?.linkedPart || ''),
+          qty.toFixed(3),
+          price.toFixed(2),
+          total.toFixed(2),
+        ].join(':');
+      })
+      .sort()
+      .join('|');
+  };
+
   const createOperationMutation = useMutation({
     mutationFn: async (payload) => {
       const res = await axios.post(`${API_URL}/operations`, payload);
@@ -1647,34 +1685,60 @@ const Operations = () => {
         lastSubmitRef.current = { hash: payloadHash, timestamp: now };
 
         const candidateAmount = Number(cleanPayload?.total || cleanPayload?.paymentAmount || 0);
+        const candidateType = normalizeDuplicateToken(cleanPayload?.type);
+        const candidatePartnerId = normalizeDuplicateToken(cleanPayload?.partnerId);
+        const candidatePartnerName = normalizeDuplicateToken(cleanPayload?.partnerName);
+        const candidateDate = toDateKey(cleanPayload?.opDate || cleanPayload?.date);
+        const candidateInvoice = normalizeDuplicateToken(cleanPayload?.invoiceNumber);
+        const candidateItemsSig = buildItemsSignature(cleanPayload?.items);
+        const candidatePlate = normalizeDuplicateToken(
+          selectedVehicle?.plateNumber
+          || selectedVehicle?.plate_number
+          || ''
+        ) || extractPlateFromText(cleanPayload?.notes || '');
+
         const duplicateMatches = (ops || []).filter((op) => {
           const opAmount = Number(op?.total || op?.amount || op?.paymentAmount || 0);
           if (!Number.isFinite(opAmount) || !Number.isFinite(candidateAmount)) return false;
           if (Math.abs(opAmount - candidateAmount) > 0.01) return false;
 
-          const sameType = normalizeText(op?.type) === normalizeText(cleanPayload?.type);
+          const sameType = normalizeDuplicateToken(op?.type) === candidateType;
           if (!sameType) return false;
 
+          const opPlate = resolvePlateTokenFromOperation(op);
+          if (candidatePlate && opPlate && candidatePlate !== opPlate) {
+            // نفس العميل قد يملك أكثر من مركبة، اختلاف اللوحة يعني غالباً أنها عملية مختلفة
+            return false;
+          }
+
           const samePartner =
-            normalizeText(op?.partnerId || op?.partner_id) === normalizeText(cleanPayload?.partnerId)
-            || normalizeText(op?.partnerName || op?.partner_name) === normalizeText(cleanPayload?.partnerName);
+            (candidatePartnerId && normalizeDuplicateToken(op?.partnerId || op?.partner_id) === candidatePartnerId)
+            || (candidatePartnerName && normalizeDuplicateToken(op?.partnerName || op?.partner_name) === candidatePartnerName);
 
-          const sameAccounting =
-            normalizeText(op?.accountingAccountId || op?.accounting_account_id) === normalizeText(cleanPayload?.accountingAccountId);
+          const samePlate = Boolean(candidatePlate && opPlate && candidatePlate === opPlate);
+          const sameDate = toDateKey(op?.date || op?.opDate || op?.createdAt || op?.created_at) === candidateDate;
+          const sameInvoice = candidateInvoice
+            ? normalizeDuplicateToken(op?.invoiceNumber || op?.invoice_number) === candidateInvoice
+            : false;
+          const sameItems = candidateItemsSig
+            ? candidateItemsSig === buildItemsSignature(op?.items)
+            : false;
 
-          const opTs = new Date(op?.date || op?.createdAt || op?.created_at || 0).getTime();
-          const nearTime = Number.isFinite(opTs) && Math.abs(Date.now() - opTs) <= 5 * 60 * 1000;
-
-          return samePartner || sameAccounting || nearTime;
+          const signals = [samePartner, samePlate, sameDate, sameInvoice, sameItems].filter(Boolean).length;
+          return signals >= 2;
         });
 
         if (duplicateMatches.length > 0) {
           const latest = duplicateMatches[0];
           const latestTime = latest?.date || latest?.createdAt || latest?.created_at || '-';
+          const latestPlate = resolvePlateTokenFromOperation(latest) || '-';
+          const latestPartner = latest?.partnerName || latest?.partner_name || '-';
           const proceed = window.confirm(
-            `⚠️ يوجد تطابق محتمل مع عملية سابقة بنفس النوع/المبلغ.\n` +
-            `آخر تطابق: ${latestTime}\n` +
-            `هل العملية صحيحة وتريد المتابعة؟`
+            `⚠️ تم العثور على عملية مشابهة جدًا قبل الحفظ.\n` +
+            `النوع: ${latest?.type || '-'} | المبلغ: ${Number(latest?.total || 0).toLocaleString('ar-SA')}\n` +
+            `العميل/المورد: ${latestPartner} | اللوحة: ${latestPlate}\n` +
+            `التاريخ: ${latestTime}\n\n` +
+            `إذا كانت هذه عملية مختلفة (مثلاً نفس العميل لكن مركبة أخرى) اضغط موافق للمتابعة.`
           );
           if (!proceed) {
             setIsSaving(false);
@@ -3178,7 +3242,7 @@ const Operations = () => {
           const total = parseFloat(op.total || op.workshopTotal || 0);
           return Math.max(0, total);
         })()}
-        onConfirm={async ({ paymentLines, date, amount, paymentMethod, receipt }) => {
+        onConfirm={async ({ paymentLines, date, amount, paymentMethod, receipt, supplierId }) => {
           if (!confirmTarget?.id) return;
           // جلب workshopId من env أو من العملية مباشرة
           const wid = workshopId
@@ -3193,13 +3257,34 @@ const Operations = () => {
 
             for (const line of lines) {
               const payAmt = (line.amount && line.amount > 0) ? line.amount : undefined;
-              await axios.post(`${API_URL}/operations/${confirmTarget.id}/confirm-payment`, {
-                workshopId: wid,
-                ...(payAmt !== undefined && { amount: payAmt }),
-                date,
-                payment_method: line.method || 'bank',
-                receipt: receipt || null,
-              });
+              if (line.method === 'supplier_balance') {
+                const resolvedSupplierId =
+                  supplierId
+                  || confirmTarget?.supplierId
+                  || (normalizeText(confirmTarget?.partnerType) === 'supplier' ? confirmTarget?.partnerId : null)
+                  || null;
+
+                if (!resolvedSupplierId) {
+                  throw new Error('يرجى اختيار المورد قبل السداد عبر رصيد المورد.');
+                }
+
+                await axios.post(`${API_URL}/smart-accounting/operations/${confirmTarget.id}/confirm-via-supplier-balance`, {
+                  workshopId: wid,
+                  workshop_id: wid,
+                  supplier_id: resolvedSupplierId,
+                  ...(payAmt !== undefined && { amount: payAmt }),
+                  date,
+                  notes: `تسوية عملية عبر رصيد المورد — ${confirmTarget?.partnerName || confirmTarget?.supplierName || ''}`.trim(),
+                });
+              } else {
+                await axios.post(`${API_URL}/operations/${confirmTarget.id}/confirm-payment`, {
+                  workshopId: wid,
+                  ...(payAmt !== undefined && { amount: payAmt }),
+                  date,
+                  payment_method: line.method || 'bank',
+                  receipt: receipt || null,
+                });
+              }
             }
 
             setConfirmOpen(false);
@@ -3212,6 +3297,12 @@ const Operations = () => {
             toast({ title: 'فشل تأكيد السداد', description: errMsg || 'تأكد من الاتصال وحاول مرة أخرى', variant: 'destructive' });
           }
         }}
+        supplierId={
+          confirmTarget?.supplierId
+          || (normalizeText(confirmTarget?.partnerType) === 'supplier' ? confirmTarget?.partnerId : null)
+          || null
+        }
+        allowSupplierBalance={true}
       />
       
       <OperationDeleteConfirmDialog

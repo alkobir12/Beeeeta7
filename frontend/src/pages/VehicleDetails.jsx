@@ -1775,7 +1775,7 @@ const VisitCard = ({
                 className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100"
                 data-testid={`visit-supplier-balance-multi-suppliers-note-${visit.id}`}
               >
-                يوجد أكثر من مورد في هذه الزيارة، لذلك تم تعطيل خيار «السداد من رصيد المورد» حتى اختيار مورد واحد.
+                يوجد أكثر من مورد في هذه الزيارة. عند اختيار «السداد من رصيد المورد» سيتم طلب تحديد المورد داخل نافذة السداد.
               </div>
             )}
 
@@ -2108,7 +2108,7 @@ const VisitCard = ({
         onConfirm={handleConfirmVisitPayment}
         loading={confirmPayLoading}
         supplierId={singleSupplierForBalance?.id || null}
-        allowSupplierBalance={Boolean(singleSupplierForBalance?.id)}
+        allowSupplierBalance={true}
         vehicleId={visit.vehicleId || visit.vehicle_id}
         showArchiveOption={true}
         remainingBalance={Math.max(0, Math.round((

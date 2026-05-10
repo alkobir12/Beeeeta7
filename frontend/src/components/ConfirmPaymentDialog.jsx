@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -33,19 +33,47 @@ const ConfirmPaymentDialog = ({
   supplierId = null,   // إذا كان السداد من رصيد مورد
   vehicleId  = null,   // إذا كان مرتبطاً بمركبة
   showArchiveOption = false,  // هل يظهر خيار الأرشفة
-  allowSupplierBalance = false,
+  allowSupplierBalance = true,
 }) => {
   const [lines, setLines]             = useState([emptyLine()]);
   const [dateStr, setDateStr]         = useState(todayISO());
   const [archiveVehicle, setArchiveVehicle] = useState(false);
   const [supplierBal, setSupplierBal] = useState(null); // رصيد المورد المُجلَب
   const [balLoading, setBalLoading]   = useState(false);
+  const [selectedSupplierId, setSelectedSupplierId] = useState(supplierId || '');
+  const [suppliers, setSuppliers] = useState([]);
+  const [suppliersLoading, setSuppliersLoading] = useState(false);
   const methods = useMemo(() => {
-    const canUseSupplierBalance = allowSupplierBalance && !!supplierId;
+    const canUseSupplierBalance = allowSupplierBalance;
     return canUseSupplierBalance
       ? [...BASE_METHODS, SUPPLIER_BALANCE_METHOD]
       : BASE_METHODS;
-  }, [allowSupplierBalance, supplierId]);
+  }, [allowSupplierBalance]);
+
+  const effectiveSupplierId = supplierId || selectedSupplierId || '';
+
+  useEffect(() => {
+    if (!open || !allowSupplierBalance || supplierId) return;
+    let mounted = true;
+    const loadSuppliers = async () => {
+      setSuppliersLoading(true);
+      try {
+        const r = await axios.get(`${API}/api/suppliers`);
+        const rows = r?.data?.data || r?.data || [];
+        if (mounted) {
+          setSuppliers(Array.isArray(rows) ? rows : []);
+        }
+      } catch {
+        if (mounted) setSuppliers([]);
+      } finally {
+        if (mounted) setSuppliersLoading(false);
+      }
+    };
+    loadSuppliers();
+    return () => {
+      mounted = false;
+    };
+  }, [open, allowSupplierBalance, supplierId]);
 
   /* reset when dialog opens */
   const handleOpenChange = (v) => {
@@ -54,6 +82,7 @@ const ConfirmPaymentDialog = ({
       setDateStr(todayISO());
       setArchiveVehicle(false);
       setSupplierBal(null);
+      setSelectedSupplierId(supplierId || '');
     }
     onOpenChange(v);
   };
@@ -61,10 +90,11 @@ const ConfirmPaymentDialog = ({
   // عند اختيار "رصيد مورد" → جلب رصيد المورد
   const handleMethodChange = async (lineId, method) => {
     updateLine(lineId, 'method', method);
-    if (method === 'supplier_balance' && supplierId && !supplierBal) {
+    const targetSupplierId = supplierId || selectedSupplierId;
+    if (method === 'supplier_balance' && targetSupplierId && !supplierBal) {
       setBalLoading(true);
       try {
-        const r = await axios.get(`${API}/api/suppliers/${supplierId}`);
+        const r = await axios.get(`${API}/api/suppliers/${targetSupplierId}`);
         const sup = r.data?.data || r.data || {};
         setSupplierBal({
           name:   sup.name || 'المورد',
@@ -107,6 +137,11 @@ const ConfirmPaymentDialog = ({
 
     // التحقق من رصيد المورد عند اختيار "رصيد مورد"
     const usesSupplierBalance = paymentLines.some(pl => pl.method === 'supplier_balance');
+    if (usesSupplierBalance && !effectiveSupplierId) {
+      alert('يرجى اختيار مورد قبل السداد عبر رصيد المورد.');
+      return;
+    }
+
     if (usesSupplierBalance && supplierBal !== null) {
       const needed = paymentLines.filter(pl => pl.method === 'supplier_balance')
         .reduce((s, pl) => s + (pl.amount || remainingBalance), 0);
@@ -121,7 +156,7 @@ const ConfirmPaymentDialog = ({
       date: dateStr || todayISO(),
       archiveVehicle,
       viaSupplierBalance: usesSupplierBalance,
-      supplierId,
+      supplierId: effectiveSupplierId || null,
     });
   };
 
@@ -167,7 +202,39 @@ const ConfirmPaymentDialog = ({
 
                 {/* معلومات رصيد المورد */}
                 {isSupBal && (
-                  <div className="rounded-lg bg-amber-500/8 border border-amber-500/25 px-3 py-2 text-xs">
+                  <div className="space-y-2 rounded-lg bg-amber-500/8 border border-amber-500/25 px-3 py-2 text-xs">
+                    {!supplierId && (
+                      <select
+                        value={selectedSupplierId}
+                        onChange={async (e) => {
+                          const next = e.target.value;
+                          setSelectedSupplierId(next);
+                          setSupplierBal(null);
+                          if (!next) return;
+                          setBalLoading(true);
+                          try {
+                            const r = await axios.get(`${API}/api/suppliers/${next}`);
+                            const sup = r.data?.data || r.data || {};
+                            setSupplierBal({
+                              name: sup.name || 'المورد',
+                              credit: Number(sup.credit_balance || sup.creditBalance || 0),
+                            });
+                          } catch {
+                            setSupplierBal({ name: 'المورد', credit: 0 });
+                          } finally {
+                            setBalLoading(false);
+                          }
+                        }}
+                        className="w-full rounded-lg border border-amber-500/30 bg-slate-900/60 px-2 py-1.5 text-xs text-slate-100"
+                        data-testid={`pay-line-${idx}-supplier-select`}
+                        disabled={suppliersLoading}
+                      >
+                        <option value="">{suppliersLoading ? 'جارٍ تحميل الموردين...' : 'اختر المورد'}</option>
+                        {suppliers.map((sup) => (
+                          <option key={sup.id} value={sup.id}>{sup.name}</option>
+                        ))}
+                      </select>
+                    )}
                     {balLoading ? (
                       <span className="text-amber-400 animate-pulse">جارٍ جلب رصيد المورد...</span>
                     ) : supplierBal ? (

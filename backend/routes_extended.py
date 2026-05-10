@@ -2402,7 +2402,7 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
             prev = (
                 supa.client.table("journal_entries")
                 .select("total")
-                .in_("source", ["operation_payment", "operation_payment_income"])
+                .in_("source", ["operation_payment", "operation_payment_income", "supplier_balance_payment"])
                 .eq("reference_id", op_id)
                 .execute()
                 .data

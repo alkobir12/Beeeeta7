@@ -192,6 +192,10 @@ async def supplier_balance_payment(payload: Dict[str, Any] = Body(...)):
     workshop_id   = str(payload.get("workshop_id", "finmodule-sync"))
     operation_id  = str(payload.get("operation_id", ""))
     notes_text    = str(payload.get("notes", "سداد من رصيد مورد"))
+    supplier_name_payload = str(payload.get("supplier_name", "")).strip()
+
+    if not supplier_id:
+        raise HTTPException(status_code=400, detail="supplier_id مطلوب")
 
     if amount <= 0:
         raise HTTPException(status_code=400, detail="المبلغ يجب أن يكون أكبر من صفر")
@@ -199,13 +203,20 @@ async def supplier_balance_payment(payload: Dict[str, Any] = Body(...)):
     if not supabase:
         raise HTTPException(status_code=503, detail="Supabase غير متصل")
 
-    # جلب بيانات المورد
-    sup_res = supabase.table("suppliers").select("id,name,credit_balance,debit_balance").eq("id", supplier_id).execute()
-    supplier = (sup_res.data or [{}])[0]
-    sup_name = supplier.get("name", "مورد")
+    # جلب بيانات المورد (قد لا يكون جدول suppliers موجوداً في بعض البيئات)
+    supplier = {}
+    suppliers_table_available = True
+    try:
+        sup_res = supabase.table("suppliers").select("id,name,credit_balance,debit_balance").eq("id", supplier_id).execute()
+        supplier = (sup_res.data or [{}])[0]
+    except Exception as e:
+        suppliers_table_available = False
+        print(f"supplier_balance_payment: suppliers table unavailable ({e})")
+
+    sup_name = supplier.get("name") or supplier_name_payload or f"مورد {supplier_id[:8]}"
     credit_bal = float(supplier.get("credit_balance") or 0)
 
-    if credit_bal < amount:
+    if suppliers_table_available and credit_bal < amount:
         raise HTTPException(
             status_code=400,
             detail=f"رصيد المورد {credit_bal:,.2f} ر.س أقل من المبلغ المطلوب {amount:,.2f} ر.س"
@@ -227,16 +238,135 @@ async def supplier_balance_payment(payload: Dict[str, Any] = Body(...)):
     }
     supabase.table("journal_entries").insert(entry).execute()
 
-    # تحديث رصيد المورد
-    new_credit = max(0, credit_bal - amount)
-    supabase.table("suppliers").update({"credit_balance": new_credit}).eq("id", supplier_id).execute()
+    # تحديث رصيد المورد إن كان جدول الموردين متاحاً
+    if suppliers_table_available:
+        new_credit = max(0, credit_bal - amount)
+        supabase.table("suppliers").update({"credit_balance": new_credit}).eq("id", supplier_id).execute()
+    else:
+        new_credit = max(0, credit_bal - amount)
 
     invalidate_finance_caches()
     return {
         "success":          True,
         "journal_entry_id": entry["id"],
         "new_credit_balance": new_credit,
+        "balance_tracking_skipped": not suppliers_table_available,
         "message": f"تم سداد {amount:,.2f} ر.س من رصيد المورد. الرصيد الجديد: {new_credit:,.2f} ر.س",
+    }
+
+
+@router.post("/operations/{op_id}/confirm-via-supplier-balance")
+async def confirm_operation_via_supplier_balance(op_id: str, payload: Dict[str, Any] = Body(...)):
+    """
+    تسوية عملية آجل عبر رصيد المورد:
+    - إنشاء حركة رصيد مورد (journal entry + تحديث رصيد المورد)
+    - تحديث حالة العملية (paid/partial)
+    """
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Supabase غير متصل")
+
+    op_rows = supabase.table("operations").select("*").eq("id", op_id).execute().data or []
+    if not op_rows:
+        raise HTTPException(status_code=404, detail="operation not found")
+
+    op_row = op_rows[0]
+    workshop_id = (
+        str(payload.get("workshop_id") or payload.get("workshopId") or "")
+        or str(op_row.get("workshop_id") or op_row.get("workshopId") or "")
+    )
+    if not workshop_id:
+        raise HTTPException(status_code=400, detail="workshop_id مطلوب")
+
+    total = float(op_row.get("total") or 0)
+    if total <= 0:
+        raise HTTPException(status_code=400, detail="invalid operation total")
+
+    already_paid = 0.0
+    try:
+        prev = (
+            supabase.table("journal_entries")
+            .select("total")
+            .in_("source", ["operation_payment", "operation_payment_income", "supplier_balance_payment"])
+            .eq("reference_id", op_id)
+            .execute()
+            .data
+            or []
+        )
+        already_paid = sum(float(x.get("total") or 0) for x in prev)
+    except Exception as e:
+        print(f"confirm_via_supplier_balance: paid lookup failed: {e}")
+
+    remaining = max(0.0, total - already_paid)
+    if remaining <= 0.0001:
+        return {
+            "success": True,
+            "data": {
+                "paid": 0,
+                "remaining": 0,
+                "status": "paid",
+                "payment_method": "supplier_balance",
+            },
+            "message": "لا يوجد رصيد متبقٍ للتسوية",
+        }
+
+    amount_raw = payload.get("amount")
+    if amount_raw is None:
+        pay_amount = remaining
+    else:
+        try:
+            pay_amount = float(amount_raw)
+        except Exception:
+            raise HTTPException(status_code=400, detail="invalid amount")
+
+    if pay_amount <= 0:
+        raise HTTPException(status_code=400, detail="amount must be > 0")
+    pay_amount = min(pay_amount, remaining)
+
+    supplier_id = str(
+        payload.get("supplier_id")
+        or op_row.get("supplierId")
+        or op_row.get("supplier_id")
+        or (op_row.get("partnerId") if str(op_row.get("partnerType") or "").lower() == "supplier" else "")
+        or ""
+    )
+    if not supplier_id:
+        raise HTTPException(status_code=400, detail="supplier_id مطلوب للسداد عبر رصيد المورد")
+
+    notes_text = str(payload.get("notes") or f"تسوية عملية {op_id} عبر رصيد المورد")
+    settlement_result = await supplier_balance_payment({
+        "supplier_id": supplier_id,
+        "amount": pay_amount,
+        "workshop_id": workshop_id,
+        "operation_id": op_id,
+        "notes": notes_text,
+    })
+
+    remaining_after = max(0.0, remaining - pay_amount)
+    new_status = "paid" if remaining_after <= 0.0001 else "partial"
+    new_method = "supplier_balance" if new_status == "paid" else "credit"
+
+    update_payload = {
+        "payment_method": new_method,
+        "paymentMethod": new_method,
+        "payment_status": new_status,
+        "paymentStatus": new_status,
+    }
+    try:
+        supabase.table("operations").update(update_payload).eq("id", op_id).execute()
+    except Exception as e:
+        print(f"confirm_via_supplier_balance: operation update failed: {e}")
+
+    invalidate_finance_caches()
+    return {
+        "success": True,
+        "data": {
+            "paid": round(pay_amount, 2),
+            "remaining": round(remaining_after, 2),
+            "status": new_status,
+            "payment_method": new_method,
+            "supplier_id": supplier_id,
+            "journal_entry_id": settlement_result.get("journal_entry_id") if isinstance(settlement_result, dict) else None,
+        },
     }
 
 

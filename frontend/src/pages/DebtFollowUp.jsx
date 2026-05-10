@@ -258,7 +258,27 @@ export default function DebtFollowUp() {
     try {
       for (const line of lines) {
         const lineAmt = line.amount && line.amount > 0 ? line.amount : finalAmount;
-        const methodLabel = { bank: 'بنك/تحويل', cash: 'نقد', pos: 'نقاط بيع' }[line.method] || line.method;
+        const methodLabel = {
+          bank: 'بنك/تحويل',
+          cash: 'نقد',
+          pos: 'نقاط بيع',
+          supplier_balance: 'رصيد مورد',
+        }[line.method] || line.method;
+
+        if (line.method === 'supplier_balance') {
+          if (row.entityType !== 'supplier') {
+            throw new Error('سداد رصيد المورد متاح فقط لصفوف الموردين.');
+          }
+          await api.post('/smart-accounting/supplier-balance-payment', {
+            supplier_id: row.id,
+            amount: lineAmt,
+            workshop_id: process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync',
+            workshopId: process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync',
+            notes: `تسوية ذمم عبر رصيد المورد (${row.name})`,
+          });
+          continue;
+        }
+
         const cashAccountCode = line.method === 'pos' ? '006' : line.method === 'bank' ? '004' : '003';
         const payload = {
           workshopId: process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync',
@@ -476,6 +496,8 @@ export default function DebtFollowUp() {
         onOpenChange={(v) => { if (!v) setConfirmPayRow(null); }}
         loading={confirmPayLoading}
         remainingBalance={confirmPayRow?.defaultAmount || 0}
+        supplierId={confirmPayRow?.entityType === 'supplier' ? confirmPayRow?.id : null}
+        allowSupplierBalance={confirmPayRow?.entityType === 'supplier'}
         onConfirm={async ({ paymentLines, date }) => {
           if (!confirmPayRow) return;
           setConfirmPayLoading(true);

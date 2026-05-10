@@ -105,6 +105,7 @@ export default function OperationCard({
   isDeleting,
   expanded,
   onExpandedChange,
+  integrityStatus = null,
 }) {
   const isControlled = typeof expanded === 'boolean' && typeof onExpandedChange === 'function';
   const [internalExpanded, setInternalExpanded] = useState(false);
@@ -316,6 +317,17 @@ export default function OperationCard({
     : cardBorder;
   const stop = (e) => e.stopPropagation();
 
+  const integrityWarnings = Array.isArray(integrityStatus?.warnings) ? integrityStatus.warnings : [];
+  const hasIntegrityWarning = integrityWarnings.length > 0;
+  const integrityLabelMap = {
+    missing_journal_entry: 'لا يوجد قيد يومية مرتبط',
+    vehicle_not_found: 'المركبة غير موجودة',
+    visit_not_found: 'الزيارة غير موجودة',
+    visit_vehicle_mismatch: 'الزيارة لا تطابق المركبة المرتبطة',
+    vehicle_scope_without_vehicle: 'العملية من نوع مركبة بدون ربط مركبة',
+    potential_duplicate: 'تكرار محتمل لنفس العملية',
+  };
+
   return (
     <div
       className="dash-widget-shell"
@@ -355,6 +367,14 @@ export default function OperationCard({
               {operation.invoiceNumber ? (
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-white/5 text-slate-200 border border-white/10" data-testid={`operation-card-invoice-${operation.id}`}>
                   {operation.invoiceNumber}
+                </span>
+              ) : null}
+              {integrityStatus ? (
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${hasIntegrityWarning ? 'bg-rose-500/15 text-rose-100 border-rose-400/35' : 'bg-emerald-500/15 text-emerald-100 border-emerald-400/35'}`}
+                  data-testid={`operation-card-integrity-pill-${operation.id}`}
+                >
+                  {hasIntegrityWarning ? `⚠️ ${integrityWarnings.length} ملاحظة` : '✅ مترابطة'}
                 </span>
               ) : null}
             </div>
@@ -555,6 +575,22 @@ export default function OperationCard({
               <div className="text-[10px] text-slate-300/70 mb-1">المركبة</div>
               <div className="text-xs font-semibold text-slate-50 break-words">{vehicleDisplay}</div>
             </div>
+            {integrityStatus ? (
+              <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-integrity-expanded-${operation.id}`}>
+                <div className="text-[10px] text-slate-300/70 mb-1">كشف الربط</div>
+                {!hasIntegrityWarning ? (
+                  <div className="text-xs font-semibold text-emerald-200">سليم • مرتبط باليومية والزيارة</div>
+                ) : (
+                  <div className="space-y-1">
+                    {integrityWarnings.map((w, idx) => (
+                      <div key={`${operation.id}-integrity-warning-${idx}`} className="text-[11px] text-rose-200 break-words" data-testid={`operation-card-integrity-warning-${operation.id}-${idx}`}>
+                        • {integrityLabelMap[w] || w}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
             <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
               <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.paymentMethod') || 'طريقة الدفع'}</div>
               <div className="text-xs font-semibold text-slate-50 break-words">{operation.paymentMethod || '-'}</div>

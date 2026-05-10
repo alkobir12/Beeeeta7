@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Body, Request, UploadFile, File, Q
 from fastapi.responses import HTMLResponse, StreamingResponse
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
+from collections import defaultdict
 import asyncio
 import json
 import uuid
@@ -1855,6 +1856,324 @@ async def list_operations(
                 o["date"] = o["date"].isoformat()
             o["scope"] = o.get("scope") or ("vehicle" if o.get("vehicleId") else "workshop")
         return ops
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def _operation_date_key(op: Dict[str, Any]) -> str:
+    return str(
+        op.get("date")
+        or op.get("op_date")
+        or op.get("createdAt")
+        or op.get("created_at")
+        or ""
+    )[:10]
+
+
+def _operation_integrity_signature(op: Dict[str, Any]) -> str:
+    op_type = str(op.get("type") or "").strip().lower()
+    partner = str(op.get("partnerId") or op.get("partner_id") or op.get("partnerName") or op.get("partner_name") or "").strip().lower()
+    vehicle = str(op.get("vehicleId") or op.get("vehicle_id") or "").strip().lower()
+    date_key = _operation_date_key(op)
+    try:
+        total = round(float(op.get("total") or 0), 2)
+    except Exception:
+        total = 0.0
+    return f"{op_type}|{partner}|{vehicle}|{total}|{date_key}"
+
+
+@router.post("/operations/integrity/check")
+async def operations_integrity_check(payload: Dict[str, Any] = Body(...)):
+    """
+    كشف ترابط العملية بين:
+    - operations
+    - vehicle/visit
+    - journal_entries(reference_id)
+    مع تحذيرات التكرار المحتمل.
+    """
+    try:
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        raw_op_ids = payload.get("op_ids") or payload.get("operation_ids") or []
+        op_ids = [str(x).strip() for x in raw_op_ids if str(x).strip()]
+        vehicle_id = str(payload.get("vehicle_id") or payload.get("vehicleId") or "").strip()
+        workshop_id = str(payload.get("workshop_id") or payload.get("workshopId") or "").strip()
+
+        operations_rows: List[Dict[str, Any]] = []
+        journal_rows: List[Dict[str, Any]] = []
+        visits_rows: List[Dict[str, Any]] = []
+        vehicles_rows: List[Dict[str, Any]] = []
+
+        if provider == "supabase":
+            supa = SupabaseService()
+            if supa.mock_mode:
+                base_ops = _mem_read("operations")
+                if workshop_id:
+                    base_ops = [o for o in base_ops if str(o.get("workshopId") or o.get("workshop_id") or "") == workshop_id]
+                if vehicle_id:
+                    base_ops = [o for o in base_ops if str(o.get("vehicleId") or o.get("vehicle_id") or "") == vehicle_id]
+                if op_ids:
+                    op_set = set(op_ids)
+                    base_ops = [o for o in base_ops if str(o.get("id") or "") in op_set]
+                operations_rows = base_ops[:500]
+                if not op_ids:
+                    op_ids = [str(o.get("id") or "") for o in operations_rows if str(o.get("id") or "")]
+                journal_rows = [
+                    j for j in _mem_read("journal_entries")
+                    if str(j.get("reference_id") or j.get("referenceId") or "") in set(op_ids)
+                ]
+                visit_ids = {
+                    str(o.get("visitId") or o.get("visit_id") or "")
+                    for o in operations_rows
+                    if str(o.get("visitId") or o.get("visit_id") or "")
+                }
+                vehicle_ids = {
+                    str(o.get("vehicleId") or o.get("vehicle_id") or "")
+                    for o in operations_rows
+                    if str(o.get("vehicleId") or o.get("vehicle_id") or "")
+                }
+                visits_rows = [v for v in _mem_read("vehicle_visits") if str(v.get("id") or "") in visit_ids]
+                vehicles_rows = [v for v in _mem_read("vehicles") if str(v.get("id") or "") in vehicle_ids]
+            else:
+                q = supa.client.table("operations").select("*")
+                if workshop_id:
+                    q = q.eq("workshop_id", workshop_id)
+                if vehicle_id:
+                    q = q.eq("vehicle_id", vehicle_id)
+                if op_ids:
+                    q = q.in_("id", op_ids)
+                q = q.order("created_at", desc=True).limit(500)
+                operations_rows = q.execute().data or []
+
+                if not op_ids:
+                    op_ids = [str(o.get("id") or "") for o in operations_rows if str(o.get("id") or "")]
+
+                if op_ids:
+                    try:
+                        journal_rows = (
+                            supa.client.table("journal_entries")
+                            .select("id,reference_id,total,source,date")
+                            .in_("reference_id", op_ids)
+                            .execute()
+                            .data
+                            or []
+                        )
+                    except Exception:
+                        journal_rows = []
+
+                visit_ids = list({str(o.get("visit_id") or "") for o in operations_rows if str(o.get("visit_id") or "")})
+                vehicle_ids = list({str(o.get("vehicle_id") or "") for o in operations_rows if str(o.get("vehicle_id") or "")})
+
+                if visit_ids:
+                    visits_rows = (
+                        supa.client.table("vehicle_visits")
+                        .select("*")
+                        .in_("id", visit_ids)
+                        .execute()
+                        .data
+                        or []
+                    )
+                if vehicle_ids:
+                    vehicles_rows = (
+                        supa.client.table("vehicles")
+                        .select("*")
+                        .in_("id", vehicle_ids)
+                        .execute()
+                        .data
+                        or []
+                    )
+
+        elif provider == "memory" or db is None:
+            base_ops = _mem_read("operations")
+            if workshop_id:
+                base_ops = [o for o in base_ops if str(o.get("workshopId") or o.get("workshop_id") or "") == workshop_id]
+            if vehicle_id:
+                base_ops = [o for o in base_ops if str(o.get("vehicleId") or o.get("vehicle_id") or "") == vehicle_id]
+            if op_ids:
+                op_set = set(op_ids)
+                base_ops = [o for o in base_ops if str(o.get("id") or "") in op_set]
+            operations_rows = base_ops[:500]
+            if not op_ids:
+                op_ids = [str(o.get("id") or "") for o in operations_rows if str(o.get("id") or "")]
+            journal_rows = [
+                j for j in _mem_read("journal_entries")
+                if str(j.get("reference_id") or j.get("referenceId") or "") in set(op_ids)
+            ]
+            visit_ids = {
+                str(o.get("visitId") or o.get("visit_id") or "")
+                for o in operations_rows
+                if str(o.get("visitId") or o.get("visit_id") or "")
+            }
+            vehicle_ids = {
+                str(o.get("vehicleId") or o.get("vehicle_id") or "")
+                for o in operations_rows
+                if str(o.get("vehicleId") or o.get("vehicle_id") or "")
+            }
+            visits_rows = [v for v in _mem_read("vehicle_visits") if str(v.get("id") or "") in visit_ids]
+            vehicles_rows = [v for v in _mem_read("vehicles") if str(v.get("id") or "") in vehicle_ids]
+        else:
+            q: Dict[str, Any] = {}
+            if workshop_id:
+                q["workshopId"] = workshop_id
+            if vehicle_id:
+                q["vehicleId"] = vehicle_id
+            if op_ids:
+                q["id"] = {"$in": op_ids}
+
+            operations_rows = await db.operations.find(
+                q,
+                {
+                    "_id": 0,
+                    "id": 1,
+                    "type": 1,
+                    "total": 1,
+                    "partnerId": 1,
+                    "partnerName": 1,
+                    "vehicleId": 1,
+                    "visitId": 1,
+                    "scope": 1,
+                    "date": 1,
+                    "createdAt": 1,
+                    "notes": 1,
+                },
+            ).to_list(length=500)
+
+            if not op_ids:
+                op_ids = [str(o.get("id") or "") for o in operations_rows if str(o.get("id") or "")]
+
+            journal_rows = await db.journal_entries.find(
+                {"reference_id": {"$in": op_ids}},
+                {"_id": 0, "id": 1, "reference_id": 1, "total": 1, "source": 1, "date": 1},
+            ).to_list(length=2000)
+
+            visit_ids = list({str(o.get("visitId") or "") for o in operations_rows if str(o.get("visitId") or "")})
+            vehicle_ids = list({str(o.get("vehicleId") or "") for o in operations_rows if str(o.get("vehicleId") or "")})
+
+            if visit_ids:
+                visits_rows = await db.vehicle_visits.find(
+                    {"id": {"$in": visit_ids}},
+                    {"_id": 0, "id": 1, "vehicleId": 1, "status": 1},
+                ).to_list(length=1000)
+            if vehicle_ids:
+                vehicles_rows = await db.vehicles.find(
+                    {"id": {"$in": vehicle_ids}},
+                    {"_id": 0, "id": 1, "plateNumber": 1, "status": 1},
+                ).to_list(length=1000)
+
+        if not operations_rows:
+            return {
+                "success": True,
+                "data": {"items": [], "summary": {"total": 0, "ok": 0, "warnings": 0, "duplicates": 0}},
+            }
+
+        op_norm = []
+        for op in operations_rows:
+            op_norm.append({
+                "id": str(op.get("id") or ""),
+                "type": op.get("type"),
+                "total": op.get("total"),
+                "partnerId": op.get("partnerId") or op.get("partner_id"),
+                "partnerName": op.get("partnerName") or op.get("partner_name"),
+                "vehicleId": op.get("vehicleId") or op.get("vehicle_id"),
+                "visitId": op.get("visitId") or op.get("visit_id"),
+                "scope": op.get("scope"),
+                "date": op.get("date") or op.get("createdAt") or op.get("created_at"),
+            })
+
+        journal_count_by_ref = defaultdict(int)
+        for row in journal_rows:
+            ref = str(row.get("reference_id") or row.get("referenceId") or "").strip()
+            if ref:
+                journal_count_by_ref[ref] += 1
+
+        visit_map: Dict[str, Dict[str, Any]] = {}
+        for v in visits_rows:
+            v_id = str(v.get("id") or "").strip()
+            if not v_id:
+                continue
+            visit_map[v_id] = {
+                "id": v_id,
+                "vehicleId": v.get("vehicleId") or v.get("vehicle_id"),
+                "status": v.get("status"),
+            }
+
+        vehicle_ids_existing = {
+            str(v.get("id") or "").strip()
+            for v in vehicles_rows
+            if str(v.get("id") or "").strip()
+        }
+
+        signature_count = defaultdict(int)
+        for op in op_norm:
+            signature_count[_operation_integrity_signature(op)] += 1
+
+        items = []
+        ok_count = 0
+        warn_count = 0
+        duplicate_count = 0
+
+        for op in op_norm:
+            op_id = op.get("id")
+            warnings = []
+            journal_count = int(journal_count_by_ref.get(op_id, 0))
+            if journal_count == 0:
+                warnings.append("missing_journal_entry")
+
+            op_vehicle_id = str(op.get("vehicleId") or "").strip()
+            op_visit_id = str(op.get("visitId") or "").strip()
+
+            if op_vehicle_id and op_vehicle_id not in vehicle_ids_existing:
+                warnings.append("vehicle_not_found")
+
+            visit_row = visit_map.get(op_visit_id) if op_visit_id else None
+            if op_visit_id and not visit_row:
+                warnings.append("visit_not_found")
+            if visit_row and op_vehicle_id and str(visit_row.get("vehicleId") or "") != op_vehicle_id:
+                warnings.append("visit_vehicle_mismatch")
+
+            if str(op.get("scope") or "").lower() == "vehicle" and not op_vehicle_id:
+                warnings.append("vehicle_scope_without_vehicle")
+
+            sign = _operation_integrity_signature(op)
+            dup_size = int(signature_count.get(sign, 0))
+            if dup_size > 1:
+                warnings.append("potential_duplicate")
+                duplicate_count += 1
+
+            status = "ok" if not warnings else "warning"
+            if status == "ok":
+                ok_count += 1
+            else:
+                warn_count += 1
+
+            items.append(
+                {
+                    "op_id": op_id,
+                    "status": status,
+                    "warnings": warnings,
+                    "links": {
+                        "journal_count": journal_count,
+                        "has_vehicle": bool(op_vehicle_id),
+                        "has_visit": bool(op_visit_id),
+                        "visit_vehicle_match": False if (visit_row and op_vehicle_id and str(visit_row.get("vehicleId") or "") != op_vehicle_id) else True,
+                    },
+                    "duplicate_group_size": dup_size,
+                }
+            )
+
+        return {
+            "success": True,
+            "data": {
+                "items": items,
+                "summary": {
+                    "total": len(items),
+                    "ok": ok_count,
+                    "warnings": warn_count,
+                    "duplicates": duplicate_count,
+                },
+            },
+        }
     except HTTPException:
         raise
     except Exception as e:

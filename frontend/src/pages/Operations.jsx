@@ -188,6 +188,9 @@ const Operations = () => {
 
   const [createError, setCreateError] = useState('');
   const [accountUsageVersion, setAccountUsageVersion] = useState(0);
+  const [integrityMap, setIntegrityMap] = useState({});
+  const [integritySummary, setIntegritySummary] = useState({ total: 0, ok: 0, warnings: 0, duplicates: 0 });
+  const [integrityLoading, setIntegrityLoading] = useState(false);
 
   const [form, setForm] = useState({ 
     accountId: '', 
@@ -913,6 +916,46 @@ const Operations = () => {
     () => Array.from({ length: activeTotalPages }, (_, i) => i + 1),
     [activeTotalPages]
   );
+
+  useEffect(() => {
+    const opIds = (activeOps || []).map((op) => String(op?.id || '')).filter(Boolean);
+    if (!opIds.length) {
+      setIntegrityMap({});
+      setIntegritySummary({ total: 0, ok: 0, warnings: 0, duplicates: 0 });
+      return;
+    }
+
+    let mounted = true;
+    const run = async () => {
+      setIntegrityLoading(true);
+      try {
+        const r = await axios.post(`${API_URL}/operations/integrity/check`, {
+          op_ids: opIds,
+          workshop_id: workshopId || process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync',
+        });
+        const rows = r?.data?.data?.items || [];
+        const summary = r?.data?.data?.summary || { total: 0, ok: 0, warnings: 0, duplicates: 0 };
+        if (!mounted) return;
+        const nextMap = {};
+        rows.forEach((row) => {
+          const id = String(row?.op_id || '');
+          if (id) nextMap[id] = row;
+        });
+        setIntegrityMap(nextMap);
+        setIntegritySummary(summary);
+      } catch {
+        if (!mounted) return;
+        setIntegrityMap({});
+      } finally {
+        if (mounted) setIntegrityLoading(false);
+      }
+    };
+
+    run();
+    return () => {
+      mounted = false;
+    };
+  }, [activeOps, workshopId]);
 
   useEffect(() => {
     if (!expandedOperationId) return;
@@ -3236,6 +3279,24 @@ const Operations = () => {
             </span>
           </div>
 
+          <div className="glass-card p-3" data-testid="operations-integrity-summary-card">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-100 border border-emerald-400/35" data-testid="operations-integrity-ok">
+                سليم: {integritySummary.ok || 0}
+              </span>
+              <span className="px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-100 border border-rose-400/35" data-testid="operations-integrity-warnings">
+                ملاحظات: {integritySummary.warnings || 0}
+              </span>
+              <span className="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-100 border border-amber-400/35" data-testid="operations-integrity-duplicates">
+                تكرار محتمل: {integritySummary.duplicates || 0}
+              </span>
+              <span className="text-slate-400" data-testid="operations-integrity-location-hint">
+                كشف الربط يظهر هنا، وداخل كل عملية، وفي ملف المركبة.
+              </span>
+              {integrityLoading ? <span className="text-cyan-300">جاري التحقق...</span> : null}
+            </div>
+          </div>
+
           {operationsLoading && activeOpsTotalCount === 0 ? (
             <div className="apple-card p-4 text-center" data-testid="operations-loading">
               <div className="text-sm text-slate-300">جاري تحميل العمليات...</div>
@@ -3258,6 +3319,7 @@ const Operations = () => {
                   <OperationCard
                     key={opRenderKey}
                     operation={op}
+                    integrityStatus={integrityMap[String(op.id)] || null}
                     isRTL={isRTL}
                     t={t}
                     accounts={accounts}

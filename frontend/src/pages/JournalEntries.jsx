@@ -459,6 +459,19 @@ export default function JournalEntries() {
     );
   });
 
+  const getEntryLinkage = (entry) => {
+    const hasReference = Boolean(entry?.reference_id || entry?.referenceId);
+    const hasVehicle = Boolean(entry?.vehicle_plate || extractTagValue(entry?.description || '', 'VEHICLE_REF'));
+    const party = String(entry?.party_label || '').trim();
+    const hasParty = Boolean(party && party !== 'مفتوح');
+    const linked = hasReference || hasVehicle || hasParty;
+    return {
+      linked,
+      label: linked ? 'مترابط' : 'مفتوح',
+      hint: linked ? 'مرتبط بعملية/طرف/مركبة' : 'غير مرتبط بمرجع واضح',
+    };
+  };
+
   const stats = {
     total: entries.length,
     posted: entries.filter(e => e.status === 'posted').length,
@@ -775,6 +788,7 @@ export default function JournalEntries() {
                 const total = entry.total_debit || 0;
                 const isManual = entry.source === 'manual';
                 const safeDescription = sanitizeEntryText(entry.description || 'قيد محاسبي');
+                const linkage = getEntryLinkage(entry);
 
                 return (
                   <div
@@ -815,6 +829,15 @@ export default function JournalEntries() {
                     <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
                       <span data-testid={`entry-card-date-${entry.id}`}>{formatDate(entry.entry_date)}</span>
                       <span data-testid={`entry-card-customer-${entry.id}`}>طرف العملية: {entry.party_label || 'مفتوح'}</span>
+                    </div>
+
+                    <div className="mt-1">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ${linkage.linked ? 'bg-emerald-500/15 text-emerald-200' : 'bg-amber-500/15 text-amber-200'}`}
+                        data-testid={`entry-card-linkage-${entry.id}`}
+                      >
+                        {linkage.label}
+                      </span>
                     </div>
 
                     <div className="mt-1 text-xs text-slate-400" data-testid={`entry-card-vehicle-${entry.id}`}>
@@ -904,6 +927,7 @@ export default function JournalEntries() {
                   const total = entry.total_debit || 0;
                   const isManual = entry.source === 'manual';
                   const safeDescription = sanitizeEntryText(entry.description || 'قيد محاسبي');
+                  const linkage = getEntryLinkage(entry);
 
                   return (
                     <div 
@@ -953,6 +977,9 @@ export default function JournalEntries() {
                         </div>
                         <p className="text-xs" style={{ color: styles.textMuted }} data-testid={`entry-row-vehicle-${entry.id}`}>
                           المركبة: {entry.vehicle_plate || 'غير محدد'}
+                        </p>
+                        <p className={`text-[10px] mt-1 ${linkage.linked ? 'text-emerald-300' : 'text-amber-300'}`} data-testid={`entry-row-linkage-${entry.id}`}>
+                          حالة الربط: {linkage.label}
                         </p>
                       </div>
 

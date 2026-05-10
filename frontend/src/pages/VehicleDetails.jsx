@@ -2334,6 +2334,16 @@ const VehicleDetails = () => {
   const [waPreview, setWaPreview] = useState(null);
 
   const [financeSummary, setFinanceSummary] = useState(null);
+  const [vehicleLinkSummary, setVehicleLinkSummary] = useState({ total: 0, ok: 0, warnings: 0, duplicates: 0 });
+  const [vehicleLinkIssues, setVehicleLinkIssues] = useState([]);
+  const integrityLabelMap = {
+    missing_journal_entry: 'لا يوجد قيد يومية مرتبط',
+    vehicle_not_found: 'المركبة غير موجودة',
+    visit_not_found: 'الزيارة غير موجودة',
+    visit_vehicle_mismatch: 'الزيارة لا تطابق المركبة',
+    vehicle_scope_without_vehicle: 'عملية مركبة بدون مركبة مرتبطة',
+    potential_duplicate: 'تكرار محتمل',
+  };
   const [financialSourceOpen, setFinancialSourceOpen] = useState(false);
   const [financialSourceTitle, setFinancialSourceTitle] = useState('');
   const [financialSourceRows, setFinancialSourceRows] = useState([]);
@@ -2562,14 +2572,18 @@ const VehicleDetails = () => {
         .getAll(workshopId ? { workshop_id: workshopId } : {})
         .catch(() => ({ data: [] }));
       const customersPromise = customerAPI.getAll().catch(() => ({ data: [] }));
+      const operationsPromise = axios
+        .get(`${API_URL}/operations`, { params: { vehicle_id: id, limit: 200 } })
+        .catch(() => ({ data: [] }));
 
-      const [filesRes, approvalsRes, servicesRes, partsRes, suppliersRes, customersRes] = await Promise.all([
+      const [filesRes, approvalsRes, servicesRes, partsRes, suppliersRes, customersRes, operationsRes] = await Promise.all([
         filesPromise,
         approvalsPromise,
         servicesPromise,
         partsPromise,
         suppliersPromise,
         customersPromise,
+        operationsPromise,
       ]);
       
       setVehicleFiles(filesRes.files || []);
@@ -2577,6 +2591,28 @@ const VehicleDetails = () => {
       setPartsCatalog(normalizeListPayload(partsRes, ['parts']));
       setSuppliersCatalog(normalizePartyCatalog(normalizeListPayload(suppliersRes, ['suppliers']), 'supplier'));
       setCustomersCatalog(normalizePartyCatalog(normalizeListPayload(customersRes, ['customers']), 'customer'));
+
+      const vehicleOps = normalizeListPayload(operationsRes, ['operations']);
+      const vehicleOpIds = (vehicleOps || []).map((row) => String(row?.id || '')).filter(Boolean);
+      if (vehicleOpIds.length > 0) {
+        try {
+          const integrityRes = await axios.post(`${API_URL}/operations/integrity/check`, {
+            op_ids: vehicleOpIds,
+            vehicle_id: id,
+            workshop_id: workshopId || process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync',
+          });
+          const integrityItems = integrityRes?.data?.data?.items || [];
+          const integritySummary = integrityRes?.data?.data?.summary || { total: 0, ok: 0, warnings: 0, duplicates: 0 };
+          setVehicleLinkSummary(integritySummary);
+          setVehicleLinkIssues(integrityItems.filter((row) => Array.isArray(row?.warnings) && row.warnings.length > 0).slice(0, 5));
+        } catch {
+          setVehicleLinkSummary({ total: vehicleOpIds.length, ok: 0, warnings: 0, duplicates: 0 });
+          setVehicleLinkIssues([]);
+        }
+      } else {
+        setVehicleLinkSummary({ total: 0, ok: 0, warnings: 0, duplicates: 0 });
+        setVehicleLinkIssues([]);
+      }
       
       const approvalsRows = normalizeListPayload(approvalsRes, ['approvals']);
       const approvalsByVisit = new Map();
@@ -3534,6 +3570,38 @@ const VehicleDetails = () => {
                 {t('vehicle_details.items_edit_hint')}
               </div>
             </div>
+
+            <div
+              className="rounded-xl px-3 py-2.5 flex flex-wrap gap-2 items-center"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(148,163,184,0.20)',
+              }}
+              data-testid="vehicle-linkage-summary-card"
+            >
+              <span className="px-2 py-1 rounded-full text-[11px]" style={{ background: 'rgba(34,197,94,0.16)', color: 'rgba(134,239,172,0.95)' }} data-testid="vehicle-linkage-ok-count">
+                مترابط: {vehicleLinkSummary.ok || 0}
+              </span>
+              <span className="px-2 py-1 rounded-full text-[11px]" style={{ background: 'rgba(239,68,68,0.14)', color: 'rgba(252,165,165,0.95)' }} data-testid="vehicle-linkage-warning-count">
+                ملاحظات: {vehicleLinkSummary.warnings || 0}
+              </span>
+              <span className="px-2 py-1 rounded-full text-[11px]" style={{ background: 'rgba(245,158,11,0.16)', color: 'rgba(253,224,71,0.95)' }} data-testid="vehicle-linkage-duplicate-count">
+                تكرار محتمل: {vehicleLinkSummary.duplicates || 0}
+              </span>
+              <span className="text-[11px]" style={{ color: 'rgba(226,232,240,0.72)' }} data-testid="vehicle-linkage-location-hint">
+                كشف الربط: ملف المركبة ↔ العمليات ↔ دفتر اليومية.
+              </span>
+            </div>
+
+            {vehicleLinkIssues.length > 0 && (
+              <div className="rounded-xl px-3 py-2 text-[11px] space-y-1" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.26)', color: 'rgba(254,226,226,0.95)' }} data-testid="vehicle-linkage-issues-list">
+                {vehicleLinkIssues.map((issue, idx) => (
+                  <div key={`vehicle-link-issue-${idx}`} data-testid={`vehicle-linkage-issue-${idx}`}>
+                    • عملية {issue?.op_id} فيها: {(issue?.warnings || []).map((w) => integrityLabelMap[w] || w).join('، ')}
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div
               className="flex gap-2 text-xs overflow-x-auto whitespace-nowrap pb-1"

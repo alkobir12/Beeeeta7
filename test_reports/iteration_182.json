@@ -1,0 +1,66 @@
+{
+  "summary": "Verified fix for mobile bot widget overlap issue. The floating bot trigger button now correctly hides when the panel is open, preventing it from covering the chat input on mobile viewport. All 5 test scenarios passed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_182.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix verified: {!open && (...)} wrapper around unified-bot-trigger ensures button hides when panel is open",
+    "Added missing data-testid='unified-bot-close' to close button for better testability"
+  ],
+  "updated_files": [
+    "/app/frontend/src/components/UnifiedBotWidget.jsx"
+  ],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100% (5/5 test scenarios passed)"
+  },
+  "test_credentials": "Username: مدير",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Mobile bot widget overlap fix verified. The trigger button (unified-bot-button) is now hidden when panel is open via {!open && (...)} conditional rendering. Added data-testid='unified-bot-close' to close button.",
+  "features_tested": {
+    "mobile_trigger_hides_when_open": {
+      "status": "PASS",
+      "description": "When bot panel opens on mobile, trigger button disappears (no longer covers input)"
+    },
+    "mobile_panel_with_input": {
+      "status": "PASS",
+      "description": "unified-bot-panel shows with visible and writable chat input on mobile"
+    },
+    "mobile_send_message": {
+      "status": "PASS",
+      "description": "Sending message from bot-input works on mobile"
+    },
+    "close_button_works": {
+      "status": "PASS",
+      "description": "Close button inside panel works and trigger reappears"
+    },
+    "desktop_regression": {
+      "status": "PASS",
+      "description": "Open/close bot still works on desktop"
+    }
+  },
+  "bug_fix_verification": {
+    "original_issue": "زر البوت العائم كان يغطي خانة الدردشة على الجوال (Floating bot button was covering chat input on mobile)",
+    "fix_applied": "Hide unified-bot-trigger when open=true via {!open && (...)} conditional rendering",
+    "verification_result": "FIXED - Trigger button now hidden when panel is open, input is accessible on mobile"
+  },
+  "data_testid_verified": [
+    "unified-bot-button",
+    "unified-bot-trigger",
+    "unified-bot-panel",
+    "bot-input",
+    "unified-bot-close (added)"
+  ]
+}

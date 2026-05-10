@@ -774,21 +774,23 @@ export default function UnifiedBotWidget() {
   return (
     <>
       {/* ─── زر البوت ─────────────────────────────────────────────────── */}
-      <div className="fixed z-[2147483000] left-4 bottom-20 lg:bottom-6 lg:left-auto lg:right-6" data-testid="unified-bot-trigger">
-        <button
-          type="button"
-          onClick={forceOpenBotPanel}
-          className="relative w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 border"
-          style={{
-            background: open ? 'rgba(239,68,68,0.9)' : 'linear-gradient(135deg,#0ea5e9,#6366f1)',
-            borderColor: open ? 'rgba(239,68,68,0.5)' : 'rgba(99,102,241,0.5)',
-          }}
-          data-testid="unified-bot-button"
-        >
-          {open ? <X size={20} className="text-white" /> : <Bot size={20} className="text-white" />}
-          {!open && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-green-400 border border-slate-900 animate-pulse" />}
-        </button>
-      </div>
+      {!open && (
+        <div className="fixed z-[2147483000] left-4 bottom-20 lg:bottom-6 lg:left-auto lg:right-6" data-testid="unified-bot-trigger">
+          <button
+            type="button"
+            onClick={forceOpenBotPanel}
+            className="relative w-12 h-12 rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 border"
+            style={{
+              background: 'linear-gradient(135deg,#0ea5e9,#6366f1)',
+              borderColor: 'rgba(99,102,241,0.5)',
+            }}
+            data-testid="unified-bot-button"
+          >
+            <Bot size={20} className="text-white" />
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-green-400 border border-slate-900 animate-pulse" />
+          </button>
+        </div>
+      )}
 
       {/* ─── نافذة البوت ──────────────────────────────────────────────── */}
       {open && (
@@ -822,7 +824,7 @@ export default function UnifiedBotWidget() {
                 <div className="text-[10px] text-green-400 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />متصل</div>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-white/8 text-slate-400"><X size={14} /></button>
+            <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-white/8 text-slate-400" data-testid="unified-bot-close"><X size={14} /></button>
           </div>
 
           {/* تبويبات */}

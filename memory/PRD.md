@@ -29,6 +29,32 @@
 
 ## What's Been Implemented
 
+### Preview Visibility + Smart Accounting UI Verification (10 May 2026)
+
+**ما تم في هذه الجولة:**
+1. **ربط SmartAccountSelect فعلياً داخل صفحة العمليات** (`Operations.jsx`):
+   - استبدال حقل الحساب التقليدي بمكوّن `SmartAccountSelect`.
+   - إظهار تلميح واضح بأن آخر 3 حسابات مستخدمة تُعرض أولاً.
+   - تم التحقق بصرياً وبتقرير اختبار أن العنصر يظهر في تبويب **الربط**.
+
+2. **تحسين منطق خيارات الدفع في `ConfirmPaymentDialog.jsx`:**
+   - طرق الدفع الأساسية أصبحت: `bank`, `cash`, `pos`.
+   - خيار `supplier_balance` يظهر فقط عند توفر شرطين معًا:
+     - `allowSupplierBalance=true`
+     - `supplierId` موجود.
+
+3. **ربط سداد رصيد المورد من زيارة المركبة** (`VehicleDetails.jsx`):
+   - استخراج الموردين من بنود الزيارة (itemType='supplier').
+   - تفعيل السداد من رصيد المورد فقط عند وجود **مورد واحد** في الزيارة.
+   - عند تعدد الموردين، يظهر تنبيه واجهة يوضح تعطيل الخيار حتى لا يحدث التباس.
+   - إضافة استدعاء backend إلى:
+     - `POST /api/smart-accounting/supplier-balance-payment`
+
+4. **اختبار واجهة شامل عبر testing agent:**
+   - التقرير: `/app/test_reports/iteration_168.json`
+   - النتيجة: **Frontend 100% PASS**
+   - لا توجد Bugs أو Action Items مفتوحة في الجولة الحالية.
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

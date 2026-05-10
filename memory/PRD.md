@@ -259,6 +259,37 @@
   - القائمة لم تعد فارغة (ظهور 187 خيار في الاختبار).
   - الجوال والديسكتوب يعملان بشكل صحيح.
 
+### Linkage Integrity Layer (Vehicle File ↔ Operations ↔ Journal) — 10 May 2026
+
+**أين يوضع كشف الربط؟ (تم التنفيذ):**
+1. **صفحة العمليات**
+   - بطاقة ملخص: `operations-integrity-summary-card`
+   - داخل كل بطاقة عملية: شارة حالة الربط + تفاصيل التحذيرات عند التوسيع.
+2. **ملف المركبة (تبويب الزيارات)**
+   - بطاقة ملخص ربط: `vehicle-linkage-summary-card`
+   - قائمة مشاكل الربط: `vehicle-linkage-issues-list` (عند وجود أخطاء).
+3. **دفتر اليومية**
+   - حالة الربط لكل قيد في العرضين (جوال/ديسكتوب):
+     - `entry-card-linkage-{id}`
+     - `entry-row-linkage-{id}`
+
+**Backend جديد:**
+- `POST /api/operations/integrity/check`
+  - يدقق العلاقة بين: العملية، المركبة/الزيارة، وقيد اليومية (reference_id).
+  - يعيد `items + summary` مع تحذيرات مثل:
+    - `missing_journal_entry`
+    - `visit_vehicle_mismatch`
+    - `potential_duplicate`
+
+**التكرار (Duplicate) والتحذيرات:**
+- تم دعم مؤشر تكرار محتمل ضمن endpoint ويظهر في ملخص العمليات.
+- تم إصلاح ملاحظة اختبارية مرتبطة بـ `workshop_id` في Supabase داخل endpoint.
+
+**الاختبار:**
+- تقرير: `/app/test_reports/iteration_177.json`
+- Backend: **PASS 100%**
+- Frontend: تم التحقق من ظهور مكونات العمليات بالكامل، وباقي العناصر مثبتة في الكود مع data-testid.
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

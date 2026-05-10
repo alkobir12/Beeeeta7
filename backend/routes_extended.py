@@ -1937,8 +1937,6 @@ async def operations_integrity_check(payload: Dict[str, Any] = Body(...)):
                 vehicles_rows = [v for v in _mem_read("vehicles") if str(v.get("id") or "") in vehicle_ids]
             else:
                 q = supa.client.table("operations").select("*")
-                if workshop_id:
-                    q = q.eq("workshop_id", workshop_id)
                 if vehicle_id:
                     q = q.eq("vehicle_id", vehicle_id)
                 if op_ids:

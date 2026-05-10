@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Trash2, FileText, CreditCard, User, Building2, Car, Clock, Camera, Upload } from 'lucide-react';
+import { Plus, Trash2, FileText, CreditCard, User, Car, Clock, Camera, Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../hooks/use-toast';
 import GuidanceStepper from '../components/GuidanceStepper';
@@ -11,6 +11,7 @@ import GuidanceStepper from '../components/GuidanceStepper';
 import { financeAPI } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import ConfirmPaymentDialog from '../components/ConfirmPaymentDialog';
+import SmartAccountSelect from '../components/SmartAccountSelect';
 import OperationDetailsModal from '../components/OperationDetailsModal';
 import OperationCard from '../components/OperationCard';
 import OperationDeleteConfirmDialog from '../components/OperationDeleteConfirmDialog';
@@ -1732,6 +1733,7 @@ const Operations = () => {
 
   const subtotal = form.items.reduce((s, it) => s + Number(it.total || (Number(it.quantity || 1) * Number(it.price || 0)) || 0), 0);
   const previewEffectiveType = form.type;
+  const smartAccountFieldKey = SALE_LIKE_TYPES.has(previewEffectiveType) ? 'credit' : 'debit';
   const previewKind = isSelectedAccountingRakan
     ? OPERATION_KIND_RAKAN
     : (form.operationKind === OPERATION_KIND_RAKAN
@@ -2470,52 +2472,26 @@ const Operations = () => {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium" style={{ color: styles.textSecondary }}>الحساب المحاسبي (القيد)</label>
-                    <div className="relative">
-                      <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <select 
-                        className="apple-input pr-10"
-                        value={form.accountingAccountId} 
-                        onChange={e => {
-                          const nextAccountId = e.target.value;
-                          setForm({ ...form, accountingAccountId: nextAccountId });
-                          if (nextAccountId) {
-                            recordAccountUsage(nextAccountId);
-                          }
-                          if (nextAccountId) {
+                    <div className="space-y-2" data-testid="operations-smart-account-select-wrapper">
+                      <SmartAccountSelect
+                        operationType={previewEffectiveType}
+                        fieldKey={smartAccountFieldKey}
+                        includeAll={true}
+                        value={selectedAccountingCode || form.accountingAccountId || ''}
+                        onChange={(nextCode, acc) => {
+                          const normalizedCode = String(acc?.code || nextCode || '').trim();
+                          setForm((prev) => ({ ...prev, accountingAccountId: normalizedCode }));
+                          if (normalizedCode) {
+                            recordAccountUsage(normalizedCode);
                             window.setTimeout(() => setCreateFormTab('items'), 120);
                           }
                         }}
+                        placeholder={accountsLoading ? 'جاري تحميل الحسابات...' : 'اختر الحساب المحاسبي'}
                         data-testid="operation-account-select"
-                      >
-                        <option value="">{t('operations.select_account')}</option>
-                        {accountsLoading ? (
-                          <option value="">{t('operations.loading_accounts')}</option>
-                        ) : Array.isArray(filteredAccounts) ? (
-                          filteredAccounts.length > 0 ? (
-                            <>
-                              {/* آخر 3 حسابات مستخدمة (يُميَّزون) */}
-                              {filteredAccounts.filter(a => a._recentlyUsed).length > 0 && (
-                                <>
-                                  <option disabled>── آخر حسابات استُخدمت ──</option>
-                                  {filteredAccounts.filter(a => a._recentlyUsed).map(a => (
-                                    <option key={`r-${a.id || a.code}`} value={a.id || a.code}>
-                                      ★ {a.name_ar || a.name || a.code}
-                                    </option>
-                                  ))}
-                                  <option disabled>── بقية الحسابات ──</option>
-                                </>
-                              )}
-                              {filteredAccounts.filter(a => !a._recentlyUsed).map(a => (
-                                <option key={a.id || a.code} value={a.id || a.code}>
-                                  {a.name_ar || a.name || a.code}
-                                </option>
-                              ))}
-                            </>
-                          ) : (
-                            <option value="">{t('operations.no_accounts')}</option>
-                          )
-                        ) : null}
-                      </select>
+                      />
+                      <p className="text-[11px] text-slate-400" data-testid="operations-smart-account-hint">
+                        يتم تقديم آخر 3 حسابات مستخدمة تلقائياً في أعلى القائمة.
+                      </p>
                     </div>
                   </div>
 

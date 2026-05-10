@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,15 +10,20 @@ import { Button } from './ui/button';
 import axios from 'axios';
 
 const API = process.env.REACT_APP_BACKEND_URL;
-const WID = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
 const todayISO = () => new Date().toISOString().split('T')[0];
 
-const METHODS = [
+const BASE_METHODS = [
   { value: 'bank', label: 'بنك / تحويل', sub: '004', color: 'border-sky-500/60 bg-sky-500/10 text-sky-200' },
   { value: 'cash', label: 'نقد',          sub: '003', color: 'border-emerald-500/60 bg-emerald-500/10 text-emerald-200' },
-  { value: 'pos',  label: 'نقاط بيع',    sub: '006', color: 'border-violet-500/60 bg-violet-500/10 text-violet-200' },
-  { value: 'supplier_balance', label: 'رصيد مورد', sub: '2101', color: 'border-amber-500/60 bg-amber-500/10 text-amber-200' },
+  { value: 'pos',  label: 'نقاط بيع',     sub: '006', color: 'border-violet-500/60 bg-violet-500/10 text-violet-200' },
 ];
+
+const SUPPLIER_BALANCE_METHOD = {
+  value: 'supplier_balance',
+  label: 'رصيد مورد',
+  sub: '2101',
+  color: 'border-amber-500/60 bg-amber-500/10 text-amber-200',
+};
 
 const emptyLine = () => ({ id: Date.now() + Math.random(), method: 'bank', amountStr: '' });
 
@@ -28,12 +33,19 @@ const ConfirmPaymentDialog = ({
   supplierId = null,   // إذا كان السداد من رصيد مورد
   vehicleId  = null,   // إذا كان مرتبطاً بمركبة
   showArchiveOption = false,  // هل يظهر خيار الأرشفة
+  allowSupplierBalance = false,
 }) => {
   const [lines, setLines]             = useState([emptyLine()]);
   const [dateStr, setDateStr]         = useState(todayISO());
   const [archiveVehicle, setArchiveVehicle] = useState(false);
   const [supplierBal, setSupplierBal] = useState(null); // رصيد المورد المُجلَب
   const [balLoading, setBalLoading]   = useState(false);
+  const methods = useMemo(() => {
+    const canUseSupplierBalance = allowSupplierBalance && !!supplierId;
+    return canUseSupplierBalance
+      ? [...BASE_METHODS, SUPPLIER_BALANCE_METHOD]
+      : BASE_METHODS;
+  }, [allowSupplierBalance, supplierId]);
 
   /* reset when dialog opens */
   const handleOpenChange = (v) => {
@@ -135,7 +147,7 @@ const ConfirmPaymentDialog = ({
               <div key={line.id} className="rounded-xl border border-white/10 bg-white/4 p-3 space-y-2" data-testid={`pay-line-${idx}`}>
                 {/* وسيلة الدفع — 2×2 */}
                 <div className="grid grid-cols-4 gap-1.5">
-                  {METHODS.map(opt => (
+                  {methods.map(opt => (
                     <button
                       key={opt.value}
                       type="button"
@@ -248,7 +260,7 @@ const ConfirmPaymentDialog = ({
         </div>
 
         <DialogFooter className="gap-2 mt-2">
-          <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={loading}>
+          <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={loading} data-testid="confirm-payment-dialog-cancel">
             إلغاء
           </Button>
           <Button

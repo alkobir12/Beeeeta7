@@ -1131,7 +1131,37 @@ const VisitCard = ({
 
     setConfirmPayLoading(true);
     try {
-      const methodLabel = { bank: 'بنك/تحويل', cash: 'نقد', pos: 'نقاط بيع' };
+      const methodLabel = {
+        bank: 'بنك/تحويل',
+        cash: 'نقد',
+        pos: 'نقاط بيع',
+        supplier_balance: 'رصيد مورد',
+      };
+
+      const supplierBalanceAmount = resolvedLines
+        .filter((line) => line.method === 'supplier_balance')
+        .reduce((sum, line) => sum + Number(line.amount || 0), 0);
+
+      if (supplierBalanceAmount > 0) {
+        if (!spId) {
+          throw new Error('لا يمكن السداد من رصيد المورد بدون تحديد مورد واحد للزيارة.');
+        }
+
+        const activeWorkshopId =
+          process.env.REACT_APP_WORKSHOP_ID
+          || vehicle?.workshopId
+          || vehicle?.workshop_id
+          || 'finmodule-sync';
+
+        await axios.post(`${API_URL}/smart-accounting/supplier-balance-payment`, {
+          supplier_id: spId,
+          amount: supplierBalanceAmount,
+          workshop_id: activeWorkshopId,
+          workshopId: activeWorkshopId,
+          operation_id: visit.id,
+          notes: `سداد زيارة مركبة ${vehicle?.plateNumber || vehicle?.plate_number || ''}`.trim(),
+        });
+      }
       const newPaymentEntries = resolvedLines.map(l => ({
         id: `pay-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         kind: 'payment',
@@ -1319,6 +1349,29 @@ const VisitCard = ({
   const advanceTotal = payments
     .filter((p) => (p.kind || '').toLowerCase() === 'advance')
     .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+  const supplierCandidates = useMemo(() => {
+    const suppliersByName = new Map(
+      (suppliersCatalog || [])
+        .filter((row) => row?.id && row?.name)
+        .map((row) => [String(row.name).trim().toLowerCase(), row])
+    );
+
+    const unique = new Map();
+    (items || [])
+      .filter((it) => it?.itemType === 'supplier' && String(it?.name || '').trim())
+      .forEach((it) => {
+        const key = String(it.name).trim().toLowerCase();
+        const matched = suppliersByName.get(key);
+        if (matched?.id) {
+          unique.set(String(matched.id), { id: matched.id, name: matched.name });
+        }
+      });
+
+    return Array.from(unique.values());
+  }, [items, suppliersCatalog]);
+
+  const singleSupplierForBalance = supplierCandidates.length === 1 ? supplierCandidates[0] : null;
 
   const totalAmount = items.reduce((sum, item) => {
     const qty   = Number(item.quantity || item.qty || 1);
@@ -1717,6 +1770,15 @@ const VisitCard = ({
               </div>
             </div>
 
+            {supplierCandidates.length > 1 && (
+              <div
+                className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100"
+                data-testid={`visit-supplier-balance-multi-suppliers-note-${visit.id}`}
+              >
+                يوجد أكثر من مورد في هذه الزيارة، لذلك تم تعطيل خيار «السداد من رصيد المورد» حتى اختيار مورد واحد.
+              </div>
+            )}
+
             {payments.length === 0 ? (
               <div className="text-xs" style={{ color: 'rgba(226,232,240,0.6)' }} data-testid={`visit-payments-empty-${visit.id}`}>
                 لا توجد دفعات مسجلة لهذه الزيارة
@@ -2045,6 +2107,8 @@ const VisitCard = ({
         onOpenChange={setConfirmPayOpen}
         onConfirm={handleConfirmVisitPayment}
         loading={confirmPayLoading}
+        supplierId={singleSupplierForBalance?.id || null}
+        allowSupplierBalance={Boolean(singleSupplierForBalance?.id)}
         vehicleId={visit.vehicleId || visit.vehicle_id}
         showArchiveOption={true}
         remainingBalance={Math.max(0, Math.round((

@@ -624,7 +624,7 @@ const Operations = () => {
 
     const base = cleaned.length > 0 ? cleaned : typeScoped;
 
-    return [...base].sort((a, b) => {
+    const sorted = [...base].sort((a, b) => {
       const aPriorityRank = getAccountPriorityRank(a);
       const bPriorityRank = getAccountPriorityRank(b);
       if (aPriorityRank !== bPriorityRank) return aPriorityRank - bPriorityRank;
@@ -656,6 +656,18 @@ const Operations = () => {
       const bCode = normalizeAccountCode(b?.code || b?.id || '');
       return String(aCode).localeCompare(String(bCode), 'ar');
     });
+
+    // علامة "_recentlyUsed" لأول 3 حسابات ذات استخدام حديث
+    const topUsedSet = new Set(
+      sorted
+        .filter(a => {
+          const keys = [String(a.id||''), String(a.code||'')];
+          return keys.some(k => accountUsageStats.lastUsed.get(k) > 0);
+        })
+        .slice(0, 3)
+        .map(a => a.id || a.code)
+    );
+    return sorted.map(a => ({ ...a, _recentlyUsed: topUsedSet.has(a.id || a.code) }));
   }, [accounts, form.type, accountUsageStats]);
   const selectedAccountingAccount = useMemo(
     () => accounts.find((account) => String(account.id || account.code) === String(form.accountingAccountId || '')) || null,
@@ -2480,11 +2492,25 @@ const Operations = () => {
                           <option value="">{t('operations.loading_accounts')}</option>
                         ) : Array.isArray(filteredAccounts) ? (
                           filteredAccounts.length > 0 ? (
-                            filteredAccounts.map(a => (
-                              <option key={a.id || a.code} value={a.id || a.code}>
-                                {a.name_ar || a.name || a.code}
-                              </option>
-                            ))
+                            <>
+                              {/* آخر 3 حسابات مستخدمة (يُميَّزون) */}
+                              {filteredAccounts.filter(a => a._recentlyUsed).length > 0 && (
+                                <>
+                                  <option disabled>── آخر حسابات استُخدمت ──</option>
+                                  {filteredAccounts.filter(a => a._recentlyUsed).map(a => (
+                                    <option key={`r-${a.id || a.code}`} value={a.id || a.code}>
+                                      ★ {a.name_ar || a.name || a.code}
+                                    </option>
+                                  ))}
+                                  <option disabled>── بقية الحسابات ──</option>
+                                </>
+                              )}
+                              {filteredAccounts.filter(a => !a._recentlyUsed).map(a => (
+                                <option key={a.id || a.code} value={a.id || a.code}>
+                                  {a.name_ar || a.name || a.code}
+                                </option>
+                              ))}
+                            </>
                           ) : (
                             <option value="">{t('operations.no_accounts')}</option>
                           )

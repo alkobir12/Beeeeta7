@@ -7,28 +7,63 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import { Button } from './ui/button';
+import axios from 'axios';
 
+const API = process.env.REACT_APP_BACKEND_URL;
+const WID = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
 const todayISO = () => new Date().toISOString().split('T')[0];
 
 const METHODS = [
   { value: 'bank', label: 'بنك / تحويل', sub: '004', color: 'border-sky-500/60 bg-sky-500/10 text-sky-200' },
   { value: 'cash', label: 'نقد',          sub: '003', color: 'border-emerald-500/60 bg-emerald-500/10 text-emerald-200' },
   { value: 'pos',  label: 'نقاط بيع',    sub: '006', color: 'border-violet-500/60 bg-violet-500/10 text-violet-200' },
+  { value: 'supplier_balance', label: 'رصيد مورد', sub: '2101', color: 'border-amber-500/60 bg-amber-500/10 text-amber-200' },
 ];
 
 const emptyLine = () => ({ id: Date.now() + Math.random(), method: 'bank', amountStr: '' });
 
-const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false, remainingBalance = 0 }) => {
-  const [lines, setLines]       = useState([emptyLine()]);
-  const [dateStr, setDateStr]   = useState(todayISO());
+const ConfirmPaymentDialog = ({
+  open, onOpenChange, onConfirm, loading = false, remainingBalance = 0,
+  // خيارات إضافية
+  supplierId = null,   // إذا كان السداد من رصيد مورد
+  vehicleId  = null,   // إذا كان مرتبطاً بمركبة
+  showArchiveOption = false,  // هل يظهر خيار الأرشفة
+}) => {
+  const [lines, setLines]             = useState([emptyLine()]);
+  const [dateStr, setDateStr]         = useState(todayISO());
+  const [archiveVehicle, setArchiveVehicle] = useState(false);
+  const [supplierBal, setSupplierBal] = useState(null); // رصيد المورد المُجلَب
+  const [balLoading, setBalLoading]   = useState(false);
 
   /* reset when dialog opens */
   const handleOpenChange = (v) => {
     if (v) {
       setLines([emptyLine()]);
       setDateStr(todayISO());
+      setArchiveVehicle(false);
+      setSupplierBal(null);
     }
     onOpenChange(v);
+  };
+
+  // عند اختيار "رصيد مورد" → جلب رصيد المورد
+  const handleMethodChange = async (lineId, method) => {
+    updateLine(lineId, 'method', method);
+    if (method === 'supplier_balance' && supplierId && !supplierBal) {
+      setBalLoading(true);
+      try {
+        const r = await axios.get(`${API}/api/suppliers/${supplierId}`);
+        const sup = r.data?.data || r.data || {};
+        setSupplierBal({
+          name:   sup.name || 'المورد',
+          credit: Number(sup.credit_balance || sup.creditBalance || 0),
+        });
+      } catch {
+        setSupplierBal({ name: 'المورد', credit: 0 });
+      } finally {
+        setBalLoading(false);
+      }
+    }
   };
 
   const updateLine = (id, field, value) => {
@@ -36,10 +71,7 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false, 
   };
 
   const addLine = () => setLines(prev => [...prev, emptyLine()]);
-
-  const removeLine = (id) => {
-    setLines(prev => prev.length > 1 ? prev.filter(l => l.id !== id) : prev);
-  };
+  const removeLine = (id) => setLines(prev => prev.length > 1 ? prev.filter(l => l.id !== id) : prev);
 
   /* إجمالي ما أُدخل */
   const enteredTotal = lines.reduce((s, l) => {
@@ -47,26 +79,38 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false, 
     return s + (Number.isFinite(n) && n > 0 ? n : 0);
   }, 0);
 
-  /* هل يوجد خطأ في أي سطر؟ */
   const hasError = lines.some(l => {
-    if (!l.amountStr.trim()) return false; // فارغ = مقبول
+    if (!l.amountStr.trim()) return false;
     const n = parseFloat(l.amountStr);
     return !Number.isFinite(n) || n <= 0;
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (hasError) return;
 
-    // بناء قائمة المدفوعات
     const paymentLines = lines.map(l => {
       const n = parseFloat(l.amountStr);
-      return {
-        method: l.method,
-        amount: Number.isFinite(n) && n > 0 ? n : null,  // null = حصة من الرصيد
-      };
+      return { method: l.method, amount: Number.isFinite(n) && n > 0 ? n : null };
     });
 
-    onConfirm({ paymentLines, date: dateStr || todayISO() });
+    // التحقق من رصيد المورد عند اختيار "رصيد مورد"
+    const usesSupplierBalance = paymentLines.some(pl => pl.method === 'supplier_balance');
+    if (usesSupplierBalance && supplierBal !== null) {
+      const needed = paymentLines.filter(pl => pl.method === 'supplier_balance')
+        .reduce((s, pl) => s + (pl.amount || remainingBalance), 0);
+      if (needed > supplierBal.credit) {
+        alert(`رصيد المورد (${supplierBal.credit.toLocaleString('ar-SA')} ر.س) غير كافٍ للسداد.`);
+        return;
+      }
+    }
+
+    onConfirm({
+      paymentLines,
+      date: dateStr || todayISO(),
+      archiveVehicle,
+      viaSupplierBalance: usesSupplierBalance,
+      supplierId,
+    });
   };
 
   return (
@@ -86,27 +130,43 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false, 
           {lines.map((line, idx) => {
             const n = parseFloat(line.amountStr);
             const isValid = !line.amountStr.trim() || (Number.isFinite(n) && n > 0);
+            const isSupBal = line.method === 'supplier_balance';
             return (
               <div key={line.id} className="rounded-xl border border-white/10 bg-white/4 p-3 space-y-2" data-testid={`pay-line-${idx}`}>
-                {/* وسيلة الدفع */}
-                <div className="grid grid-cols-3 gap-1.5">
+                {/* وسيلة الدفع — 2×2 */}
+                <div className="grid grid-cols-4 gap-1.5">
                   {METHODS.map(opt => (
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => updateLine(line.id, 'method', opt.value)}
-                      className={`rounded-lg border px-1.5 py-2 text-center text-xs transition-all ${
+                      onClick={() => handleMethodChange(line.id, opt.value)}
+                      className={`rounded-lg border px-1 py-2 text-center text-[10px] transition-all ${
                         line.method === opt.value
                           ? opt.color + ' border-opacity-80 font-semibold'
                           : 'border-slate-600 bg-slate-800/40 text-slate-400 hover:border-slate-500'
                       }`}
                       data-testid={`pay-line-${idx}-method-${opt.value}`}
                     >
-                      <div className="font-medium">{opt.label}</div>
+                      <div className="font-medium truncate">{opt.label}</div>
                       <div className="text-[9px] opacity-60">{opt.sub}</div>
                     </button>
                   ))}
                 </div>
+
+                {/* معلومات رصيد المورد */}
+                {isSupBal && (
+                  <div className="rounded-lg bg-amber-500/8 border border-amber-500/25 px-3 py-2 text-xs">
+                    {balLoading ? (
+                      <span className="text-amber-400 animate-pulse">جارٍ جلب رصيد المورد...</span>
+                    ) : supplierBal ? (
+                      <span className="text-amber-300">
+                        رصيد <strong>{supplierBal.name}</strong>: {supplierBal.credit.toLocaleString('ar-SA')} ر.س
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">اختر مورداً لعرض رصيده</span>
+                    )}
+                  </div>
+                )}
 
                 {/* المبلغ */}
                 <div className="flex items-center gap-2">
@@ -132,19 +192,14 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false, 
                       onClick={() => removeLine(line.id)}
                       className="p-2 rounded-lg text-red-400 hover:bg-red-500/10 border border-red-500/30 text-xs"
                       data-testid={`pay-line-${idx}-remove`}
-                    >
-                      ✕
-                    </button>
+                    >✕</button>
                   )}
                 </div>
-                {!isValid && (
-                  <p className="text-xs text-red-400">مبلغ غير صحيح</p>
-                )}
+                {!isValid && <p className="text-xs text-red-400">مبلغ غير صحيح</p>}
               </div>
             );
           })}
 
-          {/* زر إضافة وسيلة */}
           <button
             type="button"
             onClick={addLine}
@@ -154,7 +209,6 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false, 
             + إضافة وسيلة دفع أخرى
           </button>
 
-          {/* إجمالي ما أُدخل */}
           {enteredTotal > 0 && (
             <div className="flex justify-between text-sm rounded-lg bg-white/5 px-3 py-2">
               <span className="text-slate-400">إجمالي المُدخل</span>
@@ -164,7 +218,23 @@ const ConfirmPaymentDialog = ({ open, onOpenChange, onConfirm, loading = false, 
             </div>
           )}
 
-          {/* تاريخ السداد */}
+          {/* خيار أرشفة المركبة (يظهر فقط عند وجود vehicleId) */}
+          {showArchiveOption && vehicleId && (
+            <label className="flex items-center gap-3 rounded-xl border border-slate-700 bg-white/3 px-3 py-2.5 cursor-pointer hover:bg-white/5 transition-colors"
+              data-testid="archive-vehicle-option">
+              <input
+                type="checkbox"
+                checked={archiveVehicle}
+                onChange={e => setArchiveVehicle(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-600"
+              />
+              <div>
+                <div className="text-xs font-semibold text-slate-200">إغلاق ملف المركبة وأرشفته</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">ينقل الملف لقسم الأرشيف بعد تأكيد السداد</div>
+              </div>
+            </label>
+          )}
+
           <div className="space-y-1">
             <label className="text-xs text-slate-400">تاريخ السداد</label>
             <input

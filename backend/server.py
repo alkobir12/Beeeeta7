@@ -526,6 +526,8 @@ app.include_router(advanced_router)
 app.include_router(finance_router)
 app.include_router(finance_bot_router)
 app.include_router(suppliers_ext_router)
+from routes_smart_accounting import router as smart_accounting_router
+app.include_router(smart_accounting_router)
 app.include_router(stitch_router)
 app.include_router(invoices_router)
 app.include_router(alkabeer_bot_router)

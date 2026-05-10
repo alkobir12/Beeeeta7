@@ -1096,7 +1096,7 @@ const VisitCard = ({
   const latestApproval = approvals?.[0];
 
   // ─── تأكيد السداد من الزيارة مباشرة ────────────────────────────────────────
-  const handleConfirmVisitPayment = async ({ paymentLines, date }) => {
+  const handleConfirmVisitPayment = async ({ paymentLines, date, archiveVehicle, viaSupplierBalance, supplierId: spId }) => {
     // حساب الرصيد المتبقي للورشة
     const workshopTotal = items.reduce((sum, it) => {
       if (it.itemType === 'supplier') return sum;
@@ -1164,6 +1164,17 @@ const VisitCard = ({
         title: 'تم السداد',
         description: summaryParts.join(' • '),
       });
+
+      // أرشفة المركبة إذا اختار المستخدم ذلك
+      if (archiveVehicle && (visit.vehicleId || visit.vehicle_id)) {
+        try {
+          await axios.post(`${API_URL}/smart-accounting/vehicle/${visit.vehicleId || visit.vehicle_id}/archive`);
+          toast({ title: '📦 تم الأرشفة', description: 'انتقل ملف المركبة للأرشيف' });
+        } catch {
+          // لا توقف العملية عند فشل الأرشفة
+        }
+      }
+
       onUpdate?.();
     } catch (e) {
       const errMsg = e?.response?.data?.detail || e?.message || '';
@@ -2034,6 +2045,8 @@ const VisitCard = ({
         onOpenChange={setConfirmPayOpen}
         onConfirm={handleConfirmVisitPayment}
         loading={confirmPayLoading}
+        vehicleId={visit.vehicleId || visit.vehicle_id}
+        showArchiveOption={true}
         remainingBalance={Math.max(0, Math.round((
           items.filter(it => it.itemType !== 'supplier').reduce((s, it) => s + Number(it.total ?? (Number(it.quantity||1) * Number(it.price||0))), 0)
           - paymentsTotal

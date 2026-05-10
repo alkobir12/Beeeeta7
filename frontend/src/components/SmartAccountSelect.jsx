@@ -34,6 +34,17 @@ const DESCRIPTION_KEYWORDS_MAP = [
   { keywords: ['بيع', 'sale'], suggestedGroup: 'revenue' },
 ];
 
+const CORE_FALLBACK_ACCOUNTS = [
+  { id: 'core-003', code: '003', name: 'النقد', type: 'asset', group: 'cash' },
+  { id: 'core-004', code: '004', name: 'البنك', type: 'asset', group: 'bank' },
+  { id: 'core-005', code: '005', name: 'العملاء', type: 'asset', group: 'customers' },
+  { id: 'core-006', code: '006', name: 'نقاط بيع', type: 'asset', group: 'bank' },
+  { id: 'core-027', code: '027', name: 'إيرادات ميكانيك', type: 'revenue', group: 'revenue' },
+  { id: 'core-028', code: '028', name: 'إيرادات توضيب', type: 'revenue', group: 'revenue' },
+  { id: 'core-030', code: '030', name: 'تكلفة مبيعات', type: 'expense', group: 'expenses' },
+  { id: 'core-2101', code: '2101', name: 'ذمم الموردين', type: 'liability', group: 'suppliers' },
+];
+
 const normalize = (text) => String(text || '').toLowerCase().trim();
 
 const inferAccountGroup = (acc) => {
@@ -119,7 +130,7 @@ export default function SmartAccountSelect({
 
   const normalizedAccounts = useMemo(
     () =>
-      (accounts || []).map((acc) => ({
+      ((accounts && accounts.length > 0) ? accounts : CORE_FALLBACK_ACCOUNTS).map((acc) => ({
         ...acc,
         group: inferAccountGroup(acc),
         normalized_name: normalize(acc?.name || acc?.name_ar),

@@ -249,11 +249,26 @@ export default function JournalEntries() {
       if (data?.success && Array.isArray(data?.data)) {
         setCoaAccounts(data.data);
       } else {
-        setCoaAccounts([]);
+        const fallback = await fetch(`${API_URL}/accounts?workshop_id=${workshopId}`);
+        const fallbackData = await fallback.json();
+        const normalized = Array.isArray(fallbackData)
+          ? fallbackData
+          : (Array.isArray(fallbackData?.data) ? fallbackData.data : []);
+        setCoaAccounts(normalized);
       }
     } catch (e) {
       console.error('Failed to fetch chart of accounts:', e);
-      setCoaAccounts([]);
+      try {
+        const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
+        const fallback = await fetch(`${API_URL}/accounts?workshop_id=${workshopId}`);
+        const fallbackData = await fallback.json();
+        const normalized = Array.isArray(fallbackData)
+          ? fallbackData
+          : (Array.isArray(fallbackData?.data) ? fallbackData.data : []);
+        setCoaAccounts(normalized);
+      } catch {
+        setCoaAccounts([]);
+      }
     }
   };
 
@@ -1620,6 +1635,15 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
               </button>
             </div>
 
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px]" data-testid="entry-debit-credit-color-legend">
+              <span className="px-2 py-1 rounded-md" style={{ background: 'rgba(34,197,94,0.16)', color: 'rgba(134,239,172,0.95)', border: '1px solid rgba(34,197,94,0.35)' }}>
+                مدين = أخضر
+              </span>
+              <span className="px-2 py-1 rounded-md" style={{ background: 'rgba(239,68,68,0.14)', color: 'rgba(252,165,165,0.95)', border: '1px solid rgba(239,68,68,0.35)' }}>
+                دائن = أحمر
+              </span>
+            </div>
+
             <div 
               className="rounded-xl overflow-hidden"
               style={{ border: `1px solid ${styles.cardBorder}` }}
@@ -1640,6 +1664,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                         fieldKey={getLineFieldKey(line, idx)}
                         description={formData.description}
                         includeAll={includeAllAccounts}
+                        allAccounts={coaAccounts}
                         compact={true}
                         value={line.account_code}
                         onChange={(nextCode, account) => {
@@ -1666,8 +1691,8 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                         placeholder="مدين"
                         className="w-full px-2.5 py-2 rounded-lg text-xs text-center"
                         style={{
-                          backgroundColor: styles.inputBg,
-                          border: `1px solid ${styles.inputBorder}`,
+                          backgroundColor: line.account_code ? 'rgba(34,197,94,0.12)' : styles.inputBg,
+                          border: `1px solid ${line.account_code ? 'rgba(34,197,94,0.45)' : styles.inputBorder}`,
                           color: styles.textPrimary,
                         }}
                         data-testid={`line-debit-mobile-${idx}`}
@@ -1679,8 +1704,8 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                         placeholder="دائن"
                         className="w-full px-2.5 py-2 rounded-lg text-xs text-center"
                         style={{
-                          backgroundColor: styles.inputBg,
-                          border: `1px solid ${styles.inputBorder}`,
+                          backgroundColor: line.account_code ? 'rgba(239,68,68,0.10)' : styles.inputBg,
+                          border: `1px solid ${line.account_code ? 'rgba(239,68,68,0.45)' : styles.inputBorder}`,
                           color: styles.textPrimary,
                         }}
                         data-testid={`line-credit-mobile-${idx}`}
@@ -1706,8 +1731,8 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                 <thead style={{ backgroundColor: 'rgba(15, 23, 42, 0.85)' }}>
                   <tr>
                     <th className="px-4 py-3 text-right text-xs font-semibold" style={{ color: styles.textSecondary }}>الحساب</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold w-32" style={{ color: styles.textSecondary }}>مدين</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold w-32" style={{ color: styles.textSecondary }}>دائن</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold w-32" style={{ color: 'rgba(134,239,172,0.95)' }}>مدين</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold w-32" style={{ color: 'rgba(252,165,165,0.95)' }}>دائن</th>
                     <th className="px-4 py-3 w-12"></th>
                   </tr>
                 </thead>
@@ -1723,6 +1748,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                             fieldKey={getLineFieldKey(line, idx)}
                             description={formData.description}
                             includeAll={includeAllAccounts}
+                            allAccounts={coaAccounts}
                             compact={true}
                             value={line.account_code}
                             onChange={(nextCode, account) => {
@@ -1752,8 +1778,8 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                           placeholder="0.00"
                           className="w-full px-3 py-2 rounded-lg text-sm text-center"
                           style={{ 
-                            backgroundColor: styles.inputBg,
-                            border: `1px solid ${styles.inputBorder}`,
+                            backgroundColor: line.account_code ? 'rgba(34,197,94,0.10)' : styles.inputBg,
+                            border: `1px solid ${line.account_code ? 'rgba(34,197,94,0.45)' : styles.inputBorder}`,
                             color: styles.textPrimary
                           }}
                           data-testid={`line-debit-${idx}`}
@@ -1767,8 +1793,8 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                           placeholder="0.00"
                           className="w-full px-3 py-2 rounded-lg text-sm text-center"
                           style={{ 
-                            backgroundColor: styles.inputBg,
-                            border: `1px solid ${styles.inputBorder}`,
+                            backgroundColor: line.account_code ? 'rgba(239,68,68,0.10)' : styles.inputBg,
+                            border: `1px solid ${line.account_code ? 'rgba(239,68,68,0.45)' : styles.inputBorder}`,
                             color: styles.textPrimary
                           }}
                           data-testid={`line-credit-${idx}`}

@@ -397,6 +397,27 @@
   - `/app/backend/tests/test_nlp_page_assistant.py`
   - `/app/test_reports/pytest/pytest_nlp_page_assistant_iter180.xml`
 
+### Floating Bot Open/Visibility Fix (All Pages) — 10 May 2026
+
+**المشكلة:**
+- المستخدم أبلغ أن البوت العائم لا يفتح عند الضغط عليه في كل الصفحات.
+
+**الإصلاح:**
+1. في `UnifiedBotWidget.jsx`:
+   - استبدال toggle بفتح صريح عبر `forceOpenBotPanel`.
+   - رفع طبقات العرض:
+     - trigger z-index = `2147483000`
+     - panel z-index = `2147482999`
+   - الحفاظ على الإغلاق من زر `unified-bot-close` داخل النافذة.
+
+**التحقق:**
+- تقرير: `/app/test_reports/iteration_181.json`
+- Frontend: **100% (12/12)** عبر 3 صفحات:
+  - operations
+  - accounting/journal-entries
+  - suppliers
+- النتيجة: **FIXED** (الزر يظهر والنافذة تفتح بشكل صحيح).
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

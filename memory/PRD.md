@@ -214,6 +214,28 @@
 - Frontend: **100% PASS**
 - لا توجد مشاكل UI/Integration/Design في التقرير.
 
+### Mobile UX Fix — Journal Entry Account Names & Overflow (10 May 2026)
+
+**مشكلة المستخدم:** في شاشة إنشاء قيد على الجوال، أسماء الحسابات/الكود غير واضحة والحجم كبير، مع overflow أفقي.
+
+**الإصلاحات المنفذة:**
+1. `SmartAccountSelect.jsx`
+   - إضافة `compact` mode.
+   - تحسين عرض النص ليكون:
+     - `[code] name` عند توفر الاسم
+     - `[code]` كـ fallback عند غياب الاسم
+   - تحسين truncate/width لقراءة أفضل على الجوال.
+
+2. `JournalEntries.jsx`
+   - إضافة layout موبايل مستقل لبنود القيد (`entry-lines-mobile-list`) على شكل cards.
+   - إخفاء جدول الديسكتوب على الجوال (`hidden md:table`).
+   - إبقاء إدخال المدين/الدائن واضحاً ضمن شبكة 2 عمود في الجوال.
+
+**نتيجة الاختبار:**
+- تقرير: `/app/test_reports/iteration_175.json`
+- Frontend: **100% PASS**
+- تم إصلاح overflow بالكامل: من ~12px إلى **0px** على viewport 390x844.
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

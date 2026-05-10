@@ -332,6 +332,7 @@ export default function UnifiedBotWidget() {
   const [itemDropOpen, setItemDropOpen]       = useState(false);
   const [pageSuggestion, setPageSuggestion]   = useState(null);
   const [suggestionBusy, setSuggestionBusy]   = useState(false);
+  const [interactiveDraft, setInteractiveDraft] = useState(null);
   const contextTimerRef                        = useRef(null);
   const lastContextKeyRef                      = useRef('');
 
@@ -420,6 +421,47 @@ export default function UnifiedBotWidget() {
     const guess = guessTemplate(description);
     if (guess && !selectedTemplate) setSelectedTemplate(guess);
   }, [description]);
+
+  useEffect(() => {
+    if (tab !== 'create' || !selectedTemplate || !description || interactiveDraft) return;
+
+    const partner = (partnerName || '').trim();
+    const partnerNorm = normalizeArabicText(partner);
+    const candidateVehicles = partnerNorm
+      ? (vehicles || []).filter((v) => normalizeArabicText(v?.customerName || '').includes(partnerNorm)).slice(0, 8)
+      : [];
+
+    const missing = [];
+    if (!amount) missing.push('المبلغ');
+    if (['purchase', 'parts_sale', 'service_sale', 'credit_sale'].includes(selectedTemplate) && !partner && !selectedVehicle) {
+      missing.push('الطرف (عميل/مورد أو مركبة)');
+    }
+    if (['parts_sale', 'service_sale', 'credit_sale'].includes(selectedTemplate) && !selectedVehicle) {
+      missing.push('المركبة');
+    }
+
+    const templateLabel = SMART_TEMPLATES.find((t) => t.id === selectedTemplate)?.label || selectedTemplate;
+    setInteractiveDraft({
+      templateId: selectedTemplate,
+      templateLabel,
+      amount,
+      partnerName: partner,
+      description,
+      vehicleCandidates: candidateVehicles,
+      selectedVehicleId: selectedVehicle?.id || null,
+      missing,
+    });
+
+    const summary = [
+      '🧾 ملخص قبل التنفيذ:',
+      `• النوع: ${templateLabel}`,
+      `• الوصف: ${description || '-'}`,
+      `• الطرف: ${partner || 'غير محدد'}`,
+      `• المبلغ: ${amount || 'غير محدد'}`,
+      missing.length ? `\n⚠️ النواقص: ${missing.join(' + ')}` : '\n✅ جاهز للتنفيذ. اضغط تأكيد الآن.',
+    ].join('\n');
+    setCreateResult({ ok: missing.length === 0, msg: summary });
+  }, [tab, selectedTemplate, description, amount, partnerName, selectedVehicle, interactiveDraft, vehicles]);
 
   useEffect(() => {
     if (tab !== 'create' || recentOps.length > 0) return;
@@ -533,6 +575,27 @@ export default function UnifiedBotWidget() {
     };
   };
 
+  const findVehiclesForPartner = async (partnerNameRaw = '') => {
+    const partner = normalizeArabicText(partnerNameRaw);
+    if (!partner) return [];
+
+    let pool = Array.isArray(vehicles) ? vehicles : [];
+    if (!pool.length) {
+      try {
+        const vr = await axios.get(`${API}/api/vehicles?limit=300`);
+        pool = Array.isArray(vr.data) ? vr.data : vr.data?.data || vr.data?.vehicles || [];
+        setVehicles(pool);
+      } catch {
+        pool = [];
+      }
+    }
+
+    return pool.filter((v) => {
+      const owner = normalizeArabicText(v?.customerName || v?.customer_name || '');
+      return owner && owner.includes(partner);
+    }).slice(0, 8);
+  };
+
   // ─── المدقق ──────────────────────────────────────────────────────────────
   const sendAuditor = useCallback(async (text) => {
     if (!text.trim()) return;
@@ -554,10 +617,20 @@ export default function UnifiedBotWidget() {
         if (parsedCreate.partnerName) setPartnerName(parsedCreate.partnerName);
         if (parsedCreate.description) setDescription(parsedCreate.description);
 
+        const candidateVehicles = await findVehiclesForPartner(parsedCreate.partnerName);
+        let selectedVehicleId = selectedVehicle?.id || null;
+        if (!selectedVehicleId && candidateVehicles.length === 1) {
+          setSelectedVehicle(candidateVehicles[0]);
+          selectedVehicleId = candidateVehicles[0].id;
+        }
+
         const missing = [];
         if (!parsedCreate.amount) missing.push('المبلغ');
         if (['purchase', 'parts_sale', 'service_sale', 'credit_sale'].includes(parsedCreate.templateId) && !parsedCreate.partnerName && !selectedVehicle) {
           missing.push('الطرف (عميل/مورد أو مركبة)');
+        }
+        if (['parts_sale', 'service_sale', 'credit_sale'].includes(parsedCreate.templateId) && !selectedVehicleId) {
+          missing.push('المركبة');
         }
 
         const templateLabel = SMART_TEMPLATES.find(t => t.id === parsedCreate.templateId)?.label || parsedCreate.templateId;
@@ -570,6 +643,13 @@ export default function UnifiedBotWidget() {
           missing.length ? `\n⚠️ النواقص: ${missing.join(' + ')}` : '\n✅ جاهز للتنفيذ. اضغط تنفيذ من تبويب إنشاء.',
         ].join('\n');
 
+        setInteractiveDraft({
+          ...parsedCreate,
+          templateLabel,
+          missing,
+          vehicleCandidates: candidateVehicles,
+          selectedVehicleId,
+        });
         setCreateResult({ ok: missing.length === 0, msg: summary });
         setLoading(false); return;
       }
@@ -640,8 +720,8 @@ export default function UnifiedBotWidget() {
   };
 
   // ─── الإنشاء الذكي ───────────────────────────────────────────────────────
-  const handleCreate = async (e) => {
-    e.preventDefault();
+  const handleCreate = async (e = null) => {
+    if (e?.preventDefault) e.preventDefault();
     if (!isBalanced) { setCreateResult({ ok: false, msg: 'القيد غير متوازن أو البيانات ناقصة' }); return; }
     setLoading(true); setCreateResult(null);
     try {
@@ -699,6 +779,7 @@ export default function UnifiedBotWidget() {
       }
 
       setCreateResult({ ok: true, msg: `✅ تم إنشاء القيد بنجاح (${previewLines.map(l=>l.name).join(' / ')}) — ${amt.toLocaleString('ar-SA')} ر.س` });
+      setInteractiveDraft(null);
       setAmount(''); setDescription(''); setPartnerName('');
     } catch (err) {
       setCreateResult({ ok: false, msg: err?.response?.data?.detail || 'فشل الإنشاء' });
@@ -712,6 +793,42 @@ export default function UnifiedBotWidget() {
   };
 
   const messages = tab === 'assistant' ? aMessages : fMessages;
+
+  const focusCreateField = (field) => {
+    if (field === 'المبلغ') {
+      const el = document.querySelector('[data-testid="create-amount-input"]');
+      el?.focus();
+      return;
+    }
+    if (field.includes('الطرف')) {
+      const el = document.querySelector('[data-testid="create-partner-input"]');
+      el?.focus();
+      return;
+    }
+    if (field.includes('المركبة')) {
+      const el = document.querySelector('[data-testid="create-vehicle-search"]');
+      el?.focus();
+    }
+  };
+
+  const handleSelectDraftVehicle = (vehicle) => {
+    if (!vehicle) return;
+    setSelectedVehicle(vehicle);
+    setInteractiveDraft((prev) => {
+      if (!prev) return prev;
+      const nextMissing = (prev.missing || []).filter((m) => !m.includes('المركبة'));
+      return { ...prev, selectedVehicleId: vehicle.id, missing: nextMissing };
+    });
+  };
+
+  const handleAddNewVehicleFromDraft = () => {
+    setCreateResult({ ok: false, msg: 'افتح ملف المركبات لإضافة مركبة جديدة ثم ارجع لإكمال التنفيذ.' });
+    try {
+      window.open('/vehicles', '_blank');
+    } catch {
+      // ignore
+    }
+  };
 
   const collectPageContext = () => {
     const fields = {};
@@ -1080,7 +1197,7 @@ export default function UnifiedBotWidget() {
                           const recentForTemplate = templateRecentMap[t.id] || [];
                           return (
                             <button key={t.id} type="button"
-                              onClick={() => { setSelectedTemplate(t.id); setCreateResult(null); setItemSearch(''); setItemDropOpen(false); if (t.forcePayment) setPaymentMethod(t.forcePayment); }}
+                              onClick={() => { setSelectedTemplate(t.id); setCreateResult(null); setInteractiveDraft(null); setItemSearch(''); setItemDropOpen(false); if (t.forcePayment) setPaymentMethod(t.forcePayment); }}
                               className={`rounded-xl p-2 flex flex-col items-center gap-1 border text-[10px] transition-all ${
                                 selectedTemplate === t.id
                                   ? 'border-opacity-60 font-semibold'
@@ -1242,7 +1359,7 @@ export default function UnifiedBotWidget() {
                     {/* الوصف */}
                     <div>
                       <label className="text-[10px] text-slate-400 mb-1 block">الوصف (اختياري — يُعرَّف النموذج تلقائياً)</label>
-                      <input value={description} onChange={e => setDescription(e.target.value)}
+                      <input value={description} onChange={e => { setDescription(e.target.value); setInteractiveDraft(null); }}
                         placeholder="مثال: صيانة فرامل، فطور عمال، شراء زيت..."
                         className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
                         style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
@@ -1253,10 +1370,11 @@ export default function UnifiedBotWidget() {
                       <label className="text-[10px] text-slate-400 mb-1 block">
                         {currentTemplate?.opType === 'purchase' ? 'اسم المورد' : 'اسم العميل'} (اختياري — لإنشاء عملية أيضاً)
                       </label>
-                      <input value={partnerName} onChange={e => setPartnerName(e.target.value)}
+                      <input value={partnerName} onChange={e => { setPartnerName(e.target.value); setInteractiveDraft(null); }}
                         placeholder="اترك فارغاً لقيد فقط"
                         className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
-                        style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }} />
+                        style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }}
+                        data-testid="create-partner-input" />
                     </div>
 
                     {/* ربط مركبة حالية */}
@@ -1272,7 +1390,7 @@ export default function UnifiedBotWidget() {
                           placeholder="ابحث برقم اللوحة أو اسم العميل..."
                           className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100 pr-7"
                           style={{ background: 'rgba(30,41,59,0.8)', border: `1px solid ${selectedVehicle ? 'rgba(56,189,248,0.5)' : 'rgba(71,85,105,0.5)'}` }}
-                          data-testid="vehicle-search-input"
+                          data-testid="create-vehicle-search"
                         />
                         {selectedVehicle && (
                           <button type="button" onClick={() => { setSelectedVehicle(null); setVehicleSearch(''); setPartnerName(''); }}
@@ -1386,7 +1504,7 @@ export default function UnifiedBotWidget() {
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-400 mb-1 block">المبلغ (ر.س)</label>
-                    <input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)}
+                    <input type="number" min="0" step="0.01" value={amount} onChange={e => { setAmount(e.target.value); setInteractiveDraft(null); }}
                       placeholder="0.00"
                       className="w-full rounded-lg px-2.5 py-1.5 text-[11px] text-slate-100"
                       style={{ background: 'rgba(30,41,59,0.8)', border: '1px solid rgba(71,85,105,0.5)' }}
@@ -1424,6 +1542,106 @@ export default function UnifiedBotWidget() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {interactiveDraft && (
+                  <div className="rounded-xl border border-sky-500/25 bg-sky-500/10 p-2.5 space-y-2" data-testid="interactive-draft-cards">
+                    <div className="text-[11px] font-semibold text-sky-200">معاينة تفاعلية قبل التأكيد</div>
+
+                    <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                      <button type="button" onClick={() => setSelectedTemplate(interactiveDraft.templateId)}
+                        className="text-right rounded-lg border border-slate-600 bg-slate-900/40 px-2 py-1 text-slate-100"
+                        data-testid="draft-card-type">
+                        النوع: {interactiveDraft.templateLabel}
+                      </button>
+                      <button type="button" onClick={() => focusCreateField('الطرف')}
+                        className="text-right rounded-lg border border-slate-600 bg-slate-900/40 px-2 py-1 text-slate-100"
+                        data-testid="draft-card-partner">
+                        الطرف: {interactiveDraft.partnerName || 'غير محدد'}
+                      </button>
+                      <button type="button" onClick={() => focusCreateField('المبلغ')}
+                        className="text-right rounded-lg border border-slate-600 bg-slate-900/40 px-2 py-1 text-slate-100 col-span-2"
+                        data-testid="draft-card-amount">
+                        المبلغ: {interactiveDraft.amount || 'غير محدد'}
+                      </button>
+                    </div>
+
+                    {interactiveDraft.missing?.length > 0 && (
+                      <div className="flex flex-wrap gap-1" data-testid="draft-missing-chips">
+                        {interactiveDraft.missing.map((m, idx) => (
+                          <button
+                            key={`missing-${idx}`}
+                            type="button"
+                            onClick={() => focusCreateField(m)}
+                            className="px-2 py-0.5 rounded-full text-[10px] border border-amber-500/40 bg-amber-500/10 text-amber-200"
+                            data-testid={`draft-missing-${idx}`}
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {interactiveDraft.partnerName && !interactiveDraft.selectedVehicleId && (
+                      <div className="space-y-1" data-testid="draft-vehicle-candidates">
+                        <div className="text-[10px] text-slate-300">مركبات العميل المطابقة:</div>
+                        {(interactiveDraft.vehicleCandidates || []).length === 0 ? (
+                          <div className="text-[10px] text-slate-500">لا توجد مركبات مطابقة بالاسم.</div>
+                        ) : (
+                          <div className="space-y-1">
+                            {(interactiveDraft.vehicleCandidates || []).map((v, idx) => (
+                              <button
+                                key={`candidate-${v.id || idx}`}
+                                type="button"
+                                onClick={() => handleSelectDraftVehicle(v)}
+                                className="w-full text-right px-2 py-1 rounded-lg text-[10px] border border-slate-600 bg-slate-900/40 text-slate-100 hover:border-sky-500/40"
+                                data-testid={`draft-vehicle-candidate-${idx}`}
+                              >
+                                {v.plateNumber} • {v.model} • {v.customerName}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleAddNewVehicleFromDraft}
+                          className="w-full text-center px-2 py-1 rounded-lg text-[10px] border border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                          data-testid="draft-add-new-vehicle"
+                        >
+                          + إضافة مركبة جديدة
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-3 gap-1.5" data-testid="draft-action-buttons">
+                      <button
+                        type="button"
+                        onClick={() => handleCreate()}
+                        disabled={loading || !isBalanced}
+                        className="rounded-lg py-1.5 text-[10px] font-semibold text-white disabled:opacity-40"
+                        style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)' }}
+                        data-testid="draft-action-confirm"
+                      >
+                        تأكيد الآن
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCreateResult({ ok: false, msg: 'يمكنك تعديل الحقول ثم الضغط على التنفيذ.' })}
+                        className="rounded-lg py-1.5 text-[10px] font-semibold text-slate-100 border border-slate-600"
+                        data-testid="draft-action-edit"
+                      >
+                        تعديل الحقول
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setInteractiveDraft(null); setCreateResult({ ok: false, msg: 'تم إلغاء المعاينة.' }); }}
+                        className="rounded-lg py-1.5 text-[10px] font-semibold text-rose-200 border border-rose-500/40"
+                        data-testid="draft-action-cancel"
+                      >
+                        إلغاء
+                      </button>
+                    </div>
                   </div>
                 )}
 

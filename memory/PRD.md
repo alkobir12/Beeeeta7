@@ -74,6 +74,30 @@
 - النتيجة: **Frontend 100% PASS**
 - جميع data-testid المطلوبة موجودة وتعمل.
 
+### SmartAccountSelect Upgrade (Based on user-provided script) — 10 May 2026
+
+**تمت ترقية المكوّن `SmartAccountSelect.jsx` ليشمل المنطق الذكي المتقدم:**
+1. دعم Props أوسع ومتوافق مع القديم:
+   - `entryType/lineType/description`
+   - مع الإبقاء على `operationType/fieldKey` لضمان عدم كسر الصفحات الحالية.
+2. فلترة حسب نوع الحركة + اتجاه السطر + البحث بالنص (اسم/كود).
+3. ترتيب النتائج داخل أقسام UX واضحة:
+   - `مقترح من الوصف`
+   - `المفضلة`
+   - `الأخيرة`
+   - `كل الحسابات المتاحة`
+4. إضافة keywords suggestions من الوصف (مثل: إيجار/رواتب/صيانة/تحصيل…).
+5. إضافة `data-testid` تفصيلية لعناصر القائمة الذكية (dropdown/search/sections/options).
+
+**التحقق بعد الترقية:**
+- تقرير الاختبار: `/app/test_reports/iteration_170.json`
+- النتيجة: **Frontend 100% PASS**
+- تم التحقق من:
+  - ظهور خيارات الحسابات (187 خيار في اختبار line-account-0)
+  - وجود البحث داخل القائمة
+  - استمرار عمل الفلترة الطرفية (عميل/مورد)
+  - عدم وجود Regression في صفحة العمليات.
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

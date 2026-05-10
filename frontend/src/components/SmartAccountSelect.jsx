@@ -70,6 +70,7 @@ export default function SmartAccountSelect({
   allAccounts = null,
   recentAccounts = [],
   favoriteAccounts = [],
+  compact = false,
   'data-testid': testId,
 }) {
   const [accounts, setAccounts] = useState([]);
@@ -195,6 +196,11 @@ export default function SmartAccountSelect({
   }, [filtered, suggestedIds, favoriteIds, recentIds]);
 
   const selectedAcc = normalizedAccounts.find((a) => a.code === selectedCode || a.id === selectedCode);
+  const selectedLabel = selectedAcc
+    ? `[${selectedAcc.code}] ${selectedAcc.name || selectedAcc.name_ar}`
+    : selectedCode
+      ? `[${selectedCode}]`
+      : placeholder;
 
   const emitChange = (acc) => {
     if (typeof onChange !== 'function') return;
@@ -268,7 +274,7 @@ export default function SmartAccountSelect({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-sm text-right transition-colors"
+        className={`w-full flex items-center justify-between rounded-xl text-right transition-colors ${compact ? 'px-2.5 py-1.5 text-xs md:text-sm' : 'px-3 py-2 text-xs md:text-sm'}`}
         style={{
           background: 'rgba(255,255,255,0.05)',
           border: `1px solid ${selectedCode ? 'rgba(56,189,248,0.4)' : 'rgba(148,163,184,0.2)'}`,
@@ -276,8 +282,8 @@ export default function SmartAccountSelect({
         }}
         data-testid={baseTestId}
       >
-        <span>
-          {loading ? 'جارٍ التحميل...' : selectedAcc ? `[${selectedAcc.code}] ${selectedAcc.name || selectedAcc.name_ar}` : placeholder}
+        <span className="truncate max-w-[84%]">
+          {loading ? 'جارٍ التحميل...' : selectedLabel}
         </span>
         <span className="text-slate-500 text-xs">{open ? '▲' : '▼'}</span>
       </button>

@@ -1645,6 +1645,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                             fieldKey={getLineFieldKey(line, idx)}
                             description={formData.description}
                             includeAll={includeAllAccounts}
+                            compact={true}
                             value={line.account_code}
                             onChange={(nextCode, account) => {
                               setFormData((prev) => {

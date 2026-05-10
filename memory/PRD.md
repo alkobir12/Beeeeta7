@@ -236,6 +236,29 @@
 - Frontend: **100% PASS**
 - تم إصلاح overflow بالكامل: من ~12px إلى **0px** على viewport 390x844.
 
+### Debit/Credit Color Safety + Account Dropdown Stability (10 May 2026)
+
+**طلبات المستخدم المنفذة:**
+1. تمييز بصري واضح لتجنب خطأ القيد:
+   - عند اختيار حساب:
+     - حقل **مدين** يظهر بخلفية/حدود خضراء.
+     - حقل **دائن** يظهر بخلفية/حدود حمراء.
+   - إضافة Legend ثابت داخل المودال:
+     - `مدين = أخضر`
+     - `دائن = أحمر`
+
+2. إصلاح ظهور قائمة الحسابات السفلية:
+   - ربط مباشر بـ `coaAccounts` داخل JournalEntries.
+   - إضافة fallback قوي داخل `SmartAccountSelect` (`CORE_FALLBACK_ACCOUNTS`) عند بطء/فشل التحميل حتى لا تظهر القائمة فارغة.
+
+**الاختبار:**
+- تقرير: `/app/test_reports/iteration_176.json`
+- Frontend: **100% PASS**
+- تم التحقق من:
+  - التلوين الأحمر/الأخضر يعمل حسب اختيار الحساب.
+  - القائمة لم تعد فارغة (ظهور 187 خيار في الاختبار).
+  - الجوال والديسكتوب يعملان بشكل صحيح.
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

@@ -55,6 +55,25 @@
    - النتيجة: **Frontend 100% PASS**
    - لا توجد Bugs أو Action Items مفتوحة في الجولة الحالية.
 
+### Journal Entry Create Form: SmartAccountSelect + Context Filtering (10 May 2026)
+
+**تحديثات صفحة إنشاء القيد (`JournalEntries.jsx`):**
+1. استبدال اختيار الحساب التقليدي داخل بنود القيد بمكوّن `SmartAccountSelect` لكل سطر.
+2. تطبيق فلترة ذكية للحسابات حسب:
+   - نوع الحركة (`sale` / `purchase` / `expense`)
+   - جهة السطر (`debit` أو `credit`)
+3. إضافة حقل طرف ديناميكي `entry-party-name-input`:
+   - عند `sale` يظهر كـ **العميل**
+   - عند `purchase/expense` يظهر كـ **المورد**
+4. عند الحفظ يتم تطبيع الوصف وإضافة وسوم الطرف:
+   - `[PARTY:...]`
+   - `[PARTY_TYPE:customer|supplier|open]`
+
+**الاختبار:**
+- تقرير الاختبار: `/app/test_reports/iteration_169.json`
+- النتيجة: **Frontend 100% PASS**
+- جميع data-testid المطلوبة موجودة وتعمل.
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

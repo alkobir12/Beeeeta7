@@ -519,17 +519,28 @@ export default function JournalEntries() {
 
   return (
     <div 
-      className="p-4 md:p-6 min-h-screen transition-colors duration-300"
-      style={{ background: styles.bg }}
+      className="relative p-4 md:p-6 min-h-screen overflow-hidden transition-colors duration-500"
+      style={{
+        background: `
+          radial-gradient(circle at 12% 18%, rgba(56,189,248,0.20) 0%, rgba(56,189,248,0) 38%),
+          radial-gradient(circle at 88% 8%, rgba(14,116,144,0.22) 0%, rgba(14,116,144,0) 40%),
+          radial-gradient(circle at 72% 78%, rgba(34,197,94,0.10) 0%, rgba(34,197,94,0) 42%),
+          ${styles.bg}
+        `,
+      }}
       data-testid="journal-entries-page"
     >
+      <div className="pointer-events-none absolute -top-20 -right-16 h-72 w-72 rounded-full blur-3xl opacity-50" style={{ background: 'radial-gradient(circle, rgba(14,165,233,0.42) 0%, rgba(14,165,233,0.02) 70%)' }} />
+      <div className="pointer-events-none absolute top-1/3 -left-20 h-72 w-72 rounded-full blur-3xl opacity-35" style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.35) 0%, rgba(59,130,246,0.01) 72%)' }} />
+      <div className="pointer-events-none absolute bottom-0 right-1/3 h-64 w-64 rounded-full blur-3xl opacity-35" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.28) 0%, rgba(16,185,129,0.01) 72%)' }} />
+
       {/* Header */}
       <div
-        className="mb-6 rounded-3xl border px-6 py-5 backdrop-blur-xl"
+        className="relative mb-6 rounded-[28px] border px-6 py-5 backdrop-blur-2xl"
         style={{
-          backgroundColor: styles.cardBg,
-          borderColor: styles.cardBorder,
-          boxShadow: styles.cardShadow,
+          background: 'linear-gradient(145deg, rgba(15,23,42,0.84) 0%, rgba(8,47,73,0.66) 50%, rgba(15,23,42,0.86) 100%)',
+          borderColor: 'rgba(125,211,252,0.28)',
+          boxShadow: '0 24px 40px -24px rgba(14,165,233,0.55), inset 0 1px 0 rgba(255,255,255,0.12)',
           backdropFilter: styles.cardBlur
         }}
         data-testid="journal-header-card"
@@ -598,9 +609,9 @@ export default function JournalEntries() {
         <div 
           className="col-span-2 lg:col-span-1 rounded-2xl p-5 border backdrop-blur-xl"
           style={{ 
-            background: 'linear-gradient(135deg, rgba(30, 58, 95, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
-            boxShadow: styles.cardShadow,
-            borderColor: styles.cardBorder,
+            background: 'linear-gradient(145deg, rgba(8,47,73,0.85) 0%, rgba(15,23,42,0.95) 100%)',
+            boxShadow: '0 20px 28px -20px rgba(14,165,233,0.55), inset 0 1px 0 rgba(255,255,255,0.10)',
+            borderColor: 'rgba(56,189,248,0.35)',
             backdropFilter: styles.cardBlur
           }}
           data-testid="journal-ai-card"
@@ -634,9 +645,9 @@ export default function JournalEntries() {
             key={stat.key}
             className="rounded-2xl p-5 border backdrop-blur-xl"
             style={{ 
-              backgroundColor: styles.cardBg,
-              borderColor: styles.cardBorder,
-              boxShadow: styles.cardShadow,
+              background: 'linear-gradient(150deg, rgba(15,23,42,0.82) 0%, rgba(15,23,42,0.6) 48%, rgba(8,47,73,0.55) 100%)',
+              borderColor: 'rgba(125,211,252,0.24)',
+              boxShadow: '0 18px 26px -22px rgba(56,189,248,0.5), inset 0 1px 0 rgba(255,255,255,0.10)',
               backdropFilter: styles.cardBlur
             }}
             data-testid={`journal-stat-${stat.key}`}
@@ -660,9 +671,9 @@ export default function JournalEntries() {
       <div 
         className="rounded-2xl p-4 mb-6 border backdrop-blur-xl"
         style={{ 
-          backgroundColor: styles.cardBg,
-          borderColor: styles.cardBorder,
-          boxShadow: styles.cardShadow,
+          background: 'linear-gradient(145deg, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0.62) 58%, rgba(6,95,70,0.22) 100%)',
+          borderColor: 'rgba(94,234,212,0.24)',
+          boxShadow: '0 20px 28px -24px rgba(45,212,191,0.48), inset 0 1px 0 rgba(255,255,255,0.08)',
           backdropFilter: styles.cardBlur
         }}
         data-testid="journal-filters-card"
@@ -711,9 +722,9 @@ export default function JournalEntries() {
       <div 
         className="rounded-2xl overflow-hidden border backdrop-blur-xl"
         style={{ 
-          backgroundColor: styles.cardBg,
-          borderColor: styles.cardBorder,
-          boxShadow: styles.cardShadow,
+          background: 'linear-gradient(170deg, rgba(15,23,42,0.86) 0%, rgba(15,23,42,0.68) 45%, rgba(2,132,199,0.15) 100%)',
+          borderColor: 'rgba(125,211,252,0.25)',
+          boxShadow: '0 24px 34px -24px rgba(14,165,233,0.55), inset 0 1px 0 rgba(255,255,255,0.09)',
           backdropFilter: styles.cardBlur
         }}
         data-testid="journal-entries-card"

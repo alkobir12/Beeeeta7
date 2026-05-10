@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { resolveBackendBase } from '../utils/backendBase';
+import SmartAccountSelect from '../components/SmartAccountSelect';
+import axios from 'axios';
 import {
   BookOpen,
   Plus,
@@ -1088,10 +1090,20 @@ export default function JournalEntries() {
 }
 
 function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAccounts }) {
+  const defaultPartyType =
+    entry?.party_type
+    || (entry?.transaction_type === 'sale'
+      ? 'customer'
+      : ['purchase', 'expense'].includes(entry?.transaction_type)
+        ? 'supplier'
+        : 'open');
+
   const [formData, setFormData] = useState({
     date: entry?.entry_date || new Date().toISOString().split('T')[0],
     description: entry?.description || '',
     transaction_type: entry?.transaction_type || 'manual',
+    party_type: defaultPartyType,
+    party_name: entry?.party_label && entry?.party_label !== 'مفتوح' ? entry.party_label : '',
     lines: entry?.lines?.length > 0 ? entry.lines.map(l => ({
       account_code: l.account_code || l.account,
       account_name: l.account_name,
@@ -1108,10 +1120,73 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrResult, setOcrResult] = useState(null);
   const [ocrError, setOcrError] = useState('');
+  const [customers, setCustomers] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchParties = async () => {
+      try {
+        const [customersRes, suppliersRes] = await Promise.all([
+          fetch(`${API_URL}/customers`),
+          fetch(`${API_URL}/suppliers`),
+        ]);
+        const customersData = await customersRes.json();
+        const suppliersData = await suppliersRes.json();
+
+        if (!mounted) return;
+        setCustomers(Array.isArray(customersData) ? customersData : []);
+        setSuppliers(Array.isArray(suppliersData) ? suppliersData : []);
+      } catch {
+        if (!mounted) return;
+        setCustomers([]);
+        setSuppliers([]);
+      }
+    };
+
+    fetchParties();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setFormData((prev) => {
+      if (prev.transaction_type === 'sale') {
+        if (prev.party_type === 'customer') return prev;
+        return { ...prev, party_type: 'customer' };
+      }
+      if (['purchase', 'expense'].includes(prev.transaction_type)) {
+        if (prev.party_type === 'supplier') return prev;
+        return { ...prev, party_type: 'supplier' };
+      }
+      if (prev.party_type === 'open') return prev;
+      return { ...prev, party_type: 'open' };
+    });
+  }, [formData.transaction_type]);
+
+  const smartOperationType = useMemo(() => {
+    if (formData.transaction_type === 'sale') return 'sale';
+    if (formData.transaction_type === 'purchase') return 'purchase';
+    if (formData.transaction_type === 'expense') return 'expense';
+    return 'sale';
+  }, [formData.transaction_type]);
+
+  const includeAllAccounts = ['manual', 'other'].includes(formData.transaction_type);
+  const partyOptions = formData.party_type === 'customer' ? customers : formData.party_type === 'supplier' ? suppliers : [];
 
   const totalDebit = formData.lines.reduce((sum, l) => sum + (parseFloat(l.debit) || 0), 0);
   const totalCredit = formData.lines.reduce((sum, l) => sum + (parseFloat(l.credit) || 0), 0);
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
+
+  const getLineFieldKey = (line, idx) => {
+    const debit = Number(line?.debit || 0);
+    const credit = Number(line?.credit || 0);
+    if (debit > 0 && credit <= 0) return 'debit';
+    if (credit > 0 && debit <= 0) return 'credit';
+    return idx % 2 === 0 ? 'debit' : 'credit';
+  };
 
   const addLine = () => {
     setFormData(prev => ({
@@ -1205,8 +1280,28 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
       alert('يرجى إدخال مبالغ للقيد');
       return;
     }
+    const partyName = String(formData.party_name || '').trim();
+    const inferredPartyType =
+      formData.transaction_type === 'sale'
+        ? 'customer'
+        : ['purchase', 'expense'].includes(formData.transaction_type)
+          ? 'supplier'
+          : (formData.party_type || 'open');
+
+    const cleanDescription = String(formData.description || '')
+      .replace(/\[PARTY:[^\]]+\]/g, '')
+      .replace(/\[PARTY_TYPE:[^\]]+\]/g, '')
+      .trim();
+
+    const finalDescription = partyName
+      ? `${cleanDescription} [PARTY:${partyName}] [PARTY_TYPE:${inferredPartyType}]`.trim()
+      : cleanDescription;
+
     onSave({
       ...formData,
+      description: finalDescription,
+      party_type: inferredPartyType,
+      party_label: partyName || 'مفتوح',
       lines: formData.lines.map(l => ({
         account: l.account_code,
         account_name: l.account_name,
@@ -1256,7 +1351,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
 
         <div className="p-6 space-y-6">
           {/* Basic Info */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: styles.textPrimary }}>
                 التاريخ
@@ -1298,7 +1393,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
               </label>
               <select
                 value={formData.transaction_type}
-                onChange={(e) => setFormData(prev => ({ ...prev, transaction_type: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, transaction_type: e.target.value, party_name: '' }))}
                 className="w-full px-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 style={{ 
                   backgroundColor: styles.inputBg,
@@ -1312,6 +1407,41 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                 <option value="expense">مصاريف تشغيلية</option>
                 <option value="other">أخرى</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: styles.textPrimary }}>
+                {formData.party_type === 'customer' ? 'العميل' : formData.party_type === 'supplier' ? 'المورد' : 'الطرف'}
+              </label>
+              <input
+                type="text"
+                list={`journal-party-options-${formData.party_type}`}
+                value={formData.party_name || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const match = partyOptions.find((row) => String(row?.name || '').trim().toLowerCase() === value.trim().toLowerCase());
+                  setFormData(prev => ({ ...prev, party_name: match?.name || value }));
+                }}
+                placeholder={
+                  formData.party_type === 'customer'
+                    ? 'اختر عميل أو اكتب الاسم'
+                    : formData.party_type === 'supplier'
+                      ? 'اختر مورد أو اكتب الاسم'
+                      : 'اختياري'
+                }
+                className="w-full px-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                style={{
+                  backgroundColor: styles.inputBg,
+                  border: `1px solid ${styles.inputBorder}`,
+                  color: styles.textPrimary,
+                }}
+                data-testid="entry-party-name-input"
+              />
+              <datalist id={`journal-party-options-${formData.party_type}`}>
+                {partyOptions.map((row) => (
+                  <option key={row.id || row.name} value={row.name} />
+                ))}
+              </datalist>
             </div>
           </div>
 
@@ -1401,24 +1531,30 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                   {formData.lines.map((line, idx) => (
                     <tr key={idx} style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
                       <td className="px-4 py-3">
-                        <select
-                          value={line.account_code}
-                          onChange={(e) => updateLine(idx, 'account_code', e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg text-sm"
-                          style={{ 
-                            backgroundColor: styles.inputBg,
-                            border: `1px solid ${styles.inputBorder}`,
-                            color: styles.textPrimary
-                          }}
-                          data-testid={`line-account-${idx}`}
-                        >
-                          <option value="">اختر الحساب</option>
-                          {coaAccounts.map(acc => (
-                            <option key={acc.code} value={acc.code}>
-                              {acc.code} - {acc.name_ar || acc.name || ''}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="space-y-1.5" data-testid={`line-account-wrapper-${idx}`}>
+                          <SmartAccountSelect
+                            operationType={smartOperationType}
+                            fieldKey={getLineFieldKey(line, idx)}
+                            includeAll={includeAllAccounts}
+                            value={line.account_code}
+                            onChange={(nextCode, account) => {
+                              setFormData((prev) => {
+                                const newLines = [...prev.lines];
+                                newLines[idx] = {
+                                  ...newLines[idx],
+                                  account_code: nextCode,
+                                  account_name: account?.name || account?.name_ar || '',
+                                };
+                                return { ...prev, lines: newLines };
+                              });
+                            }}
+                            placeholder="اختر الحساب"
+                            data-testid={`line-account-${idx}`}
+                          />
+                          <div className="text-[10px]" style={{ color: styles.textMuted }} data-testid={`line-account-filter-label-${idx}`}>
+                            الفلتر: {getLineFieldKey(line, idx) === 'credit' ? 'حسابات دائن مرتبطة بالنوع' : 'حسابات مدين مرتبطة بالنوع'}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <input

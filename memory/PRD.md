@@ -355,6 +355,48 @@
   - ظهور عدادات وآخر العمليات في كروت الإنشاء
   - عدم وجود Regression في الإنشاء.
 
+### NLP Page Assistant (Rule-based) داخل المساعد الموحد — 10 May 2026
+
+**طلب المستخدم:**
+- Page Assistant ذكي يقرأ الصفحة الحالية وحقولها.
+- يقترح تصحيحًا ويطبقه فقط بعد موافقة المستخدم.
+- النطاق: كل الصفحات المالية (C).
+- منطق النسخة الأولى: Rule-based (A).
+- واجهة الاقتراحات مدمجة داخل المساعد الموحد.
+
+**ما تم تنفيذه:**
+1. **Backend (FastAPI)**
+   - إضافة ملف: `routes_nlp_page_assistant.py`
+   - Endpoints:
+     - `POST /api/nlp/page/context`
+     - `POST /api/nlp/page/apply_correction`
+   - محرك قواعد Rule-based + تعلم بسيط من:
+     - approved_entries
+     - corrected_entries
+     - rejected_entries
+   - أمثلة قواعد مفعلة:
+     - card + account 004 ⇒ اقتراح 006
+     - sale بدون ربط عميل/مركبة ⇒ اقتراح ربط
+     - journal line فيها debit+credit معًا ⇒ اقتراح تصحيح
+
+2. **Frontend (UnifiedBotWidget)**
+   - مراقبة تغيّر أي `input/select/textarea` في الصفحات المالية.
+   - إرسال page context تلقائيًا إلى endpoint مع debounce.
+   - عرض `page-suggestion-box` داخل البوت نفسه (apply / ignore).
+   - عند Apply: استدعاء endpoint التطبيق + محاولة تعبئة الحقول المصححة في الواجهة.
+
+3. **تكامل عام**
+   - تضمين Router الجديد في `server.py`.
+   - الحفاظ على عمل تبويبات البوت الثلاثة (المساعد، إنشاء، فوري) دون كسر.
+
+**الاختبار:**
+- تقرير: `/app/test_reports/iteration_180.json`
+- Backend: **100% (10/10)**
+- Frontend: **100%**
+- ملفات الاختبار الناتجة:
+  - `/app/backend/tests/test_nlp_page_assistant.py`
+  - `/app/test_reports/pytest/pytest_nlp_page_assistant_iter180.xml`
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

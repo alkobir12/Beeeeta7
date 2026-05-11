@@ -803,58 +803,39 @@ export default function AIFinancial() {
         </div>
       ) : null}
 
-      {/* Main grid: Trial Balance + Chat */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="lg:col-span-2">
-          <FinancialCard
-            title="ميزان المراجعة"
-            subtitle="عرض مختصر لأرصدة المدين والدائن"
-            icon={Scale}
-            variant="default"
-            expandable={false}
+      {/* Centralize Financial Statements in dedicated Financial section only */}
+      <div className="mb-8">
+        <FinancialCard
+          title="القوائم المالية"
+          subtitle="تم اعتمادها حصرياً داخل صفحة القوائم المالية في القسم المالي"
+          icon={FileText}
+          variant="default"
+          expandable={false}
+        >
+          <div
+            className="rounded-xl border border-slate-800 bg-slate-950/40 p-4 text-sm text-slate-200"
+            data-testid="assistant-financial-statements-centralized-note"
           >
-            <div className="flex flex-wrap gap-4 text-xs text-slate-300 mb-3">
-              <span data-testid="trial-balance-count">عدد الحسابات: {trialBalance.accounts?.length || 0}</span>
-              <span data-testid="trial-balance-debit">إجمالي المدين: {formatCurrency(trialBalance.totals?.total_debit || 0)}</span>
-              <span data-testid="trial-balance-credit">إجمالي الدائن: {formatCurrency(trialBalance.totals?.total_credit || 0)}</span>
-            </div>
-            <details className="rounded-xl border border-slate-800 bg-slate-950/40 overflow-hidden">
-              <summary className="cursor-pointer px-4 py-2 text-xs text-slate-300">عرض تفاصيل الحسابات</summary>
-              <div className="max-h-[320px] overflow-auto">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-slate-950/90">
-                    <tr className="text-slate-300">
-                      <th className="p-3 text-right">الكود</th>
-                      <th className="p-3 text-right">الاسم</th>
-                      <th className="p-3 text-right">مدين</th>
-                      <th className="p-3 text-right">دائن</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(trialBalance.accounts || []).map((a, idx) => (
-                      <tr key={idx} className="border-t border-slate-800 text-slate-200">
-                        <td className="p-3 whitespace-nowrap">{a.code}</td>
-                        <td className="p-3">{a.name_ar || a.name || '-'}</td>
-                        <td className="p-3 tabular-nums">{formatCurrency(a.debit || 0)}</td>
-                        <td className="p-3 tabular-nums">{formatCurrency(a.credit || 0)}</td>
-                      </tr>
-                    ))}
-                    {!trialBalance.accounts?.length ? (
-                      <tr>
-                        <td colSpan={4} className="p-4 text-center text-slate-400">
-                          لا توجد بيانات.
-                        </td>
-                      </tr>
-                    ) : null}
-                  </tbody>
-                </table>
-              </div>
-            </details>
-          </FinancialCard>
-        </div>
+            تم إخفاء القوائم المالية من تبويب <strong>التحليل المالي</strong> في صفحة المساعد.
+            <br />
+            للوصول إلى القوائم الرئيسية (الميزانية، قائمة الدخل، التدفقات، وغيرها) استخدم صفحة
+            <strong> القوائم المالية</strong> ضمن القسم المالي.
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button
+              onClick={() => (window.location.href = '/accounting/comprehensive')}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="assistant-go-financial-statements-button"
+            >
+              فتح صفحة القوائم المالية
+            </Button>
+          </div>
+        </FinancialCard>
+      </div>
 
-        <div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 shadow-lg" dir="rtl">
+      {/* AbuFahad Chat */}
+      <div className="mb-8">
+        <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 shadow-lg" dir="rtl">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
                 <Brain className="h-4 w-4 text-blue-400" />
@@ -953,7 +934,6 @@ export default function AIFinancial() {
               </button>
             </form>
           </div>
-        </div>
       </div>
 
       {/* System Audit */}

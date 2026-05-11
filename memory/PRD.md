@@ -29,6 +29,47 @@
 
 ## What's Been Implemented
 
+### 🛡️ Accounting Firewall Dashboard (11 Feb 2026)
+
+**طلب المستخدم:** بناء لوحة جدار حماية المحاسبة لعرض حالة الحماية لحظياً.
+
+**ما تم تنفيذه:**
+
+1. **Backend**
+   - ملف جديد `firewall_state.py` (rolling buffer in-memory مع 3 أنواع أحداث: unbalanced_rejection, idempotency_hit, cogs_generated).
+   - ملف جديد `routes_firewall.py` — Endpoint:
+     - `GET /api/firewall/status?workshop_id=...&recent_limit=20`
+     - يحلل جميع قيود `journal_entries` ويُعيد:
+       - `summary` (total/balanced/unbalanced/cogs/idempotency counters + balance_health_percent)
+       - `drift` (max/avg/threshold)
+       - `recent_rejections`, `recent_idempotency_hits`, `recent_cogs_events`
+       - `recent_cogs_entries`, `unbalanced_entries_in_db`
+   - **Hooks جديدة:**
+     - `routes_finance.py` يستدعي `firewall_state.log_event("unbalanced_rejection", ...)` قبل رفع 400 الخاص بالقيد غير المتوازن.
+     - `routes_extended.py` يستدعي `firewall_state.log_event("idempotency_hit", ...)` عند رصد عملية مكررة.
+     - `routes_extended.py` يستدعي `firewall_state.log_event("cogs_generated", ...)` بعد توليد قيد COGS تلقائياً.
+
+2. **Frontend**
+   - صفحة جديدة `/accounting/firewall` (`FirewallPanel.jsx`) بأسلوب Liquid:
+     - 5 بطاقات إحصائيات: سلامة التوازن، رفضيات الجلسة، ضربات منع التكرار، قيود COGS، أقصى انحراف.
+     - 4 لوحات تفصيلية: آخر القيود المرفوضة، ضربات منع التكرار، قيود COGS الأخيرة، قيود غير متوازنة تسربت إلى DB (يجب 0).
+     - زر **عرض تجريبي للحماية** (`firewall-run-demo-button`) ينفّذ live demo: محاولة قيد غير متوازن (يُرفض) + قيد متوازن (يُقبل) ثم يُحدث اللوحة.
+     - تحديث تلقائي كل 15 ثانية + زر تحديث يدوي.
+     - شريط حالة (`firewall-health-badge`) يلون السلامة (أخضر/أحمر).
+     - ملاحظة توضيحية أن العدادات لحظية لهذه الجلسة.
+   - رابط في الـ Sidebar داخل قسم "💰 المالية والمحاسبة": **🛡️ جدار حماية المحاسبة**.
+   - مسار جديد في `App.js`: `accounting/firewall → <FirewallPanel/>`.
+
+**التحقق:**
+- Backend curl tests: ✅ Unbalanced 100/50 مرفوض، Balanced 100/100 مقبول، idempotency تعيد نفس ID.
+- Frontend screenshot: ✅ كل البطاقات والـ panels تظهر مع البيانات الحقيقية.
+- Testing agent (`/app/test_reports/iteration_190_firewall_panel.json`):
+  - Frontend: **100% (14/14 testids + demo + reload + sidebar)**
+  - Backend: **3/4 PASS** (idempotency via /api/operations تخطّت بسبب اشتراط مورد — تم اختبارها يدوياً عبر curl وعملت).
+  - **0 blocking issues**.
+
+
+
 ### Accounting Audit Hardening (11 May 2026)
 
 **Based on user-requested 5-point accounting audit plan, implemented and verified:**

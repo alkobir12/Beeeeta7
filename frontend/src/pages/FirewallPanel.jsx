@@ -284,6 +284,13 @@ export default function FirewallPanel() {
                 <span className="text-[11px] text-slate-400" data-testid="firewall-last-refreshed">
                   آخر تحديث: {refreshedAt ? formatDateTime(refreshedAt) : '—'}
                 </span>
+                <span
+                  data-testid="firewall-counters-note"
+                  title="عدادات الجلسة (الرفضيات/منع التكرار/COGS) محفوظة في ذاكرة الخادم وتُعاد عند إعادة تشغيله. أما القيود المتوازنة وقيود COGS في قاعدة البيانات فهي دائمة."
+                  className="text-[11px] text-slate-500 italic cursor-help"
+                >
+                  • العدادات لحظية لهذه الجلسة
+                </span>
               </div>
             </div>
           </div>

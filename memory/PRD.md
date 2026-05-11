@@ -29,6 +29,40 @@
 
 ## What's Been Implemented
 
+### Accounting Audit Hardening (11 May 2026)
+
+**Based on user-requested 5-point accounting audit plan, implemented and verified:**
+
+1. **Double-Entry Firewall (Backend Enforcement)**
+   - Updated `POST /api/finance/journal-entries` in `routes_finance.py`.
+   - Added strict line normalization and balance validation.
+   - Unbalanced entries are now rejected with HTTP 400 and clear Arabic detail.
+
+2. **Idempotency Guard for Operations**
+   - Updated `create_operation` in `routes_extended.py`.
+   - Added transaction/reference key extraction (`transaction_id`, `reference`, `referenceId`, etc.).
+   - Added `[IDEMP:<key>]` note tagging and lookup to return existing operation instead of creating duplicates.
+
+3. **Inventory + COGS Auto-Posting (Supabase Path)**
+   - Added automatic parts quantity decrement/increment for operations with `itemType=part` in Supabase mode.
+   - Added auto-generated COGS journal entry (`source=operation_cogs`):
+     - Dr `030` (تكلفة الخدمات)
+     - Cr `1105` (مخزون قطع غيار)
+
+4. **Finance Cache Invalidation After Operation Journals**
+   - Added safe finance cache invalidation after posting operation journals/COGS to ensure immediate visibility in trial balance.
+
+**Verification Reports:**
+- Initial audit (before fixes): `/app/test_reports/iteration_187_accounting_audit.json` (2 pass / 3 fail)
+- Post-fix audit: `/app/test_reports/iteration_189_accounting_audit_after_fixes.json` (**5 pass / 0 fail**)
+
+**Verified outcomes after fixes:**
+- ✅ Real-time ledger linkage (003/027/042) reflects immediately.
+- ✅ Unbalanced entry rejection works.
+- ✅ Part quantity changes + COGS entry generation works.
+- ✅ Idempotency returns same operation ID for repeated same reference.
+- ✅ Decimal precision scenario (0.55) remains balanced with zero drift.
+
 ### AI Financial Page → Assistant-Only Mode (11 May 2026)
 
 **طلب المستخدم:** تحويل صفحة `/ai-financial` إلى صفحة مساعد فقط، وإزالة البيانات/القوائم المالية الجذرية لتفادي أخطاء الربط المالي.

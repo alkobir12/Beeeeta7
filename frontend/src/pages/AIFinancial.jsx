@@ -45,6 +45,8 @@ function useQuery() {
 }
 
 export default function AIFinancial() {
+  const assistantOnlyMode = true;
+
   const query = useQuery();
   const vehicleId = query.get('vehicleId') || query.get('vehicle_id') || '';
 
@@ -594,26 +596,64 @@ export default function AIFinancial() {
   };
 
   useEffect(() => {
+    if (assistantOnlyMode) return;
     loadChatFromStorage();
     fetchAccounts();
     // eslint-disable-next-line
-  }, []);
+  }, [assistantOnlyMode]);
 
   useEffect(() => {
+    if (assistantOnlyMode) return;
     fetchVehicleIfNeeded();
     // eslint-disable-next-line
-  }, [vehicleId]);
+  }, [vehicleId, assistantOnlyMode]);
 
   useEffect(() => {
+    if (assistantOnlyMode) return;
     fetchCoreFinancials();
     // eslint-disable-next-line
-  }, [workshopId, timeRange]);
+  }, [workshopId, timeRange, assistantOnlyMode]);
 
   // تحسين بسيط: فتح محادثة أبوفهد تلقائياً إذا لم يكن هناك تاريخ محادثة
   useEffect(() => {
+    if (assistantOnlyMode) return;
     if (!chatHistory?.length) return;
     // لا شيء هنا حالياً، فقط مكان مخصص لتحسينات UX لاحقاً بدون كسر السلوك.
-  }, [chatHistory]);
+  }, [chatHistory, assistantOnlyMode]);
+
+  if (assistantOnlyMode) {
+    return (
+      <div
+        className="container mx-auto p-6 max-w-7xl"
+        dir="rtl"
+        style={{ backgroundColor: 'var(--bg-primary)', minHeight: '100vh' }}
+        data-testid="ai-financial-assistant-only-page"
+      >
+        <div className="mb-6" data-testid="assistant-only-header">
+          <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
+            <Brain size={34} className="text-blue-500" />
+            صفحة المساعد فقط
+          </h1>
+          <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }} data-testid="assistant-only-description">
+            تم تعطيل القوائم والبيانات المالية الجذرية في هذه الصفحة لتفادي أي ربط مالي أو أخطاء.
+            للاعتماد الرسمي على القوائم المالية استخدم صفحة القسم المالي: <strong>/accounting/comprehensive</strong>.
+          </p>
+        </div>
+
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{
+            border: '1px solid var(--border-color)',
+            backgroundColor: 'var(--bg-card)',
+            minHeight: '760px',
+          }}
+          data-testid="assistant-only-workshop-panel"
+        >
+          <WorkshopAIBot />
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

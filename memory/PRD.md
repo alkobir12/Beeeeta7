@@ -29,7 +29,37 @@
 
 ## What's Been Implemented
 
-### 🩹 Fix Negative Numbers Bug + "After Last Close" Preset (11 Feb 2026)
+### 💳 Smart POS Journal + Recent Pages + Duplicate Customer Alert (11 Feb 2026)
+
+**1. 💳 POS الذكي لدفتر اليومية (`SmartPOSJournal.jsx`, 586 سطر)**
+- **مفتاح تبديل أعلى الصفحة** (محفوظ في localStorage): POS الذكي ↔ العرض الكامل.
+- **وضع القوالب** (6 قوالب جاهزة بألوان مختلفة):
+  - 💵 بيع نقدي (003 ↔ 042)
+  - 💳 بيع بنكي/بطاقة (004 ↔ 042)
+  - 🧾 صرف نقدي (035 ↔ 003)
+  - 🤝 تحصيل من عميل (003 ↔ 005)
+  - 📦 سداد لمورد (2101 ↔ 003)
+  - 🏧 إيداع بنكي (004 ↔ 003)
+- **Numpad 4×4**: أرقام + C + ⌫ + . + 00 + 000 + OK (الحفظ).
+- **وضع السلة (Cashier)**: إضافة خدمات/قطع متعددة، حساب الإجمالي، تحديد طريقة الدفع (cash/bank/pos)، حفظ بقيد متوازن واحد.
+- **شريط جانبي «آخر القيود»**: 5 قيود مع زر «نسخ» لإعادة الاستخدام.
+- يستدعي POST /api/finance/journal-entries — الجدار يضمن التوازن.
+
+**2. 📜 السايدبار: أحدث الصفحات (الأعلى)**
+- Hook جديد `useRecentPagesTracker` يلتقط التنقل عبر `useLocation` ويخزّن آخر 5 صفحات في localStorage (`recentPages.v1`).
+- قسم بأعلى السايدبار يعرض القائمة مع labels عربية + emojis + زر «مسح».
+- يدعم 18 مسار معروف بأسماء عربية friendly، fallback لأي مسار آخر.
+
+**3. 🚨 تنبيه العميل المتكرر في «استقبال مركبة»**
+- يحسب `duplicateCustomerInfo` بناءً على `customerDirectory` و `vehicleSearchIndex` (بحث بالاسم/الهاتف).
+- يظهر `new-vehicle-duplicate-customer-alert` بطاقة كهرمانية inline **فقط عندما** يكون لدى العميل **مركبة واحدة** سابقة (يُستثنى العملاء بـ ≥2 مركبات).
+- يعرض اسم العميل + عدد المركبات + أرقام اللوحات (حتى 5).
+
+**Verification (`/app/test_reports/iteration_198.json`)**
+- Backend: **100%** — جدار الحماية 100% balance health، 70/70 قيد، اختبار POS save end-to-end ناجح (entries grew 67→69 via testing).
+- Frontend: **95%** — كل التطبيقات تعمل + bug حرج تم اكتشافه وإصلاحه (`onSaved={() => fetchJournalEntries()}` بدل `fetchEntries`).
+
+
 
 **🐛 المشكلة المُكتشفة (من قبل المستخدم)**: كرت صافي الدخل يعرض أرقاماً سالبة خاطئة بعد الإقفال:
 - Revenue: -23,775 ر.س ❌

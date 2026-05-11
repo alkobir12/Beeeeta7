@@ -130,6 +130,9 @@ const resolveCurrentAccountCode = (rawCode = '', accountName = '', coaAccounts =
   return code;
 };
 
+const ensureArray = (value) => (Array.isArray(value) ? value : []);
+const ensureObject = (value) => (value && typeof value === 'object' ? value : null);
+
 // Chart of Accounts (loaded from API)
 
 export default function JournalEntries() {
@@ -177,37 +180,50 @@ export default function JournalEntries() {
     try {
       const response = await fetch(`${API_URL}/finance/journal-entries?workshop_id=${WORKSHOP_ID}&limit=50`);
       const data = await response.json();
-      
-      if (data.success && data.data) {
-        const transformedEntries = data.data.map((entry, index) => ({
-          id: entry.id || String(index),
+
+      if (data?.success) {
+        const rawEntries = ensureArray(data?.data)
+          .map((entry) => ensureObject(entry))
+          .filter(Boolean);
+
+        const transformedEntries = rawEntries.map((entry, index) => {
+          const rawLines = ensureArray(entry?.lines)
+            .map((line) => ensureObject(line))
+            .filter(Boolean);
+
+          return {
+          id: entry?.id || String(index),
           entry_number: `JE-${String(index + 1).padStart(4, '0')}`,
-          entry_date: entry.date,
-          description: sanitizeEntryText(entry.description || ''),
-          reference_type: entry.source === 'operation'
-            ? (entry.transaction_type === 'sale' || entry.transaction_type === 'service' ? 'invoice' : 'purchase')
+          entry_date: entry?.date,
+          description: sanitizeEntryText(entry?.description || ''),
+          reference_type: entry?.source === 'operation'
+            ? (entry?.transaction_type === 'sale' || entry?.transaction_type === 'service' ? 'invoice' : 'purchase')
             : 'manual',
           status: 'posted',
-          total_debit: entry.total,
-          total_credit: entry.total,
-          lines: entry.lines?.map(line => ({
-            account_code: resolveCurrentAccountCode(line.account, line.account_name, coaAccounts),
-            account_name: line.account_name,
-            debit: line.debit,
-            credit: line.credit
-          })) || [],
-          vehicle_plate: entry.vehicle_label || entry.vehicle_plate,
-          customer_name: entry.party_label || entry.customer_name,
-          party_label: entry.party_label || 'مفتوح',
-          party_type: entry.party_type || 'open',
-          operation_type_label: entry.operation_type_label || 'غير محدد',
-          transaction_type: entry.transaction_type || '',
-          source: entry.source || 'manual'
-        }));
+          total_debit: Number(entry?.total || 0),
+          total_credit: Number(entry?.total || 0),
+          lines: rawLines.map((line) => ({
+            account_code: resolveCurrentAccountCode(line?.account, line?.account_name, coaAccounts),
+            account_name: line?.account_name || '',
+            debit: Number(line?.debit || 0),
+            credit: Number(line?.credit || 0)
+          })),
+          vehicle_plate: entry?.vehicle_label || entry?.vehicle_plate,
+          customer_name: entry?.party_label || entry?.customer_name,
+          party_label: entry?.party_label || 'مفتوح',
+          party_type: entry?.party_type || 'open',
+          operation_type_label: entry?.operation_type_label || 'غير محدد',
+          transaction_type: entry?.transaction_type || '',
+          source: entry?.source || 'manual'
+        };
+      });
         setEntries(transformedEntries);
+      } else {
+        setEntries([]);
       }
     } catch (error) {
       console.error('Error fetching journal entries:', error);
+      setEntries([]);
     } finally {
       setLoading(false);
     }
@@ -444,7 +460,9 @@ export default function JournalEntries() {
     }
   };
 
-  const filteredEntries = entries.filter((entry) => {
+  const filteredEntries = ensureArray(entries).filter((entry) => {
+    const safeEntry = ensureObject(entry);
+    if (!safeEntry) return false;
     if (statusFilter !== 'all' && entry.status !== statusFilter) return false;
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -472,18 +490,24 @@ export default function JournalEntries() {
     };
   };
 
+  const safeEntries = ensureArray(entries).filter((entry) => ensureObject(entry));
+
   const stats = {
-    total: entries.length,
-    posted: entries.filter(e => e.status === 'posted').length,
-    draft: entries.filter(e => e.status === 'draft').length,
-    totalAmount: entries.reduce((sum, e) => sum + (e.total_debit || 0), 0),
-    manual: entries.filter(e => e.source === 'manual').length,
+    total: safeEntries.length,
+    posted: safeEntries.filter(e => e.status === 'posted').length,
+    draft: safeEntries.filter(e => e.status === 'draft').length,
+    totalAmount: safeEntries.reduce((sum, e) => sum + (Number(e.total_debit) || 0), 0),
+    manual: safeEntries.filter(e => e.source === 'manual').length,
   };
 
   const handlePrintInvoice = (entry) => {
     const printWindow = window.open('', '_blank', 'width=800,height=1000');
     if (!printWindow) return;
-    const total = entry.total_debit || 0;
+    const safeEntry = ensureObject(entry) || {};
+    const safeLines = ensureArray(safeEntry.lines)
+      .map((line) => ensureObject(line))
+      .filter(Boolean);
+    const total = Number(safeEntry.total_debit || 0);
     const workshopName = workshopSettings?.workshopName || workshopProfile?.business_name || workshopProfile?.name || 'ورشة الصيانة';
     const workshopPhone = workshopSettings?.workshopPhone || workshopProfile?.phone || workshopProfile?.phone_number || '';
     const workshopAddress = workshopSettings?.workshopAddress || workshopProfile?.address || '';
@@ -493,7 +517,7 @@ export default function JournalEntries() {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>فاتورة - ${entry.entry_number}</title>
+  <title>فاتورة - ${safeEntry.entry_number || '-'}</title>
   <style>
     body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #f5f5f5; color: #111827; }
     .container { max-width: 800px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 24px 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
@@ -510,15 +534,15 @@ export default function JournalEntries() {
   <div class="container">
     <div class="header">
       <div class="title">${workshopName}</div>
-      <div>فاتورة: ${entry.entry_number}<br/>التاريخ: ${entry.entry_date || '-'}</div>
+      <div>فاتورة: ${safeEntry.entry_number || '-'}<br/>التاريخ: ${safeEntry.entry_date || '-'}</div>
     </div>
     <p><strong>العنوان:</strong> ${workshopAddress || '-'} | <strong>الهاتف:</strong> ${workshopPhone || '-'}</p>
     <p><strong>السجل التجاري:</strong> ${workshopCR || '-'} | <strong>الرقم الضريبي:</strong> ${workshopTax || '-'}</p>
-    <p><strong>العميل:</strong> ${sanitizeEntryText(entry.customer_name || '-') || '-'} | <strong>اللوحة:</strong> ${entry.vehicle_plate || '-'}</p>
+    <p><strong>العميل:</strong> ${sanitizeEntryText(safeEntry.customer_name || '-') || '-'} | <strong>اللوحة:</strong> ${safeEntry.vehicle_plate || '-'}</p>
     <table>
       <thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead>
       <tbody>
-        ${entry.lines.map(l => `<tr><td>${l.account_code} - ${l.account_name}</td><td>${l.debit ? l.debit.toFixed(2) : '-'}</td><td>${l.credit ? l.credit.toFixed(2) : '-'}</td></tr>`).join('')}
+        ${safeLines.map((l) => `<tr><td>${l.account_code || '-'} - ${l.account_name || '—'}</td><td>${Number(l.debit || 0) > 0 ? Number(l.debit || 0).toFixed(2) : '-'}</td><td>${Number(l.credit || 0) > 0 ? Number(l.credit || 0).toFixed(2) : '-'}</td></tr>`).join('')}
       </tbody>
     </table>
     <div class="totals">
@@ -1150,6 +1174,14 @@ export default function JournalEntries() {
 }
 
 function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAccounts }) {
+  const safeCoaAccounts = ensureArray(coaAccounts)
+    .map((acc) => ensureObject(acc))
+    .filter(Boolean);
+
+  const normalizedEntryLines = ensureArray(entry?.lines)
+    .map((line) => ensureObject(line))
+    .filter(Boolean);
+
   const defaultPartyType =
     entry?.party_type
     || (entry?.transaction_type === 'sale'
@@ -1165,11 +1197,11 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
     party_type: defaultPartyType,
     party_name: entry?.party_label && entry?.party_label !== 'مفتوح' ? entry.party_label : '',
     vehicle_reference: extractTagValue(entry?.description || '', 'VEHICLE_REF') || entry?.vehicle_reference || '',
-    lines: entry?.lines?.length > 0 ? entry.lines.map(l => ({
-      account_code: l.account_code || l.account,
-      account_name: l.account_name,
-      debit: l.debit || 0,
-      credit: l.credit || 0
+    lines: normalizedEntryLines.length > 0 ? normalizedEntryLines.map(l => ({
+      account_code: l?.account_code || l?.account || '',
+      account_name: l?.account_name || '',
+      debit: Number(l?.debit || 0),
+      credit: Number(l?.credit || 0)
     })) : [
       { account_code: '', account_name: '', debit: 0, credit: 0 },
       { account_code: '', account_name: '', debit: 0, credit: 0 }
@@ -1272,7 +1304,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
   const resolveLineAccountLabel = (line) => {
     if (!line) return 'غير محدد';
     const code = String(line.account_code || '').trim();
-    const acc = coaAccounts.find((a) => String(a.code) === code);
+    const acc = safeCoaAccounts.find((a) => String(a?.code) === code);
     const name = line.account_name || acc?.name_ar || acc?.name || '';
     return code ? `[${code}] ${name || 'حساب'}` : 'غير محدد';
   };
@@ -1316,7 +1348,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
     setFormData(prev => {
       const newLines = [...prev.lines];
       if (field === 'account_code') {
-        const account = coaAccounts.find((a) => String(a.code) === String(value));
+        const account = safeCoaAccounts.find((a) => String(a?.code) === String(value));
         newLines[index] = {
           ...newLines[index],
           account_code: value,
@@ -1605,8 +1637,11 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                 data-testid="entry-party-name-input"
               />
               <datalist id={`journal-party-options-${formData.party_type}`}>
-                {partyOptions.map((row) => (
-                  <option key={row.id || row.name} value={row.name} />
+                {ensureArray(partyOptions)
+                  .map((row) => ensureObject(row))
+                  .filter(Boolean)
+                  .map((row, idx) => (
+                  <option key={row.id || row.name || `party-${idx}`} value={row.name || ''} />
                 ))}
               </datalist>
             </div>
@@ -1761,7 +1796,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                         fieldKey={getLineFieldKey(line, idx)}
                         description={formData.description}
                         includeAll={includeAllAccounts}
-                        allAccounts={coaAccounts}
+                        allAccounts={safeCoaAccounts}
                         compact={true}
                         value={line.account_code}
                         onChange={(nextCode, account) => {
@@ -1845,7 +1880,7 @@ function EntryFormModal({ entry, onClose, onSave, saving, isLight, styles, coaAc
                             fieldKey={getLineFieldKey(line, idx)}
                             description={formData.description}
                             includeAll={includeAllAccounts}
-                            allAccounts={coaAccounts}
+                            allAccounts={safeCoaAccounts}
                             compact={true}
                             value={line.account_code}
                             onChange={(nextCode, account) => {
@@ -2039,6 +2074,10 @@ function DeleteConfirmModal({ entry, onClose, onConfirm, isLight, styles }) {
 }
 
 function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
+  const safeLines = ensureArray(entry?.lines)
+    .map((line) => ensureObject(line))
+    .filter(Boolean);
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div 
@@ -2123,22 +2162,22 @@ function EntryDetailModal({ entry, onClose, onPrint, isLight, styles }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {entry.lines.map((line, idx) => (
+                  {safeLines.map((line, idx) => (
                     <tr key={idx} style={{ borderBottom: `1px solid ${styles.cardBorder}` }}>
                       <td className="px-4 py-3" style={{ color: styles.textPrimary }}>
                         <span className="font-mono text-xs bg-blue-500/15 text-blue-200 px-2 py-0.5 rounded ml-2">
-                          {line.account_code}
+                          {line.account_code || '-'}
                         </span>
-                        {line.account_name}
+                        {line.account_name || '—'}
                       </td>
                       <td className="px-4 py-3 text-left font-mono">
-                        {line.debit > 0 ? (
-                          <span className="text-emerald-300 font-semibold">{formatCurrency(line.debit)}</span>
+                        {Number(line.debit || 0) > 0 ? (
+                          <span className="text-emerald-300 font-semibold">{formatCurrency(Number(line.debit || 0))}</span>
                         ) : <span style={{ color: styles.textMuted }}>-</span>}
                       </td>
                       <td className="px-4 py-3 text-left font-mono">
-                        {line.credit > 0 ? (
-                          <span className="text-rose-300 font-semibold">{formatCurrency(line.credit)}</span>
+                        {Number(line.credit || 0) > 0 ? (
+                          <span className="text-rose-300 font-semibold">{formatCurrency(Number(line.credit || 0))}</span>
                         ) : <span style={{ color: styles.textMuted }}>-</span>}
                       </td>
                     </tr>

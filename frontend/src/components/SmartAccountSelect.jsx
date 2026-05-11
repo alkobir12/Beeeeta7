@@ -46,6 +46,8 @@ const CORE_FALLBACK_ACCOUNTS = [
 ];
 
 const normalize = (text) => String(text || '').toLowerCase().trim();
+const ensureArray = (value) => (Array.isArray(value) ? value : []);
+const ensureObject = (value) => (value && typeof value === 'object' ? value : null);
 
 const inferAccountGroup = (acc) => {
   const explicitGroup = normalize(acc?.group);
@@ -108,7 +110,10 @@ export default function SmartAccountSelect({
 
   useEffect(() => {
     if (Array.isArray(allAccounts) && allAccounts.length > 0) {
-      setAccounts(allAccounts);
+      const safeAccounts = ensureArray(allAccounts)
+        .map((acc) => ensureObject(acc))
+        .filter(Boolean);
+      setAccounts(safeAccounts);
       return;
     }
 
@@ -117,7 +122,12 @@ export default function SmartAccountSelect({
       .get(`${API}/api/smart-accounting/accounts`, {
         params: { operation_type: resolvedEntryType, field_key: resolvedLineType, include_all: includeAll },
       })
-      .then((r) => setAccounts(r.data?.data || []))
+      .then((r) => {
+        const safeAccounts = ensureArray(r?.data?.data)
+          .map((acc) => ensureObject(acc))
+          .filter(Boolean);
+        setAccounts(safeAccounts);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [allAccounts, resolvedEntryType, resolvedLineType, includeAll]);
@@ -130,7 +140,10 @@ export default function SmartAccountSelect({
 
   const normalizedAccounts = useMemo(
     () =>
-      ((accounts && accounts.length > 0) ? accounts : CORE_FALLBACK_ACCOUNTS).map((acc) => ({
+      ensureArray((accounts && accounts.length > 0) ? accounts : CORE_FALLBACK_ACCOUNTS)
+        .map((acc) => ensureObject(acc))
+        .filter(Boolean)
+        .map((acc) => ({
         ...acc,
         group: inferAccountGroup(acc),
         normalized_name: normalize(acc?.name || acc?.name_ar),
@@ -216,16 +229,19 @@ export default function SmartAccountSelect({
   const emitChange = (acc) => {
     if (typeof onChange !== 'function') return;
 
+    const safeAcc = ensureObject(acc);
+
     if (onChange.length <= 1) {
-      onChange(acc || null);
+      onChange(safeAcc || null);
       return;
     }
 
-    onChange(acc ? acc.code : '', acc || null);
+    onChange(safeAcc ? safeAcc.code : '', safeAcc || null);
   };
 
   const handleSelect = (acc) => {
-    if (!acc) {
+    const safeAcc = ensureObject(acc);
+    if (!safeAcc) {
       emitChange(null);
       setOpen(false);
       return;
@@ -234,12 +250,12 @@ export default function SmartAccountSelect({
     axios
       .post(`${API}/api/smart-accounting/accounts/track-usage`, {
         field_key: resolvedLineType,
-        account_code: acc.code,
+        account_code: safeAcc.code,
         operation_type: resolvedEntryType,
       })
       .catch(() => {});
 
-    emitChange(acc);
+    emitChange(safeAcc);
     setOpen(false);
   };
 

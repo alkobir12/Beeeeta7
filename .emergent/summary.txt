@@ -1,53 +1,51 @@
-<analysis>### handover summary
-
-**original_problem_statement:**
-نظام إدارة ورشة سيارات متكامل (ERP) يدعم اللغة العربية، يضم وحدات محاسبية صارمة (ميزان مراجعة، دفتر يومية، شجرة حسابات)، نظام جرد ذكي، تتبع ذمم، ومدقق مالي بالذكاء الاصطناعي. يتطلب النظام توجيه إيرادات الموردين والورشة لحسابات دقيقة (مثل راكان مستقل، أبو خالد لحساب 042، إيرادات الخدمات إلى 027 و 028)، وتسهيل عمليات الدفع والتسويات للموردين، بالإضافة إلى نظام أرشفة للمركبات، واستخدام Unified Bot للتحكم والتدقيق الفوري.
-PRODUCT REQUIREMENTS: Strict double-entry accounting, smart revenue/expense routing, AI Auditor with Auto-Escalation, Unified Bot for creation/audit, Smart Inventory Planner, and automated Vehicle Archiving & Supplier Balance settlements.
+<analysis>**original_problem_statement:**
+نظام إدارة ورشة سيارات متكامل (ERP) يدعم اللغة العربية، يضم وحدات محاسبية صارمة (ميزان مراجعة، دفتر يومية، شجرة حسابات)، نظام جرد ذكي، تتبع ذمم، ومدقق مالي بالذكاء الاصطناعي. يتطلب النظام توجيه إيرادات الموردين والورشة لحسابات دقيقة، وتسهيل عمليات الدفع والتسويات للموردين، بالإضافة إلى نظام أرشفة للمركبات.
+PRODUCT REQUIREMENTS: Strict double-entry accounting with real-time integration, Double-Entry Firewall (reject unbalanced entries), Smart Inventory with COGS generation, Idempotency to prevent duplicates, AI Auditor with Auto-Escalation, and Unified Bot.
 
 **User's preferred language**: Arabic (العربية)
-**INSTRUCT NEXT AGENT**: You MUST automatically detect the user's primary language from the prompt and respond in the user's preferred language only (Arabic).
+INSTRUCT NEXT AGENT: You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only (Arabic).
 
 **what currently exists?** 
-A mature React SPA + FastAPI backend. The app features:
-- A clean sequential Chart of Accounts (all legacy 4-digit/UUID codes have been migrated).
-- A  integrating AI Assistant, Finance Auditor (with auto-linking/contradictions/escalation), and Smart Create (instant journal/operation generation).
-- Intelligent revenue routing (distinguishing engine repairs توضيب vs general mechanical).
-- Supplier Management including PDF statements, bulk imports, and Ajel (credit) logic.
-- Smart Accounting Patch:  supporting split payments, paying via supplier balance, auto-archiving vehicles upon closure, and  which remembers the user's 3 most recently used accounts per operation type.
+A mature React SPA + FastAPI backend. The app features strict double-entry accounting with a newly implemented 5-point firewall. It enforces balanced journal entries, prevents duplicate transactions via idempotency checks, and automatically generates COGS (Cost of Goods Sold) entries for parts sales. The frontend includes a null-safe Journal Entries page and a dedicated Assistant-Only AI page that operates without fetching root financial data to prevent cross-contamination. 
 
 **Last working item**: 
-    - Last item agent was working: Applying the Smart Accounting + Supplier-Balance Payment + Vehicle Archive Logic patch provided by the user. The agent created , updated  and  to support paying via supplier balances and archiving closed vehicles, and updated  to use the new  logic (tracking recently used accounts).
+    - Last item agent was working: Implementing and verifying a 5-point Accounting System Audit Plan (Real-time Integration, Double-Entry Firewall, Inventory & COGS generation, Idempotency, and Precision Checks) on the backend.
     - Status: USER VERIFICATION PENDING
-    - Agent Testing Done: Y (Backend bash tests successfully validated the archiving, account caching, and payment confirmation flows).
-    - Which testing method agent to use? Frontend testing agent / manual testing (to verify the full UX of the new payment/archiving dialogs).
+    - Agent Testing Done: Y (Deep backend testing subagent and manual bash testing scripts confirmed that unbalanced entries are now rejected, COGS is generated, and idempotency works).
+    - Which testing method agent to use? Frontend testing agent / manual testing (to verify the full UX of creating operations and checking the generated journal entries if user requests UI additions).
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - None currently blocking. All identified issues in the session were resolved.
+  - Issue 1: Incomplete Test Data Cleanup
+     - Attempted fixes: A previous agent ran a python script to delete mock records but failed on  due to a Supabase schema mismatch (PostgREST error: ).
+     - Next debug checklist: Verify the correct table names in Supabase. Clean up the remaining mock data safely if user requests.
+     - Why fix this issue and what will be achieved with the fix? Prepares the environment for production use without junk data.
+     - Status: NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on other issue: None
 
 **In progress Task List**:
   - None.
 
 **Upcoming and Future Tasks**
+  - **P1**: Auto-map من قطع راكان (From Rakan parts) to account  inside the Unified Bot's interactive creation cards.
+  - **P1**: Add an Accounting Firewall Dashboard/Panel to the UI (suggested by agent) to show balance status, idempotency hits, and COGS for operations in real-time.
   - **P2**: إضافة ميزة OCR (التعرف البصري على الحروف) للمستندات المرفوعة في البوت المالي للتدقيق التلقائي للفواتير.
-  - **P2**: Refactor  to break down remaining bloated endpoints (e.g., extracting remaining supplier or bot logic to their respective routers).
-  - **P0/Deployment**: The user frequently needs to deploy Preview changes to the Production environment. Remind user to trigger deployment when major UI/UX changes are verified.
+  - **P2**: Refactor  and  to extract sub-routers (files are exceeding 8,000 lines).
 
 **Completed work in this session**
-- Database Migration: Replaced all legacy account codes (e.g., 1101, 1102, 4001, 4100) with new sequential codes (003, 004, 026, 027, 028, etc.) across all journal entries and operations.
-- UI/UX: Created  unifying the AI Assistant, Finance Auditor, and Smart Create modes into one liquid-design widget.
-- Finance Bot Engine: Added Auto-Linking, Contradiction Engine, and Auto-Escalation (escalates after 5 rounds). Also added  to fetch direct financial stats bypassing the LLM.
-- Suppliers Module: Built  enabling PDF statement generation, Settlements logic, and CSV imports. Merged duplicate suppliers.
-- Revenue Routing: Operations matching توضيب correctly route to 028 (Engine Repairs), general to 027. Abu Khaled parts route to 042.
-- Payment Confirmation: Revamped  to support multi-method payments (e.g., Bank 500 + Cash 200), supplier balance settlements, and integrated it into Operations, Debt Follow-up, and Vehicle Details.
-- Smart Inventory: Rebuilt  with a step-by-step manual order wizard.
-- Smart Accounting: Implemented  tracking so dropdowns show the 3 most recently used accounts first. Added vehicle archiving logic upon visit closure/payment.
+- Fixed P0 React Runtime Crash on  by adding robust null-safety and optional chaining to  and  (DONE)
+- Removed Financial Statements from  and converted it into an Assistant-Only mode without root financial data fetching (DONE)
+- Backend: Double-Entry Firewall implemented to strictly reject unbalanced journal entries (DONE)
+- Backend: Idempotency implemented to prevent duplicate operations/journal entries for the same reference (DONE)
+- Backend: Inventory & COGS link established to automatically generate Cost of Goods Sold journal entries when parts are sold (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-  - None.
+  - None (Other than the aforementioned test data cleanup mismatch).
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: None applicable to current state.
+  - Issue recurrence in previous fork: None
   - Recurrence count: 0
   - Status: RESOLVED
 
@@ -57,55 +55,55 @@ A mature React SPA + FastAPI backend. The app features:
 **Key Technical Concepts**
 - React SPA + FastAPI backend.
 - Dual Database Strategy: Supabase (Primary) and MongoDB (Fallback). 
-- State Management: Extensive use of React Hooks, Context, and local caching for financial data.
 - Universal AI Integrations: Uses  for LLM operations.
-- Ledger Engine: Operations dynamically generate double-entry  based on predefined item types, supplier keywords, and payment methods.
+- Strict Ledger Engine: Operations dynamically generate double-entry  and COGS based on predefined item types, supplier keywords, and payment methods.
 
 **key DB schema**
   - : 
   - : 
-  -  & :  (status manages if the file is open or archived).
-  - :  (Used for smart dropdowns).
+  - : 
+  - : 
 
 **changes in tech stack**
-  - Added  for Excel/CSV supplier parsing.
+  - None.
 
 **All files of reference**
-  - : Highly modified to fix revenue routing, multi-payment generation, and vehicle archiving.
-  - : Added 3 engines (Auto-Link, Contradictions, Escalations).
-  - : Newly created to replace all floating chat widgets.
-  - : Extensively updated to support multi-line, supplier-balance, and vehicle archiving options.
+  - : Updated with strict null-checks for mapping over entries/lines.
+  - : Stripped of all chart-of-accounts and trial-balance fetching logic.
+  - : Added idempotency checks and COGS generation.
+  - : Enforced strict  logic.
 
 **Areas that need refactoring**:
--  and  are getting very large (>8000 lines). Future agents should safely extract specific domains (e.g., pure vehicle logic) into separate routers.
+-  is over 8,500 lines long. Code domains (e.g., pure vehicle logic vs accounting linkage) should be extracted into separate routers.
 
 **key api endpoints**
+-  (Now enforces balance check)
 - 
-- 
-- 
-- 
+-  (Now handles Idempotency and COGS)
 
 **Critical Info for New Agent**
-- **ENVIRONMENT**: The user operates in a **Preview** environment but has a separate **Production** deployment (). If bugs are reported, *always ask* which environment they are in. You can only fix code in Preview; Production requires the user to hit Deploy via the Emergent UI.
-- **ACCOUNT CODES**: Legacy codes (e.g., 4001, 1102) are entirely purged. Use the new 3-digit format (003 Cash, 004 Bank, 006 POS, 027 Mech Revenue, 028 Engine Revenue, 042 Workshop Parts Revenue). 
-- **LLM INTEGRATION**: Do not directly install Anthropic or OpenAI SDKs. Uses  from .
+- **CRITICAL BACKEND LOGIC**: Strict accounting is active! Any endpoint that creates journal entries *must* ensure Debits = Credits exactly. Also, parts sales now automatically generate COGS entries. Do not bypass  checks.
+- **ENVIRONMENT**: The user has deployed the app to Production. You are operating in **Preview**. If the user reports issues, clarify if they are seeing it in Preview or Production. Code fixes apply to Preview; the user must click Deploy to push to Production. Do not mention deployment proactively unless debugging a production-only bug.
+- **LANGUAGE**: Always respond in Arabic.
 
 **documents and test reports created in this job**
-  -  (Updated progressively)
+  -  (Frontend Crash Fix)
   - 
+  - 
+  - 
+  -  (Updated with 5-point firewall status)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. *User*: Found an issue where the Auditor doesn't know context. Also wants a Flash Operation (عملية فورية) button.
-2. *Agent*: Passed actual financial data as context to the bot. Added Flash Operation UI + endpoint. Tested successfully.
-3. *User*: Requested removal of the old AI Assistant page from Sidebar to rely entirely on the Unified Bot.
-4. *Agent*: Removed from Sidebar routing.
-5. *User*: In the bot's Create tab, when picking Service or Part, it should show the catalog dropdown.
-6. *Agent*: Connected the services/parts catalogs to the Bot's creation wizard.
-7. *User*: Bot dropdown lists are cut off. Bot needs admin capabilities to pull stats. Bot chat UI needs Liquid Design.
-8. *Agent*: Redesigned Bot chat UI, added  to execute specific queries instantly, removed length limits on dropdowns.
-9. *User*: Inventory planner is lacking. Manual order button doesn't work. Needs supplier/part selection and WhatsApp sharing.
-10. *User*: Provided a massive backend/frontend PATCH block for Smart Accounting + Supplier Balance Payments + Vehicle Archiving.
-*Agent*: Implemented , updated UI components (), wired payment confirmation to update vehicle status to  and support . Finished and verified. *(No pending questions)*
+1. *User*: P0 (Fix the Journal Entry Crash).
+2. *Agent*: Fixed frontend null-reference crash, verified with testing agent.
+3. *User*: Remove financial statements from the AI Financial assistant page (Financial Analysis tab). Only keep them in the main Comprehensive Financial page.
+4. *Agent*: Removed UI components from .
+5. *User*: Make it strictly an assistant page. Remove ALL root financial data fetching to prevent financial linking errors.
+6. *Agent*: Removed backend API calls from . Verified with testing agent.
+7. *User*: (Provides JSON payload for transaction FIX-SA-2026-X99).
+8. *Agent*: Is this a test?
+9. *User*: Yes, this is a test for the accounting system. Provides a 5-point Accounting System Audit Plan (Real-time Integration, Double-Entry Firewall, Inventory & COGS, Idempotency, Precision Check).
+10. *User*: (LATEST) اكمل (Continue). *(User verified the continuation after agent reported fixing the firewall logic)*.
 
 **Project Health Check:**
 - Broken: None. 
@@ -117,13 +115,13 @@ A mature React SPA + FastAPI backend. The app features:
 - MongoDB (Fallback Database)
 
 **Testing status**
-  - Testing agent used after significant changes: NO (Main agent utilized extensive bash scripting, generating test data, validating backend assertions, and using screenshot tools).
+  - Testing agent used after significant changes: YES (Frontend testing agent for UI crash; Deep Backend testing agent for accounting firewall).
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: , 
-  - Known regressions: None identified.
+  - Test files created: None (JSON reports saved).
+  - Known regressions: None.
 
 **Credentials to test flow:**
-- (Preview bypasses auth typically. If prompted:  / No password)
+-  / No password (Preview bypasses auth).
 
 **What agent forgot to execute**
-- The Smart Accounting patch was fully implemented on the backend and frontend components, but the next agent should ensure to perform a full UX test of the  ->  flow to ensure the new Archive Vehicle prompt looks perfect to the user.</analysis>
+- The agent successfully implemented the backend firewall rules but suggested a UI addition (Firewall Accounting Panel) to the user. The next agent should see if the user wants this UI built or if they want to move on to the  (Rakan parts auto-mapping) task.</analysis>

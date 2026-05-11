@@ -29,7 +29,36 @@
 
 ## What's Been Implemented
 
-### 🔥 Rakan Radical Removal + Services/Parts Refactor (11 Feb 2026)
+### 🩺 Firewall ↔ Auditor & Financial Assistant Integration + UX Upgrades (11 Feb 2026)
+
+**1. Auditor Integration (`/api/finance/audit-system`)**
+- New method `AccountingSystemAuditor.check_firewall_health(firewall_data)`:
+  - **Critical**: unbalanced entries in DB > 0 OR drift > threshold.
+  - **Warning**: lifetime_rejections ≥ 20 OR missing COGS despite activity.
+  - Emits structured `status`/`issues`/`warnings`/`metrics` and appends to `corrections_needed`.
+- Endpoint `/api/finance/audit-system` now fetches firewall status live and feeds it to the auditor.
+- Audit response includes `data.details.firewall_check` with full metrics.
+
+**2. Financial Assistant Integration (`/api/finance-bot/chat`)**
+- New helper `build_firewall_context(workshop_id)` builds a live snapshot string.
+- Context auto-injected before every LLM call (no client opt-in needed).
+- `FINANCE_SYSTEM_PROMPT` updated with explicit firewall awareness instructions.
+
+**3. Firewall Panel UX Upgrades**
+- **Quick Actions bar**: تشغيل تدقيق المحاسبة، فتح المساعد المالي، تصدير CSV، نسخ تقرير الحالة.
+- **Settings panel** (localStorage-persisted): عتبة تنبيه الرفضيات، حد سلامة التوازن (٪)، فاصل التحديث (ث)، تفعيل التنبيهات.
+- **Toast alerts**: تُظهر تلقائياً عند تجاوز عتبات المستخدم (auto-dismiss بعد 6ث).
+- **Audit result card**: نتيجة التدقيق inline مع health_score + firewall_check + issues/warnings.
+- **Live pulse indicator**: نقطة خضراء تنبض مع كل refresh.
+- **Rejection detail modal**: النقر على أي رفض يفتح JSON كامل + زر نسخ.
+- **Configurable refresh interval** بدل 15ث ثابتة.
+
+**Verification (`/app/test_reports/iteration_194.json`)**
+- Backend: **100% (3/3 pytest PASS)** — `check_firewall_health` + bot context + status endpoint.
+- Frontend: **100% (17/17 testids + جميع التدفقات تعمل)**.
+- **0 critical / 0 minor issues**.
+
+
 
 **Phase 1 — Database Purge (Supabase)**
 - Deleted **9 Rakan accounts** (043, 044, 048, 053-058, 21010001) + 1 part + 1 operation.

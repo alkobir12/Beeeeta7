@@ -29,6 +29,26 @@
 
 ## What's Been Implemented
 
+### P0 Fix — Journal Entries Crash After Data Cleanup (11 May 2026)
+
+**المشكلة:** انهيار React في صفحة دفتر اليومية `/accounting/journal-entries` بعد حذف بيانات اختبار.
+
+**الإصلاح المنفذ:**
+1. **`JournalEntries.jsx`**
+   - إضافة طبقة `null-safe` عند قراءة API (تطبيع `entries` و `lines` قبل الاستخدام).
+   - منع أي crash ناتج عن عناصر `null` أو هياكل بيانات ناقصة.
+   - تحصين الطباعة وتفاصيل القيد ضد `lines` غير الصالحة.
+2. **`SmartAccountSelect.jsx`**
+   - تطبيع آمن للحسابات الواردة من `allAccounts` أو API.
+   - منع crash عند وجود عناصر حسابات ناقصة/فارغة.
+
+**التحقق والاختبار:**
+- Lint: ✅ بدون أخطاء لملفي الواجهة المعدلين.
+- Testing Agent: `/app/test_reports/iteration_186.json`
+  - Frontend: **100% PASS**
+  - لا `Script error` ولا `handleError` في Console.
+  - فتح المودال + SmartAccountSelect يعملان بدون انهيار.
+
 ### Preview Visibility + Smart Accounting UI Verification (10 May 2026)
 
 **ما تم في هذه الجولة:**
@@ -650,13 +670,14 @@
 ## Prioritized Backlog
 
 ### P1 (Next)
-- إكمال Auto-Linking + Contradiction Engine + Escalation Workflow لبوت المدقق المالي
+- تنظيف بيانات الاختبار المتبقية بأسماء جداول Supabase الصحيحة (بدون كسر القيود).
+- Auto-map لعبارة «من قطع راكان» إلى الحساب `042` داخل بطاقات إنشاء Unified Bot.
 
 ### P2
-- OCR / التحقق من المستندات المرفوعة في البوت المالي
+- OCR / التحقق من المستندات المرفوعة في البوت المالي.
 
 ### Refactoring
-- تنظيف `server.py` ونقل `/suppliers` لملف مستقل
+- تفكيك `server.py` و`routes_extended.py` إلى Routers أصغر (vehicle / nlp / suppliers / bot domains).
 
 ## Key API Endpoints
 - `GET /api/finance/reports/income-statement`

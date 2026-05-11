@@ -29,6 +29,26 @@
 
 ## What's Been Implemented
 
+### Centralizing Financial Statements (11 May 2026)
+
+**طلب المستخدم:** إزالة القوائم المالية من صفحة المساعد المالي (تبويب التحليل المالي)، واعتماد القوائم الرئيسية فقط في صفحة القوائم المالية بالقسم المالي.
+
+**ما تم تنفيذه في `AIFinancial.jsx`:**
+1. إزالة قسم قائمة **ميزان المراجعة التفصيلي** من تبويب التحليل المالي.
+2. إضافة بطاقة توضيحية تؤكد أن القوائم المالية أصبحت مركزية في صفحة القسم المالي.
+3. إضافة زر مباشر للانتقال إلى صفحة القوائم المالية:
+   - `data-testid="assistant-go-financial-statements-button"`
+   - الوجهة: `/accounting/comprehensive`
+4. إضافة معرف اختبار للرسالة التوضيحية:
+   - `data-testid="assistant-financial-statements-centralized-note"`
+
+**التحقق:**
+- Frontend test agent: ✅ جميع النقاط PASS
+  - ظهور الرسالة التوضيحية
+  - ظهور زر الانتقال
+  - اختفاء `trial-balance-count`
+  - نجاح الانتقال إلى `/accounting/comprehensive`
+
 ### P0 Fix — Journal Entries Crash After Data Cleanup (11 May 2026)
 
 **المشكلة:** انهيار React في صفحة دفتر اليومية `/accounting/journal-entries` بعد حذف بيانات اختبار.

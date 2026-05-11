@@ -29,6 +29,55 @@
 
 ## What's Been Implemented
 
+### 💳 Smart POS Journal — User-requested completion (11 May 2026)
+
+**ملخص التنفيذ النهائي لطلب المستخدم الأخير:**
+- إعادة بناء `SmartPOSJournal.jsx` كواجهة POS موحدة بدلاً من فصل «سلة كاشير» — تم **دمج السلة داخل قسم البنود** نفسه.
+- إضافة **8 قوالب جاهزة** داخل شاشة واحدة:
+  - ⚡ بيع فوري
+  - 💵 بيع نقدي
+  - 💳 بيع بنكي/بطاقة
+  - 👷 رواتب
+  - 🧾 صرف نقدي
+  - 🤝 تحصيل من عميل
+  - 📦 سداد لمورد
+  - 🏧 إيداع بنكي
+- إضافة الحقول المطلوبة من المستخدم داخل الـPOS:
+  - **العميل**
+  - **المركبة**
+  - **البنود**
+- ربط lookup فعلي مع APIs:
+  - `GET /api/customers`
+  - `GET /api/suppliers`
+  - `GET /api/vehicles`
+  - `GET /api/parts`
+  - `GET /api/services`
+- دعم احتساب الإجمالي تلقائياً من البنود مع الإبقاء على الإدخال اليدوي للمبلغ عند الحاجة.
+- الحفظ يرسل قيداً متوازناً إلى `POST /api/finance/journal-entries` مع tokens داخل الوصف:
+  - `[PARTY:...]`
+  - `[PARTY_TYPE:...]`
+  - `[VEHICLE_REF:...]`
+- شريط «آخر القيود» ما زال يدعم **نسخ القيد** لإعادة الاستخدام بسرعة.
+- تحصين `JournalEntries.jsx` باستخدام `AbortController` لتقليل ضوضاء fetch عند التنقل/الإلغاء أثناء التحميل.
+
+**التحقق والاختبار:**
+- `testing_agent`: `/app/test_reports/iteration_199.json`
+  - Frontend: **100% PASS**
+  - Backend: **100% PASS**
+  - تم التحقق من جميع القوالب، ومن دمج سلة الكاشير، ومن حفظ قيود متوازنة فعلياً.
+- `auto_frontend_testing_agent`: **PASS كامل**
+  - تم التحقق بصرياً من القوالب، الحقول الشرطية، البنود، وحفظ البيع الفوري مع toast نجاح.
+- `deep_testing_backend_v2`: **7/7 PASS**
+  - تم التحقق من قوالب: instant_sale / salary / collect_customer / pay_supplier
+  - وتم التحقق من رفض القيد غير المتوازن كما يجب.
+
+**ملاحظات هندسية:**
+- `SmartPOSJournal.jsx` أصبح الآن المرجع الأساسي لتجربة POS داخل `/accounting/journal-entries`.
+- `JournalEntries.jsx` ما زال يحتفظ بمفتاح التبديل بين **POS الذكي** و**العرض الكامل**.
+- تمت إضافة ملفات ذاكرة مساندة:
+  - `/app/memory/CHANGELOG.md`
+  - `/app/memory/ROADMAP.md`
+
 ### 💳 Smart POS Journal + Recent Pages + Duplicate Customer Alert (11 Feb 2026)
 
 **1. 💳 POS الذكي لدفتر اليومية (`SmartPOSJournal.jsx`, 586 سطر)**

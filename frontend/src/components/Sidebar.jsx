@@ -31,6 +31,8 @@ import { useTranslation } from 'react-i18next';
 import LanguageToggleButton from './LanguageToggleButton';
 import { resolveBackendBase } from '../utils/backendBase';
 import { hasPermission } from '../utils/permissions';
+import { readRecentPages, clearRecentPages } from '../hooks/useRecentPages';
+import { Clock } from 'lucide-react';
 
 const API_URL = (
   process.env.NODE_ENV === 'production'
@@ -202,10 +204,17 @@ const Sidebar = ({
   };
 
   const [session, setSession] = useState(() => readSession());
+  const [recentPages, setRecentPages] = useState(() => readRecentPages());
   const groupLabels = useMemo(
     () => MENU_ITEMS.filter((item) => item.group && Array.isArray(item.children)).map((item) => item.label),
     [MENU_ITEMS]
   );
+
+  useEffect(() => {
+    const sync = () => setRecentPages(readRecentPages());
+    window.addEventListener('recentpages:update', sync);
+    return () => window.removeEventListener('recentpages:update', sync);
+  }, []);
 
   useEffect(() => {
     const sync = () => setSession(readSession());
@@ -426,6 +435,46 @@ const Sidebar = ({
         </div>
 
         <nav ref={navRef} className={`overflow-y-auto flex-1 min-h-0 ${isCollapsed ? 'px-2 pt-3' : 'px-3 pt-3'}`}>
+          {/* 📜 Recent Pages — last 5 visited */}
+          {!isCollapsed && recentPages.length > 0 ? (
+            <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-2.5" data-testid="sidebar-recent-pages">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                  <Clock size={11} className="text-slate-400" />
+                  أحدث الصفحات
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); clearRecentPages(); }}
+                  className="text-[9px] text-slate-500 hover:text-slate-200 transition"
+                  data-testid="sidebar-recent-pages-clear"
+                  title="مسح السجل"
+                >
+                  مسح
+                </button>
+              </div>
+              <ul className="space-y-0.5">
+                {recentPages.map((p) => (
+                  <li key={p.path}>
+                    <button
+                      type="button"
+                      onClick={() => { navigate(p.path); if (typeof onNavigate === 'function') onNavigate(); }}
+                      className={`w-full text-right text-[12px] px-2 py-1 rounded-md transition truncate ${
+                        location.pathname === p.path
+                          ? 'bg-cyan-500/15 text-cyan-100'
+                          : 'text-slate-300 hover:bg-white/5 hover:text-slate-100'
+                      }`}
+                      data-testid={`sidebar-recent-page-${p.path.replace(/[^a-zA-Z0-9-]/g, '-')}`}
+                      title={p.path}
+                    >
+                      {p.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           <div className="space-y-1.5 pb-4">
             {MENU_ITEMS.map((item, index) => renderMenuItem(item, index))}
           </div>

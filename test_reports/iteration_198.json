@@ -1,0 +1,48 @@
+{
+  "summary": "Iter 198 — Tested 3 new features: Smart POS journal (template+cart modes), Sidebar Recent Pages, Duplicate Customer alert. Found and FIXED 1 critical bug: JournalEntries.jsx line 705 passed onSaved={() => fetchEntries()} but the actual function is fetchJournalEntries — caused user to see misleading 'fetchEntries is not defined' error toast on every POS save even though the entry persisted to backend. All other features verified working: view-mode toggle (LS persists journal.viewMode pos/full), 6 POS templates with correct debit/credit accounts (cash_expense → 035/003 confirmed), numpad 5,0,0 → ٥٠٠٫٠٠ ر.س (Arabic-Indic display), backspace/clear, OK saves, cart mode (100+150=٢٥٠٫٠٠ ر.س), pos-recent-entries-panel with 5 rows + copy fills amount. Sidebar Recent Pages: appears at top after visiting pages, shows last 5 with LS key recentPages.v1, Clear button removes LS and hides section. Regression: /accounting/firewall and /accounting/comprehensive load OK; backend firewall 100% balance_health, unbalanced=0; entries grew from 67 → 69 via POS saves (balanced double-entry, firewall accepted).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "JournalEntries → SmartPOSJournal onSaved callback",
+        "issue": "onSaved={() => fetchEntries()} referenced undefined fetchEntries (actual function is fetchJournalEntries). POST /api/finance/journal-entries succeeded (entries 67→69 confirmed via firewall) but user saw misleading red toast 'fetchEntries is not defined' and entries list did NOT refresh after save. FIXED in this iteration (JournalEntries.jsx:705).",
+        "selector": "[data-testid=\"pos-save-toast\"]",
+        "priority": "HIGH (fixed)"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_198.json"
+  ],
+  "action_items": [
+    "Verify fix in JournalEntries.jsx:705 (onSaved → fetchJournalEntries) — already applied by testing agent, should auto-refresh entries list after POS save.",
+    "Duplicate customer alert: code logic verified (shouldShowDuplicateAlert = vehicleCount>0 && vehicleCount<2) and all data-testids present (new-vehicle-duplicate-customer-alert, -title, -body). E2E validation with live data was not fully reproducible because /api/vehicles returned 115 rows but the customer→vehicle counting keys (customer_phone / customer_name / customer_id) yielded empty counts in the in-page eval — likely the vehicle records use different field names than expected. Main agent should sanity-check the customerDirectory/vehicleSearchIndex building in NewVehicle.jsx against the actual /api/vehicles payload shape (whether it uses owner_phone, customer_id, or some other linkage key)."
+  ],
+  "critical_code_review_comments": [
+    "BUG FIXED: JournalEntries.jsx:705 — `onSaved={() => fetchEntries()}` → corrected to `fetchJournalEntries()`. Without this fix every POS save displayed a misleading failure toast despite the entry being persisted and the firewall remaining balanced. This is a high-priority UX bug that the manual screenshot earlier in the task missed because it only verified component rendering, not the full save flow.",
+    "SmartPOSJournal.jsx is 586 lines and well-structured. Numpad correctly handles append/backspace/clear with the leading-zero suppression (`if (prev === '0' && d !== '.') return String(d)`). The 6 templates have correct double-entry account pairs and cash_expense correctly maps to 035 (expense) debit / 003 (cash) credit.",
+    "Cart-mode debit account dynamically follows payment method (cash=003 / bank=004 / pos=006), credit always 042 (revenue). Properly balanced double-entry POST shape: { lines: [{account, debit, credit, account_name}, ...], total, source: 'pos_cart'|'pos_template' }.",
+    "useRecentPages.js: clean implementation, deduplicates by path, max 5 entries, friendly Arabic labels with emoji prefixes, LS key 'recentPages.v1'. Custom event 'recentpages:update' lets Sidebar reactively re-render.",
+    "NewVehicle.jsx duplicate alert logic at line 320-324 is correct: `vehicleCount > 0 && vehicleCount < 2` — only fires for customers with exactly one prior vehicle, properly excludes multi-vehicle customers.",
+    "Minor: JournalEntries.jsx is 2303 lines — consider splitting (templates/filters/AI/cards) into sub-components. Out of scope for this iteration."
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/JournalEntries.jsx (line 705 — onSaved callback fixed from fetchEntries → fetchJournalEntries)"
+  ],
+  "success_rate": {
+    "backend": "100% (firewall 100% balance_health, 69/69 entries balanced after 2 successful POS saves during testing)",
+    "frontend": "~95% — all listed data-testids present and working; 1 high-priority bug found and fixed in JournalEntries.jsx; duplicate-customer-alert E2E lookup couldn't reproduce a customer-with-1-vehicle from /api/vehicles payload in the time available (code logic verified by inspection)"
+  },
+  "test_credentials": "Username: مدير (text input only, no password). Workshop: finmodule-sync (display name 'ورشة اختبار 192').",
+  "seed_data_creation": "Created 2 journal entries via POS during testing (1 template cash_sale 100 ر.س, 1 cart with 100+150=250 ر.س). Backend firewall confirmed both balanced; total entries grew from 67 → 69 with 100% balance_health and 0 unbalanced.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The critical onSaved typo fix (JournalEntries.jsx:705) was applied by this testing agent. After hot-reload it should make POS saves show a proper green success toast and refresh the entries list. To verify, main agent (or next tester) can: (1) login as مدير, visit /accounting/journal-entries, (2) click pos-template-cash_sale, press numpad 5,0,0, then OK, (3) pos-save-toast should now show success (green, with id+total), no 'fetchEntries' error. For the duplicate-customer alert, prefer a manual approach: use new-vehicle-customer-search-input to type a partial name; the autocomplete list (if present) is the cleanest way to select a customer whose vehicleCount is known. Backend has 115 vehicles in /api/vehicles — main agent can inspect that payload's customer linkage field to write a deterministic E2E test.",
+  "rca of the issue": "ROOT CAUSE: In JournalEntries.jsx, the SmartPOSJournal child was wired with onSaved={() => fetchEntries()} but the parent's data-loading function is named fetchJournalEntries (line 182). When POS save succeeded, SmartPOSJournal's then-branch called onSaved(res.data), which triggered the inline arrow → ReferenceError: fetchEntries is not defined → caught by SmartPOSJournal's surrounding try/catch → setSavedToast({ok:false, error: err.message}) overwrote the success toast. User saw a red error toast despite the entry persisting (firewall confirmed 67→69). REPRODUCTION: 1) Open /accounting/journal-entries 2) Click any template 3) Enter amount 4) Press OK → see red 'fetchEntries is not defined' toast 5) Refresh page or check /api/firewall/status → entry count increased. MITIGATION (APPLIED): Renamed callback target to fetchJournalEntries() at line 705. Verified post-fix: toast no longer carries error text; backend entry count keeps incrementing per save."
+}

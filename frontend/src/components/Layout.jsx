@@ -11,10 +11,12 @@ import { hasPermission, resolveRoutePermission } from '../utils/permissions';
 import { siteBuilderAPI } from '../services/siteBuilderAPI';
 import { PageCustomCardsDock } from './PageCustomCardsDock';
 import { applyPageCustomizations, clearPageCustomizations } from '../utils/pageCustomization';
+import { useRecentPagesTracker } from '../hooks/useRecentPages';
 
 
 
 const Layout = ({ pageTitle }) => {
+  useRecentPagesTracker();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pageCustomization, setPageCustomization] = useState({ custom_cards: [] });
   const appliedCustomizationsRef = useRef([]);

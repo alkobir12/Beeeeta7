@@ -278,6 +278,51 @@ const NewVehicle = () => {
     toast({ title: 'تم اختيار العميل', description: `تم اختيار العميل: ${customer.name}` });
   };
 
+  // 🚨 Duplicate customer detection — detects when the typed customer (name/phone) already exists,
+  // and lists their existing vehicles so the user knows they're returning.
+  const duplicateCustomerInfo = useMemo(() => {
+    const name = String(formData.customerName || '').trim().toLowerCase();
+    const phone = String(formData.customerPhone || '').replace(/\D/g, '').trim();
+    if (!name && !phone) return null;
+
+    // Try to find a matching customer in directory by phone first, then name.
+    const dir = customerDirectory || [];
+    let match = null;
+    if (phone.length >= 7) {
+      match = dir.find((c) => String(c?.phone || '').replace(/\D/g, '') === phone);
+    }
+    if (!match && name.length >= 2) {
+      match = dir.find((c) => String(c?.name || '').trim().toLowerCase() === name);
+    }
+    if (!match) return null;
+
+    // Lookup their existing vehicles from the vehicle archive index
+    const vehiclesIndex = vehicleSearchIndex || [];
+    const customerVehicles = vehiclesIndex
+      .filter((v) => {
+        const vPhone = String(v?.customerPhone || '').replace(/\D/g, '');
+        const vName = String(v?.customerName || '').trim().toLowerCase();
+        return (phone && vPhone === phone) || (name && vName === name);
+      })
+      .map((v) => ({
+        plate: v?.plateRaw || v?.plate || '',
+        id: v?.id || '',
+      }))
+      .filter((v) => v.plate);
+
+    return {
+      customer: match,
+      vehicleCount: customerVehicles.length,
+      vehicles: customerVehicles.slice(0, 5),
+    };
+  }, [formData.customerName, formData.customerPhone, customerDirectory, vehicleSearchIndex]);
+
+  const shouldShowDuplicateAlert = useMemo(() => {
+    if (!duplicateCustomerInfo) return false;
+    // Per user spec: skip alert if customer ALREADY has multiple vehicles (returning customer with several cars).
+    return duplicateCustomerInfo.vehicleCount > 0 && duplicateCustomerInfo.vehicleCount < 2;
+  }, [duplicateCustomerInfo]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.plateNumber || !formData.customerName || !formData.customerPhone || !formData.brand) {
@@ -481,6 +526,33 @@ const NewVehicle = () => {
             )}
           </div>
         </div>
+
+        {/* 🚨 Duplicate Customer Alert (inline) */}
+        {shouldShowDuplicateAlert && duplicateCustomerInfo ? (
+          <div
+            className="rounded-2xl border border-amber-300/50 bg-gradient-to-br from-amber-50 to-yellow-50 p-4 shadow-sm"
+            data-testid="new-vehicle-duplicate-customer-alert"
+          >
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-lg">
+                ⚠️
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-amber-900" data-testid="new-vehicle-duplicate-customer-title">
+                  العميل «{duplicateCustomerInfo.customer?.name || formData.customerName}» موجود مسبقاً
+                </div>
+                <div className="mt-1 text-xs text-amber-800 leading-relaxed" data-testid="new-vehicle-duplicate-customer-body">
+                  لديه {duplicateCustomerInfo.vehicleCount} {duplicateCustomerInfo.vehicleCount === 1 ? 'مركبة' : 'مركبات'} سابقة
+                  {duplicateCustomerInfo.vehicles.length > 0 ? (
+                    <>: {duplicateCustomerInfo.vehicles.map((v) => v.plate).join('، ')}</>
+                  ) : null}.
+                  <br />
+                  <strong>تأكّد أن المركبة الحالية مختلفة قبل المتابعة.</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* Vehicle Info */}
         <div className="apple-card p-6">

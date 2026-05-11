@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { resolveBackendBase } from '../utils/backendBase';
 import SmartAccountSelect from '../components/SmartAccountSelect';
+import SmartPOSJournal from './SmartPOSJournal';
 import axios from 'axios';
 import {
   BookOpen,
@@ -153,6 +154,9 @@ export default function JournalEntries() {
   const [partyEditorSaving, setPartyEditorSaving] = useState(false);
   const [resetKeepDebtsLoading, setResetKeepDebtsLoading] = useState(false);
   const [coaAccounts, setCoaAccounts] = useState([]);
+  const [viewMode, setViewMode] = useState(() => {
+    try { return localStorage.getItem('journal.viewMode') || 'pos'; } catch (e) { return 'pos'; }
+  });
   const [workshopProfile, setWorkshopProfile] = useState(null);
   const [workshopSettings, setWorkshopSettings] = useState(null);
   
@@ -655,6 +659,56 @@ export default function JournalEntries() {
         </div>
       </div>
 
+      {/* 💳 POS / Full View Toggle */}
+      <div className="mb-4 flex items-center gap-2" data-testid="journal-view-mode-toggle">
+        <span className="text-xs text-slate-400">العرض:</span>
+        <button
+          type="button"
+          onClick={() => { setViewMode('pos'); try { localStorage.setItem('journal.viewMode','pos'); } catch (e) {} }}
+          data-testid="journal-mode-pos-button"
+          className={`px-4 py-2 rounded-xl text-sm border transition ${
+            viewMode === 'pos'
+              ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-50'
+              : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+          }`}
+        >
+          💳 POS الذكي
+        </button>
+        <button
+          type="button"
+          onClick={() => { setViewMode('full'); try { localStorage.setItem('journal.viewMode','full'); } catch (e) {} }}
+          data-testid="journal-mode-full-button"
+          className={`px-4 py-2 rounded-xl text-sm border transition ${
+            viewMode === 'full'
+              ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-50'
+              : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+          }`}
+        >
+          📖 العرض الكامل
+        </button>
+      </div>
+
+      {viewMode === 'pos' ? (
+        <div className="rounded-[24px] border p-4 backdrop-blur-2xl mb-6"
+          style={{
+            background: 'linear-gradient(145deg, rgba(15,23,42,0.84) 0%, rgba(8,47,73,0.66) 50%, rgba(15,23,42,0.86) 100%)',
+            borderColor: 'rgba(125,211,252,0.28)',
+            boxShadow: '0 24px 40px -24px rgba(14,165,233,0.55), inset 0 1px 0 rgba(255,255,255,0.12)',
+          }}
+          data-testid="journal-pos-container"
+        >
+          <SmartPOSJournal
+            apiBase={API_URL}
+            workshopId={WORKSHOP_ID}
+            accounts={coaAccounts}
+            recentEntries={(entries || []).slice(0, 5)}
+            onSaved={() => fetchJournalEntries()}
+          />
+        </div>
+      ) : null}
+
+      {viewMode === 'full' ? (
+        <>
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* AI Assistant Card */}
@@ -1071,6 +1125,8 @@ export default function JournalEntries() {
           </>
         )}
       </div>
+        </>
+      ) : null}
 
       {/* Detail Modal */}
       {showDetailModal && selectedEntry && (

@@ -29,6 +29,31 @@
 
 ## What's Been Implemented
 
+### 🏗️ Major Refactor — 4 Domain Extractions (11 Feb 2026)
+
+**Goal:** تقسيم `routes_extended.py` و `server.py` إلى Routers أصغر دون كسر أي شيء.
+
+**النتائج:**
+| الملف | قبل | بعد | الفرق |
+|---|---|---|---|
+| `routes_extended.py` | 8,639 | **5,093** | **-3,546 (-41%)** |
+| `server.py` | 3,418 | **3,364** | -54 |
+
+**الملفات الجديدة (5 routers + 2 shared modules):**
+- `app_state.py` (87 سطر) — حالة مشتركة (`db`, `DB_PROVIDER`, `supabase_service`, `mem_read`, `mem_write`).
+- `mem_store.py` (44 سطر) — helpers لـ `_mem_read/_mem_write` بدون تكرار.
+- `routes_workshop_config.py` (295 سطر) — Settings, Profile, Logo Upload, Auth OTP.
+- `routes_approvals.py` (547 سطر) — Approval CRUD, public view, SSE stream, Notifications, Approval logs.
+- `routes_accounts_extended.py` (2,003 سطر) — Chart of Accounts بكاملها (list, tree, status, transactions, sparkline, usage, reconciliation, export, init-defaults).
+- `routes_templates_extended.py` (674 سطر) — Print Templates + Invoice Designer + xlsx + Public Agent Chat (+ **إصلاح import مفقود** لـ `LlmChat`).
+- `routes_technicians.py` (68 سطر) — Technicians CRUD مع pattern `app_state` المشترك.
+
+**Verification (`/app/test_reports/iteration_192.json`):**
+- Backend: **100% (20/20 pytest assertions PASS)**.
+- Frontend smoke: **100% (3/3 pages — home, /accounting/firewall, /accounting/journal-entries)**. 0 console errors.
+- **0 regressions**. كل مسارات الـ API احتفظت بسلوكها الأصلي.
+- مجموعة اختبار regression محفوظة في `/app/backend/tests/test_refactor_regression_iter192.py` للاستخدام المستقبلي.
+
 ### 🧹 Test Data Cleanup + 🧩 Templates Router Extraction (11 Feb 2026)
 
 **Cleanup:**
@@ -817,10 +842,12 @@
 
 ### Refactoring (in progress)
 - ✅ Templates domain extracted from routes_extended.py (642 lines → routes_templates_extended.py).
-- ⏳ Settings/Profile section (~300 lines) — candidate for next extraction from routes_extended.py.
-- ⏳ Approvals section (~500 lines) — candidate for next extraction from routes_extended.py.
-- ⏳ Accounts/COA section (~1100 lines) — candidate for next extraction from routes_extended.py.
-- ⏳ server.py: 43 inline endpoints (vehicles/customers/services/parts/suppliers/technicians) — deeply coupled with globals; needs careful extraction with shared deps module.
+- ✅ Workshop Config (Settings/Profile/Auth-OTP) extracted (348 lines → routes_workshop_config.py).
+- ✅ Approvals (+ SSE + Notifications) extracted (591 lines → routes_approvals.py).
+- ✅ Accounts/COA extracted (1,966 lines → routes_accounts_extended.py).
+- ✅ Technicians extracted from server.py (54 lines → routes_technicians.py).
+- ⏳ **Backlog candidates from routes_extended.py (5,093 سطر متبقية):** Visits APIs (~400 lines), Operations CRUD (~700 lines), Vehicles (~200 lines), Reports/Analytics.
+- ⏳ **Backlog candidates from server.py (3,364 سطر متبقية):** Vehicles, Customers, Parts, Services, Suppliers — كلها تستخدم نمط `app_state` الجاهز الآن.
 
 ### P2
 - OCR / التحقق من المستندات المرفوعة في البوت المالي.

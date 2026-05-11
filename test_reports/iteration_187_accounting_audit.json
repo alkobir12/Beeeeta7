@@ -1,0 +1,55 @@
+{
+  "1_real_time_integration": {
+    "pass": true,
+    "status_code": 200,
+    "operation_id": "ba89b064-1402-4890-8626-13a1991d5c77",
+    "journal_entries_found": 1,
+    "accounts_check": {
+      "003_debit": true,
+      "042_credit": true,
+      "027_or_028_credit": true
+    },
+    "trial_balance_delta": {
+      "debit": 1500.0,
+      "credit": 1500.0
+    }
+  },
+  "2_double_entry_firewall": {
+    "pass": false,
+    "status_code": 200,
+    "response_success": true,
+    "created_entry_id": "a56fd3f7-9829-4738-bab6-2f15a7063702",
+    "message_or_detail": "تم إنشاء القيد المحاسبي بنجاح"
+  },
+  "3_inventory_and_cogs": {
+    "pass": false,
+    "status_code": 200,
+    "part_id": "8fe3275f-effd-4820-8a1a-eb4fdf36ab95",
+    "part_created_for_test": true,
+    "quantity_before": 5,
+    "quantity_after": 5,
+    "journal_entries_found": 0,
+    "has_cogs_entry": false
+  },
+  "4_idempotency": {
+    "pass": false,
+    "first_status": 200,
+    "second_status": 200,
+    "first_id": "762978d4-f970-40ca-ae6a-1deffb61fef2",
+    "second_id": "143f6a96-2a5d-4cba-bd80-1f8f3c2c7333",
+    "operations_with_same_reference_marker": 2
+  },
+  "5_precision": {
+    "pass": true,
+    "operations_created": 5,
+    "expected_delta": 2.75,
+    "actual_delta_debit": 2.75,
+    "actual_delta_credit": 2.75,
+    "difference_between_sides": 0.0
+  },
+  "summary": {
+    "passed_tests": 2,
+    "failed_tests": 3,
+    "timestamp": "2026-05-11T15:46:01.038365Z"
+  }
+}

@@ -6,6 +6,7 @@ from bulk_delete_audit import list_bulk_delete_events, record_bulk_delete_event
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import uuid
 import os
 import re
@@ -2652,17 +2653,61 @@ async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
     }
     """
     try:
+        def _to_decimal(value: Any) -> Decimal:
+            try:
+                return Decimal(str(value if value is not None else 0))
+            except (InvalidOperation, ValueError, TypeError):
+                return Decimal("0")
+
+        raw_lines = entry.get("lines", [])
+        if not isinstance(raw_lines, list) or len(raw_lines) == 0:
+            raise HTTPException(status_code=400, detail="يجب إدخال سطور القيد")
+
+        normalized_lines = []
+        total_debit = Decimal("0")
+        total_credit = Decimal("0")
+
+        for idx, line in enumerate(raw_lines):
+            if not isinstance(line, dict):
+                raise HTTPException(status_code=400, detail=f"سطر غير صالح عند الموضع {idx + 1}")
+
+            debit = _to_decimal(line.get("debit"))
+            credit = _to_decimal(line.get("credit"))
+
+            if debit < 0 or credit < 0:
+                raise HTTPException(status_code=400, detail="لا يسمح بقيم سالبة في سطور القيد")
+
+            total_debit += debit
+            total_credit += credit
+
+            normalized_lines.append(
+                {
+                    "account": line.get("account"),
+                    "account_name": line.get("account_name") or "",
+                    "debit": float(debit.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+                    "credit": float(credit.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)),
+                }
+            )
+
+        diff = (total_debit - total_credit).copy_abs()
+        if diff > Decimal("0.009"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"القيد غير متوازن: مدين {float(total_debit):.2f} ≠ دائن {float(total_credit):.2f}",
+            )
+
+        normalized_total = total_debit.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         transaction_type = entry.get("transaction_type", "manual")
 
         # Base entry data with required fields
         entry_data = {
             "id": str(uuid.uuid4()),
             "workshop_id": workshop_id,
-            "date": entry.get("date", datetime.now().isoformat()),
+            "date": entry.get("date", datetime.now(timezone.utc).isoformat()),
             "description": entry.get("description", ""),
-            "lines": entry.get("lines", []),
-            "total": entry.get("total", 0),
-            "created_at": datetime.now().isoformat(),
+            "lines": normalized_lines,
+            "total": float(normalized_total),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "source": entry.get("source", "manual"),
             "reference_id": entry.get("reference_id"),
         }
@@ -2697,6 +2742,8 @@ async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
                 "note": "تم الحفظ بدون حقل transaction_type - يحتاج تحديث قاعدة البيانات",
             }
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Error in create_journal_entry: {str(e)}")
         return {

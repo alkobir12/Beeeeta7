@@ -1,0 +1,47 @@
+{
+  "1_real_time_integration": {
+    "pass": true,
+    "status_code": 200,
+    "operation_id": "fb0a5962-a7ca-4a22-96d7-89321434dcbf",
+    "journal_entries_found": 1,
+    "trial_delta": {
+      "debit": 1500.0,
+      "credit": 1500.0
+    }
+  },
+  "2_double_entry_firewall": {
+    "pass": true,
+    "status_code": 400,
+    "response": {
+      "detail": "القيد غير متوازن: مدين 1600.00 ≠ دائن 1500.00"
+    }
+  },
+  "3_inventory_and_cogs": {
+    "pass": true,
+    "status_code": 200,
+    "quantity_before": 5,
+    "quantity_after": 4,
+    "journal_entries_found": 1,
+    "has_cogs_entry": true,
+    "part_created_for_test": true
+  },
+  "4_idempotency": {
+    "pass": true,
+    "first_status": 200,
+    "second_status": 200,
+    "first_id": "06451e97-ea22-4a1a-949c-151c65f27c19",
+    "second_id": "06451e97-ea22-4a1a-949c-151c65f27c19"
+  },
+  "5_precision": {
+    "pass": true,
+    "operations_created": 5,
+    "actual_delta_debit": 2.75,
+    "actual_delta_credit": 2.75,
+    "difference_between_sides": 0.0
+  },
+  "summary": {
+    "passed_tests": 5,
+    "failed_tests": 0,
+    "timestamp": "2026-05-11T15:52:17.394727Z"
+  }
+}

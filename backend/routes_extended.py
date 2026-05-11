@@ -1072,6 +1072,7 @@ ACCOUNT_NAME_MAP = {
     "036": "مصروفات عامة وإدارية",
     "037": "رواتب إدارية",
     "010": "معدات ميكانيكية",
+    "1105": "مخزون قطع غيار",
     "042": "ايراد قطع الورشه",
     "2101": "الموردون (ذمم دائنة)",
     "211":  "حساب فروقات ترحيل",
@@ -1087,6 +1088,219 @@ ACCOUNT_NAME_MAP = {
     "1201": "معدات ميكانيكية",
     "6100": "مصروفات عامة وإدارية",
 }
+
+IDEMPOTENCY_NOTE_PREFIX = "[IDEMP:"
+
+
+def _extract_idempotency_key(payload: Dict[str, Any]) -> str:
+    if not isinstance(payload, dict):
+        return ""
+
+    meta = payload.get("transaction_metadata")
+    if isinstance(meta, dict):
+        key = str(meta.get("transaction_id") or "").strip()
+        if key:
+            return key
+
+    for field in (
+        "transaction_id",
+        "transactionId",
+        "reference_id",
+        "referenceId",
+        "reference",
+        "idempotency_key",
+        "idempotencyKey",
+    ):
+        key = str(payload.get(field) or "").strip()
+        if key:
+            return key
+    return ""
+
+
+def _append_idempotency_tag(notes: Any, idem_key: str) -> str:
+    key = str(idem_key or "").strip()
+    if not key:
+        return str(notes or "")
+    token = f"{IDEMPOTENCY_NOTE_PREFIX}{key}]"
+    return _append_note_token(str(notes or ""), token)
+
+
+def _map_supabase_operation_row(row: Dict[str, Any]) -> Dict[str, Any]:
+    if not isinstance(row, dict):
+        return {}
+    return {
+        "id": row.get("id"),
+        "type": row.get("type"),
+        "accountId": row.get("account_id") or row.get("accountId"),
+        "accountingAccountId": row.get("accounting_account_id") or row.get("accountingAccountId"),
+        "vehicleId": row.get("vehicle_id") or row.get("vehicleId"),
+        "visitId": row.get("visit_id") or row.get("visitId"),
+        "partnerType": row.get("partner_type") or row.get("partnerType"),
+        "partnerId": row.get("partner_id") or row.get("partnerId"),
+        "partnerName": row.get("partner_name") or row.get("partnerName"),
+        "items": row.get("items") or [],
+        "subtotal": row.get("subtotal") or 0,
+        "total": row.get("total") or 0,
+        "paymentMethod": row.get("payment_method") or row.get("paymentMethod"),
+        "paymentStatus": row.get("payment_status") or row.get("paymentStatus"),
+        "notes": row.get("notes") or "",
+        "date": row.get("op_date") or row.get("date"),
+        "createdAt": row.get("created_at") or row.get("createdAt"),
+        "updatedAt": row.get("updated_at") or row.get("updatedAt"),
+        "invoiceNumber": row.get("invoice_number") or row.get("invoiceNumber"),
+        "scope": row.get("scope") or ("vehicle" if (row.get("vehicle_id") or row.get("vehicleId")) else "workshop"),
+        "source": row.get("source"),
+        "businessUnit": row.get("business_unit") or row.get("businessUnit"),
+    }
+
+
+def _find_existing_supabase_operation_by_idempotency(
+    supa: SupabaseService,
+    workshop_id: Optional[str],
+    idem_key: str,
+) -> Optional[Dict[str, Any]]:
+    key = str(idem_key or "").strip()
+    if not key:
+        return None
+
+    token = f"{IDEMPOTENCY_NOTE_PREFIX}{key}]"
+    try:
+        q = supa.client.table("operations").select("*")
+        if workshop_id:
+            q = q.eq("workshop_id", workshop_id)
+        q = q.ilike("notes", f"%{token}%").order("created_at", desc=True).limit(1)
+        rows = q.execute().data or []
+        if rows:
+            return _map_supabase_operation_row(rows[0])
+    except Exception:
+        # Fallback for schemas without workshop_id/notes filters support
+        try:
+            rows = supa.operations_list(limit=400)
+            for row in rows:
+                notes = str((row or {}).get("notes") or "")
+                if token in notes:
+                    if workshop_id:
+                        row_workshop = str(
+                            (row or {}).get("workshopId")
+                            or (row or {}).get("workshop_id")
+                            or ""
+                        )
+                        if row_workshop and row_workshop != str(workshop_id):
+                            continue
+                    return row
+        except Exception:
+            pass
+    return None
+
+
+def _invalidate_finance_caches_safe() -> None:
+    try:
+        from routes_finance import invalidate_finance_caches
+
+        invalidate_finance_caches()
+    except Exception:
+        pass
+
+
+def _adjust_supabase_inventory_and_build_cogs_entries(
+    supa: SupabaseService,
+    op: Dict[str, Any],
+    workshop_id: Optional[str],
+) -> List[Dict[str, Any]]:
+    if not isinstance(op, dict):
+        return []
+
+    op_type = str(op.get("type") or "").lower()
+    if op_type not in {"sale", "purchase", "sale_return", "purchase_return", "service"}:
+        return []
+
+    items = op.get("items") or []
+    if not isinstance(items, list) or not items:
+        return []
+
+    cogs_total = 0.0
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("itemType") or item.get("item_type") or "").lower() != "part":
+            continue
+
+        part_id = str(item.get("itemId") or item.get("partId") or "").strip()
+        if not part_id:
+            continue
+
+        qty = _safe_amount(item.get("quantity") or item.get("qty") or 0)
+        if qty <= 0:
+            continue
+
+        try:
+            part_rows = (
+                supa.client.table("parts")
+                .select("id,quantity,purchase_price,name")
+                .eq("id", part_id)
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+        except Exception:
+            part_rows = []
+
+        if not part_rows:
+            continue
+
+        part = part_rows[0]
+        current_qty = int(float(part.get("quantity") or 0))
+        qty_int = int(round(qty))
+
+        delta = qty_int
+        if op_type in {"sale", "service", "purchase_return"}:
+            delta = -qty_int
+
+        new_qty = current_qty + delta
+        if new_qty < 0:
+            new_qty = 0
+
+        try:
+            supa.parts_update(part_id, {"quantity": new_qty})
+        except Exception as inv_error:
+            print(f"Inventory update skipped for part {part_id}: {inv_error}")
+
+        if op_type in {"sale", "service"} and delta < 0:
+            part_cost = _safe_amount(part.get("purchase_price") or 0)
+            if part_cost > 0:
+                cogs_total += part_cost * qty_int
+
+    cogs_total = round(cogs_total, 2)
+    if cogs_total <= 0 or not workshop_id:
+        return []
+
+    return [
+        {
+            "id": str(uuid.uuid4()),
+            "workshop_id": workshop_id,
+            "date": op.get("date") or op.get("op_date") or datetime.now(timezone.utc).isoformat(),
+            "description": f"تكلفة بضاعة مباعة - عملية {op.get('id')}",
+            "lines": [
+                {
+                    "account": "030",
+                    "account_name": ACCOUNT_NAME_MAP.get("030", "تكلفة الخدمات"),
+                    "debit": cogs_total,
+                    "credit": 0,
+                },
+                {
+                    "account": "1105",
+                    "account_name": ACCOUNT_NAME_MAP.get("1105", "مخزون قطع غيار"),
+                    "debit": 0,
+                    "credit": cogs_total,
+                },
+            ],
+            "total": cogs_total,
+            "source": "operation_cogs",
+            "transaction_type": "cogs",
+            "reference_id": op.get("id"),
+        }
+    ]
 
 
 # الكلمات الدالة على نوع الإيراد
@@ -3094,6 +3308,7 @@ def _apply_operation_kind_defaults(
 async def create_operation(payload: Dict[str, Any] = Body(...)):
     try:
         payload = dict(payload or {})
+        idempotency_key = _extract_idempotency_key(payload)
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         kind = _normalize_operation_kind(payload)
 
@@ -3193,6 +3408,8 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
             accounting_code=accounting_code,
             accounting_name=accounting_meta.get("name"),
         )
+        if idempotency_key:
+            payload["notes"] = _append_idempotency_tag(payload.get("notes"), idempotency_key)
         if accounting_code:
             payload["accountingAccountCode"] = accounting_code
 
@@ -3234,6 +3451,17 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
         if provider == "supabase":
             supa = SupabaseService()
             workshop_id = payload.get("workshopId") or payload.get("workshop_id")
+
+            # Idempotency guard (by transaction/reference key)
+            if idempotency_key:
+                existing = _find_existing_supabase_operation_by_idempotency(
+                    supa,
+                    workshop_id,
+                    idempotency_key,
+                )
+                if existing:
+                    return existing
+
             op = supa.operations_create(payload)
 
             # Auto-create invoice record linked to this operation (best-effort)
@@ -3274,6 +3502,17 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                         _safe_insert_journal_entry(supa, e)
                 else:
                     _safe_insert_journal_entry(supa, entry)
+
+                # Inventory decrement/increment + COGS entries for part-linked lines
+                cogs_entries = _adjust_supabase_inventory_and_build_cogs_entries(
+                    supa,
+                    op,
+                    workshop_id,
+                )
+                for cogs_entry in cogs_entries:
+                    _safe_insert_journal_entry(supa, cogs_entry)
+
+                _invalidate_finance_caches_safe()
             except Exception as je_error:
                 print(f"Failed to create journal entry for operation: {je_error}")
             await _append_operation_to_visit(payload, op, provider, db, visit_data)

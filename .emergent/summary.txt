@@ -1,48 +1,55 @@
 <analysis>**original_problem_statement:**
-نظام إدارة ورشة سيارات متكامل (ERP) يدعم اللغة العربية، يضم وحدات محاسبية صارمة (ميزان مراجعة، دفتر يومية، شجرة حسابات)، نظام جرد ذكي، تتبع ذمم، ومدقق مالي بالذكاء الاصطناعي. يتطلب النظام توجيه إيرادات الموردين والورشة لحسابات دقيقة، وتسهيل عمليات الدفع والتسويات للموردين، بالإضافة إلى نظام أرشفة للمركبات.
-PRODUCT REQUIREMENTS: Strict double-entry accounting with real-time integration, Double-Entry Firewall (reject unbalanced entries), Smart Inventory with COGS generation, Idempotency to prevent duplicates, AI Auditor with Auto-Escalation, and Unified Bot.
+نظام إدارة ورشة سيارات متكامل (ERP) يدعم اللغة العربية، يضم وحدات محاسبية صارمة (ميزان مراجعة، دفتر يومية، شجرة حسابات)، نظام جرد ذكي، تتبع ذمم، ومدقق مالي بالذكاء الاصطناعي. يتطلب النظام توجيه إيرادات الموردين والورشة لحسابات دقيقة، وتسهيل عمليات الدفع والتسويات للموردين، بالإضافة إلى نظام أرشفة للمركبات. 
+PRODUCT REQUIREMENTS: Strict double-entry accounting with real-time integration, Double-Entry Firewall, Smart Inventory with COGS generation, Idempotency, AI Auditor with Auto-Escalation, and Unified Bot.
+LATEST REQUEST: Upgrade the Journal Entries page into a Smart POS (). The user specifically requested adding Salary templates (رواتب), inputs for Customer/Vehicle/Items (العميل، المركبة، البنود), Instant Sale (بيع فوري) capabilities, and to remove or merge the Cashier Basket (سلة كاشير) tab.
 
 **User's preferred language**: Arabic (العربية)
 INSTRUCT NEXT AGENT: You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only (Arabic).
 
 **what currently exists?** 
-A mature React SPA + FastAPI backend. The app features strict double-entry accounting with a newly implemented 5-point firewall. It enforces balanced journal entries, prevents duplicate transactions via idempotency checks, and automatically generates COGS (Cost of Goods Sold) entries for parts sales. The frontend includes a null-safe Journal Entries page and a dedicated Assistant-Only AI page that operates without fetching root financial data to prevent cross-contamination. 
+A mature React SPA + FastAPI backend featuring a 100% strict double-entry accounting firewall. All legacy Rakan logic has been purged. The agent was in the process of replacing the old  with a new  but stopped to gather context on how customers and vehicles are currently fetched after the user provided specific feedback for the POS layout.
 
 **Last working item**: 
-    - Last item agent was working: Implementing and verifying a 5-point Accounting System Audit Plan (Real-time Integration, Double-Entry Firewall, Inventory & COGS generation, Idempotency, and Precision Checks) on the backend.
-    - Status: USER VERIFICATION PENDING
-    - Agent Testing Done: Y (Deep backend testing subagent and manual bash testing scripts confirmed that unbalanced entries are now rejected, COGS is generated, and idempotency works).
-    - Which testing method agent to use? Frontend testing agent / manual testing (to verify the full UX of creating operations and checking the generated journal entries if user requests UI additions).
+    - Last item agent was working: Implementing the user's requested additions in  (Salary templates, Customer/Vehicle/Item fields, Instant Sale, and removing the Cashier Basket tab). The agent was gathering context from  to copy over the party/customer fetching logic.
+    - Status: IN PROGRESS
+    - Agent Testing Done: N
+    - Which testing method agent to use? Frontend testing agent / screenshot tool.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Incomplete Test Data Cleanup
-     - Attempted fixes: A previous agent ran a python script to delete mock records but failed on  due to a Supabase schema mismatch (PostgREST error: ).
-     - Next debug checklist: Verify the correct table names in Supabase. Clean up the remaining mock data safely if user requests.
-     - Why fix this issue and what will be achieved with the fix? Prepares the environment for production use without junk data.
-     - Status: NOT STARTED
+  - Issue 1: Finish Smart POS Journal UI () based on latest user feedback.
+     - Attempted fixes: Agent viewed existing  logic to understand how to fetch , , and handle  in the new UI.
+     - Next debug checklist: 
+       1. Add Salary (رواتب) to the quick templates.
+       2. Add missing fields (Customer, Vehicle, Items).
+       3. Implement Instant Sale (بيع فوري) logic.
+       4. Remove or merge the Cashier Basket (سلة كاشير) tab.
+       5. Wire up the actual API submission .
+     - Why fix this issue and what will be achieved with the fix? Completes the transition to a user-friendly, POS-style manual journal entry interface while fulfilling the user's explicit design requirements.
+     - Status: IN PROGRESS
      - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? Both
+     - Should Test frontend/backend/both after fix? Frontend
      - Blocked on other issue: None
 
 **In progress Task List**:
-  - None.
+  - Task 1: Complete  implementation
+     - Where to resume: .
+     - What will be achieved with this? A seamless, POS-like UX for accounting entries tailored exactly to the user's feedback.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix? Frontend
+     - Blocked on something: None
 
 **Upcoming and Future Tasks**
-  - **P1**: Auto-map من قطع راكان (From Rakan parts) to account  inside the Unified Bot's interactive creation cards.
-  - **P1**: Add an Accounting Firewall Dashboard/Panel to the UI (suggested by agent) to show balance status, idempotency hits, and COGS for operations in real-time.
+  - **P1**: Refactoring: Extract , ,  from  into their own routers (similar to ).
+  - **P1**: Refactoring: Extract , ,  from .
   - **P2**: إضافة ميزة OCR (التعرف البصري على الحروف) للمستندات المرفوعة في البوت المالي للتدقيق التلقائي للفواتير.
-  - **P2**: Refactor  and  to extract sub-routers (files are exceeding 8,000 lines).
 
 **Completed work in this session**
-- Fixed P0 React Runtime Crash on  by adding robust null-safety and optional chaining to  and  (DONE)
-- Removed Financial Statements from  and converted it into an Assistant-Only mode without root financial data fetching (DONE)
-- Backend: Double-Entry Firewall implemented to strictly reject unbalanced journal entries (DONE)
-- Backend: Idempotency implemented to prevent duplicate operations/journal entries for the same reference (DONE)
-- Backend: Inventory & COGS link established to automatically generate Cost of Goods Sold journal entries when parts are sold (DONE)
+- Gathered required context on how API fetches  and  from  to port over to  (DONE)
+*(Note: No file edits were finalized in this immediate session before context ran out).*
 
 **Earlier issues found/mentioned but not fixed**
-  - None (Other than the aforementioned test data cleanup mismatch).
+  - None.
 
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: None
@@ -54,12 +61,11 @@ A mature React SPA + FastAPI backend. The app features strict double-entry accou
 
 **Key Technical Concepts**
 - React SPA + FastAPI backend.
-- Dual Database Strategy: Supabase (Primary) and MongoDB (Fallback). 
+- Strict Ledger Engine: Operations dynamically generate double-entry  and COGS based on predefined item types.
+- Dual Database Strategy: Supabase (Primary) and MongoDB (Fallback).
 - Universal AI Integrations: Uses  for LLM operations.
-- Strict Ledger Engine: Operations dynamically generate double-entry  and COGS based on predefined item types, supplier keywords, and payment methods.
 
 **key DB schema**
-  - : 
   - : 
   - : 
   - : 
@@ -68,42 +74,31 @@ A mature React SPA + FastAPI backend. The app features strict double-entry accou
   - None.
 
 **All files of reference**
-  - : Updated with strict null-checks for mapping over entries/lines.
-  - : Stripped of all chart-of-accounts and trial-balance fetching logic.
-  - : Added idempotency checks and COGS generation.
-  - : Enforced strict  logic.
+  - : The primary target file requiring edits to fulfill the user's POS interface requests.
+  - : Reference file being used by the agent to understand existing fetching logic for customers and lines.
+  - : Contains the route registration.
 
 **Areas that need refactoring**:
--  is over 8,500 lines long. Code domains (e.g., pure vehicle logic vs accounting linkage) should be extracted into separate routers.
+-  and  still contain heavy modules (Vehicles, Customers, Operations) that should be extracted into their own routers.
 
 **key api endpoints**
--  (Now enforces balance check)
+-  (Strict debits = credits validation applies)
 - 
--  (Now handles Idempotency and COGS)
+- 
 
 **Critical Info for New Agent**
-- **CRITICAL BACKEND LOGIC**: Strict accounting is active! Any endpoint that creates journal entries *must* ensure Debits = Credits exactly. Also, parts sales now automatically generate COGS entries. Do not bypass  checks.
-- **ENVIRONMENT**: The user has deployed the app to Production. You are operating in **Preview**. If the user reports issues, clarify if they are seeing it in Preview or Production. Code fixes apply to Preview; the user must click Deploy to push to Production. Do not mention deployment proactively unless debugging a production-only bug.
+- **STRICT ACCOUNTING IS ACTIVE**: Any payload sent from  to  MUST have exactly balancing debits and credits. 
+- **USER'S LATEST REQUEST**: Do not ignore the user's exact UI requests for the POS: Add Salary template (قالب رواتب), Add Customer/Vehicle/Items fields (حقول العميل والمركبة والبنود), Add instant sale (بيع فوري), and remove/merge the Cashier Basket tab (إزالة أو دمج تبويب سلة كاشير).
 - **LANGUAGE**: Always respond in Arabic.
 
 **documents and test reports created in this job**
-  -  (Frontend Crash Fix)
-  - 
-  - 
-  - 
-  -  (Updated with 5-point firewall status)
+  - No new test reports were created in this brief context-gathering session. Re-use older ones if needed.
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. *User*: P0 (Fix the Journal Entry Crash).
-2. *Agent*: Fixed frontend null-reference crash, verified with testing agent.
-3. *User*: Remove financial statements from the AI Financial assistant page (Financial Analysis tab). Only keep them in the main Comprehensive Financial page.
-4. *Agent*: Removed UI components from .
-5. *User*: Make it strictly an assistant page. Remove ALL root financial data fetching to prevent financial linking errors.
-6. *Agent*: Removed backend API calls from . Verified with testing agent.
-7. *User*: (Provides JSON payload for transaction FIX-SA-2026-X99).
-8. *Agent*: Is this a test?
-9. *User*: Yes, this is a test for the accounting system. Provides a 5-point Accounting System Audit Plan (Real-time Integration, Double-Entry Firewall, Inventory & COGS, Idempotency, Precision Check).
-10. *User*: (LATEST) اكمل (Continue). *(User verified the continuation after agent reported fixing the firewall logic)*.
+1. *User*: 1) Enhance Journal Entries page to be a Smart POS. 2) Make Sidebar show last 5 pages at top. 3) Add duplicate customer alert in Vehicle Reception.
+2. *Agent*: Completed Sidebar recent pages and duplicate customer alert. Created  file. *(From Previous Handoff)*
+3. *Agent*: (Used  to check if the user is ready for the Smart POS implementation or needs other changes).
+4. *User*: (LATEST PENDING) اضف قوالب اخرى مثل رواتب ايضا يوجد نواقص مثل حقول العميل والمركبه والبنود واماكنيه بيع فوري ازل تبويب سلة كاشير او ادمجه (Add other templates like salaries. Also, there are missing fields like customer, vehicle, and items, and the ability for instant sale. Remove the cashier basket tab or merge it.) -> IN PROGRESS.
 
 **Project Health Check:**
 - Broken: None. 
@@ -115,13 +110,13 @@ A mature React SPA + FastAPI backend. The app features strict double-entry accou
 - MongoDB (Fallback Database)
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Frontend testing agent for UI crash; Deep Backend testing agent for accounting firewall).
+  - Testing agent used after significant changes: NO (No actual code changes were applied in this session).
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None (JSON reports saved).
+  - Test files created: None.
   - Known regressions: None.
 
 **Credentials to test flow:**
 -  / No password (Preview bypasses auth).
 
 **What agent forgot to execute**
-- The agent successfully implemented the backend firewall rules but suggested a UI addition (Firewall Accounting Panel) to the user. The next agent should see if the user wants this UI built or if they want to move on to the  (Rakan parts auto-mapping) task.</analysis>
+- The agent was analyzing how to fetch customers/vehicles but ran out of context before writing any code inside . The new agent must immediately resume updating this file with the user's required fields and features.</analysis>

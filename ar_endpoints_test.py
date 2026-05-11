@@ -24,7 +24,7 @@ from datetime import datetime
 import time
 
 # Configuration
-BASE_URL = "https://smart-inventory-cogs.preview.emergentagent.com/api"
+BASE_URL = "https://accounting-firewall.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 class AREndpointsTest:

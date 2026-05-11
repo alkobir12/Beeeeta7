@@ -660,6 +660,9 @@ async def get_income_statement(
         for entry in entries:
             entry_source = str(entry.get("source") or "").strip().lower()
             entry_reference = str(entry.get("reference_id") or "").strip()
+            # 🧾 ملاحظة: قيود period_close تُحتسب عمداً ضمن الحساب — فهي تحمل اتجاهاً
+            # معاكساً للإيرادات/المصروفات، فتقاصّها طبيعياً إلى الصفر بعد الإقفال.
+            # فحص idempotency في endpoint /period-close يمنع التكرار.
             if (
                 entry_source == "operation_payment_income"
                 and entry_reference
@@ -2677,10 +2680,30 @@ async def close_period(
             )
             entries = je_res.data or []
 
+        # 2a) Idempotency check — هل يوجد قيد إقفال بنفس التاريخ مسبقاً؟
+        existing_close = (
+            supa.client.table("journal_entries")
+            .select("id, date, total")
+            .eq("source", "period_close")
+            .eq("date", as_of)
+            .limit(1)
+            .execute()
+        )
+        if existing_close.data:
+            return {
+                "success": True,
+                "data": {
+                    "closed": False,
+                    "message": f"يوجد قيد إقفال مسبق بتاريخ {as_of}",
+                    "as_of_date": as_of,
+                    "existing_journal_entry_id": existing_close.data[0]["id"],
+                },
+            }
+
         # 3) لكل حساب اجمع debit/credit للوصول إلى الرصيد الحالي
+        # نتخطّى قيود period_close السابقة لتجنّب احتسابها كحركة إيراد/مصروف.
         balances: Dict[str, float] = {}
         for je in entries:
-            # تخطي قيود إقفال سابقة لتفادي التكرار
             if str(je.get("source") or "").lower() == "period_close":
                 continue
             for ln in je.get("lines") or []:

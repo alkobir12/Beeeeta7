@@ -1,0 +1,41 @@
+{
+  "summary": "Iter 196 — Period-Close idempotency, presets bar, close dialog, success/error rendering, regressions. Backend pytest 5/5 PASS at /app/backend/tests/test_period_close_iter196.py (first call success_or_already_closed, idempotent second call returns closed:false with existing_journal_entry_id, income-statement returns 0/0/0 post-close, trial-balance balanced, firewall 100% with unbalanced=0). Frontend: all 12 required data-testids present on /accounting/comprehensive after مدير login; 30d preset correctly sets start=today-29d & end=today and highlights; manual end-date edit toggles financial-date-preset-custom-indicator and de-highlights 30d; close dialog opens with cancel+confirm; confirm flips to 'جاري الإقفال...'; cancel after success closes dialog and today preset is re-highlighted. Regressions: /accounting/firewall (firewall-panel-page OK), /accounting/journal-entries loads. CRITICAL UX BUG: Frontend treats the idempotent 'closed:false' response as success — the green financial-close-period-success card is rendered with 0/0/0 values and empty JE id instead of showing the backend's message (يوجد قيد إقفال مسبق بتاريخ 2026-05-11) + existing_journal_entry_id inside financial-close-period-error/info. PERF: POST /api/finance/period-close takes ~26 seconds through ingress (vs <1s direct pytest)— frontend feels stuck for 25+ seconds, even though backend responded 200 OK.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/finance/period-close", "issue": "End-to-end latency through the public ingress is ~26s (measured browser-side fetch). Same request via pytest server-side takes <1s. Investigate proxy/queryClient.invalidateQueries cascade, or any synchronous heavy work on the no-op idempotent path (e.g., journal_entries audit scans before returning closed:false)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ComprehensiveFinancial close-period dialog (success rendering)", "issue": "When backend returns success:true with data.closed:false + message + existing_journal_entry_id (idempotent block), the dialog still renders the green financial-close-period-success card (✅ تم الإقفال بنجاح) with الإيرادات=0, المصروفات=0, المنقول=0, JE empty. This is misleading — user thinks they just closed the period when in fact the system rejected duplicate. The render branch at ComprehensiveFinancial.jsx:1062 keys on `closeResult?.ok` (axios ok) without inspecting `closeResult.data.closed`. Suggested fix: split rendering: if closeResult.ok && data.closed === true → success card; if closeResult.ok && data.closed === false → info/warning card showing message + existing_journal_entry_id (use financial-close-period-error testid or add financial-close-period-already-closed); error card for ok===false.", "selector": "[data-testid='financial-close-period-success']", "priority": "HIGH"}
+    ],
+    "integration_issues": [
+      {"flow": "Close-period confirm round-trip", "issue": "User must wait ~26s with the confirm button stuck at 'جاري الإقفال...' before the dialog reacts. No timeout guidance / progress indicator beyond the small pulsing icon. After fix on backend latency, the existing pulse may be sufficient.", "affected_selectors": ["[data-testid='financial-close-period-confirm']"]}
+    ],
+    "design_issues": [
+      {"screen": "ComprehensiveFinancial cards", "issues": ["net_income card design verified: large value, top accent gradient stripe, ≤3 subtitle chips (إيرادات/مصروفات/الهامش %) — clean. Other cards similar with thin colored top stripe. Visually consistent."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_period_close_iter196.py", "/app/test_reports/pytest/iter196_period_close.xml"],
+  "action_items": [
+    "Frontend (HIGH): ComprehensiveFinancial.jsx close-period dialog — when closeResult.ok && closeResult.data.closed===false, render an info/already-closed card with the backend message and existing_journal_entry_id INSTEAD of the green success card showing zeros. Today's behavior shows a misleading 'تم الإقفال بنجاح' with 0/0/0 for idempotent calls.",
+    "Backend (MEDIUM): Investigate why POST /api/finance/period-close takes ~26s end-to-end via ingress when pytest direct call resolves in <1s. Possibly serialization of journal entries on the no-op path or proxy buffering. Consider short-circuiting the existence-check before any heavy aggregation.",
+    "Regression check: /accounting/journal-entries page shows 'لديك 0 قيد محاسبي' on default workshop selection — confirm whether the page should auto-bind to workshop_id=finmodule-sync (where the period_close JE exists) or list only the active workshop's entries. Not blocking for this iteration."
+  ],
+  "critical_code_review_comments": [
+    "ComprehensiveFinancial.jsx:1062 — render branch differentiates only on closeResult.ok (axios success) and not on data.closed. Backend's idempotent response (closed:false) is a legitimate semantic 'nothing to close' that should render as info, not success.",
+    "ComprehensiveFinancial.jsx dismissCloseDialog correctly checks data.closed===true before resetting dates/preset — that part is correct.",
+    "Backend POST /api/finance/period-close idempotency check works (returns closed:false + existing_journal_entry_id + Arabic message). Total_debit==total_credit verified in test_first_call_success_or_already_closed.",
+    "income-statement endpoint correctly nets revenue/expenses to 0 after close (period_close source included in computation as intended)."
+  ],
+  "updated_files": ["/app/backend/tests/test_period_close_iter196.py (created — 5 pytest tests)"],
+  "success_rate": {"backend": "100% (5/5 pytest)", "frontend": "85% (12/12 testids + presets + custom indicator + cancel/dismiss OK; idempotent render uses wrong card)"},
+  "test_credentials": "Username: مدير (text input, no password). Workshop in query: finmodule-sync.",
+  "seed_data_creation": "No new journal entries added — backend idempotency check now prevents duplicate period_close JEs on same date. Existing period_close at 2026-05-11 (JE id b1e9de0d-7f35-4fe9-a786-02f2924682db) is the only one for today.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression suite is /app/backend/tests/test_period_close_iter196.py (5 tests, all passing). The HIGH-priority frontend bug is at ComprehensiveFinancial.jsx:1062-1075 — split closeResult rendering by data.closed. The ~26s end-to-end latency for /api/finance/period-close through the ingress will keep the confirm button stuck at 'جاري الإقفال...' for that duration; UI script should wait at least 35s after clicking confirm to observe the success/error card. To test the closed:true success path, you need a date that has no prior period_close JE (today already has one). The existing JE id is b1e9de0d-7f35-4fe9-a786-02f2924682db.",
+  "rca of the issue": "1) Idempotency BACKEND now works correctly: POST /api/finance/period-close detects existing period_close JE at the as_of_date and returns success:true with data.closed:false + message 'يوجد قيد إقفال مسبق بتاريخ ...' + existing_journal_entry_id. Verified via pytest TestPeriodClose.test_idempotent_second_call_blocked. 2) FRONTEND BUG — ComprehensiveFinancial.jsx renders the success card based on closeResult.ok (axios HTTP 200) without checking data.closed. Result: on idempotent rejection the green success card shows '✅ تم الإقفال بنجاح' with الإيرادات/المصروفات/المنقول all = 0 and empty JE — misleading. FIX: Add a branch `if closeResult.ok && data.closed === false` rendering the existing-close message + existing_journal_entry_id (warning/info color), distinct from the success-with-numbers branch (data.closed===true). 3) PERF: POST /period-close ~26s via ingress vs <1s direct pytest. Likely heavy aggregation runs before the early-return idempotent branch. Reorder code to check existing JE FIRST and short-circuit."
+}

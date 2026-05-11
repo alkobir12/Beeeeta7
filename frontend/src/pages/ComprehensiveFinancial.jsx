@@ -813,15 +813,8 @@ export default function ComprehensiveFinancial() {
       });
       const data = res?.data?.data || res?.data || {};
       setCloseResult({ ok: true, data });
-      // Reset preset to "from today" so the cards show fresh state
-      const today = safeDate(new Date());
-      setStartDate(today);
-      setEndDate(today);
-      setActivePreset('today');
-      // Invalidate everything
-      setTimeout(() => {
-        queryClient.invalidateQueries();
-      }, 250);
+      // 📌 NOTE: لا نُعيد ضبط التاريخ/preset هنا حتى يرى المستخدم بطاقة النجاح.
+      // ينفّذ الـ reset عند ضغط زر "إغلاق" في الحوار.
     } catch (err) {
       setCloseResult({
         ok: false,
@@ -829,6 +822,22 @@ export default function ComprehensiveFinancial() {
       });
     } finally {
       setClosing(false);
+    }
+  };
+
+  // يُستدعى عند ضغط "إغلاق" بعد نجاح الإقفال — هنا نضبط التاريخ ونحدّث الكروت
+  const dismissCloseDialog = () => {
+    const wasSuccessful = closeResult?.ok === true && closeResult?.data?.closed === true;
+    setShowCloseDialog(false);
+    setCloseResult(null);
+    if (wasSuccessful) {
+      const today = safeDate(new Date());
+      setStartDate(today);
+      setEndDate(today);
+      setActivePreset('today');
+      setTimeout(() => {
+        queryClient.invalidateQueries();
+      }, 250);
     }
   };
 
@@ -1031,7 +1040,7 @@ export default function ComprehensiveFinancial() {
           <div
             data-testid="financial-close-period-dialog"
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-            onClick={() => !closing && setShowCloseDialog(false)}
+            onClick={() => !closing && dismissCloseDialog()}
           >
             <div
               className="max-w-lg w-full rounded-2xl border border-amber-400/40 bg-slate-900/95 p-5 shadow-2xl"
@@ -1068,7 +1077,7 @@ export default function ComprehensiveFinancial() {
               <div className="mt-4 flex justify-end gap-2">
                 <button
                   data-testid="financial-close-period-cancel"
-                  onClick={() => { setShowCloseDialog(false); setCloseResult(null); }}
+                  onClick={dismissCloseDialog}
                   disabled={closing}
                   className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-200 hover:bg-white/10 disabled:opacity-50"
                 >

@@ -163,13 +163,28 @@ export default function JournalEntries() {
   const isLight = false;
 
   useEffect(() => {
-    fetchJournalEntries();
-    fetchWorkshopProfile();
-    fetchWorkshopSettings();
+    const journalController = new AbortController();
+    const profileController = new AbortController();
+    const settingsController = new AbortController();
+
+    fetchJournalEntries(journalController.signal);
+    fetchWorkshopProfile(profileController.signal);
+    fetchWorkshopSettings(settingsController.signal);
+
+    return () => {
+      journalController.abort();
+      profileController.abort();
+      settingsController.abort();
+    };
   }, []);
 
   useEffect(() => {
-    fetchChartOfAccounts();
+    const accountsController = new AbortController();
+    fetchChartOfAccounts(accountsController.signal);
+
+    return () => {
+      accountsController.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -179,10 +194,16 @@ export default function JournalEntries() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coaAccounts.length]);
 
-  const fetchJournalEntries = async () => {
+  const isAbortLikeError = (error, signal) => {
+    if (signal?.aborted) return true;
+    const message = String(error?.message || '').toLowerCase();
+    return error?.name === 'AbortError' || message.includes('aborted');
+  };
+
+  const fetchJournalEntries = async (signal = undefined) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/finance/journal-entries?workshop_id=${WORKSHOP_ID}&limit=50`);
+      const response = await fetch(`${API_URL}/finance/journal-entries?workshop_id=${WORKSHOP_ID}&limit=50`, { signal });
       const data = await response.json();
 
       if (data?.success) {
@@ -226,16 +247,19 @@ export default function JournalEntries() {
         setEntries([]);
       }
     } catch (error) {
+      if (isAbortLikeError(error, signal)) return;
       console.error('Error fetching journal entries:', error);
       setEntries([]);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   };
 
-  const fetchWorkshopProfile = async () => {
+  const fetchWorkshopProfile = async (signal = undefined) => {
     try {
-      const response = await fetch(`${API_URL}/profile`);
+      const response = await fetch(`${API_URL}/profile`, { signal });
       const data = await response.json();
       const normalizedProfile = (data?.success && data?.data)
         ? data.data
@@ -245,31 +269,33 @@ export default function JournalEntries() {
         setWorkshopProfile(normalizedProfile);
       }
     } catch (error) {
+      if (isAbortLikeError(error, signal)) return;
       console.error('Error fetching workshop profile:', error);
     }
   };
 
-  const fetchWorkshopSettings = async () => {
+  const fetchWorkshopSettings = async (signal = undefined) => {
     try {
-      const response = await fetch(`${API_URL}/settings`);
+      const response = await fetch(`${API_URL}/settings`, { signal });
       const data = await response.json();
       if (data) {
         setWorkshopSettings(data);
       }
     } catch (error) {
+      if (isAbortLikeError(error, signal)) return;
       console.error('Error fetching workshop settings:', error);
     }
   };
 
-  const fetchChartOfAccounts = async () => {
+  const fetchChartOfAccounts = async (signal = undefined) => {
     try {
       const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
-      const response = await fetch(`${API_URL}/finance/chart-of-accounts?workshop_id=${workshopId}`);
+      const response = await fetch(`${API_URL}/finance/chart-of-accounts?workshop_id=${workshopId}`, { signal });
       const data = await response.json();
       if (data?.success && Array.isArray(data?.data)) {
         setCoaAccounts(data.data);
       } else {
-        const fallback = await fetch(`${API_URL}/accounts?workshop_id=${workshopId}`);
+        const fallback = await fetch(`${API_URL}/accounts?workshop_id=${workshopId}`, { signal });
         const fallbackData = await fallback.json();
         const normalized = Array.isArray(fallbackData)
           ? fallbackData
@@ -277,16 +303,18 @@ export default function JournalEntries() {
         setCoaAccounts(normalized);
       }
     } catch (e) {
+      if (isAbortLikeError(e, signal)) return;
       console.error('Failed to fetch chart of accounts:', e);
       try {
         const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
-        const fallback = await fetch(`${API_URL}/accounts?workshop_id=${workshopId}`);
+        const fallback = await fetch(`${API_URL}/accounts?workshop_id=${workshopId}`, { signal });
         const fallbackData = await fallback.json();
         const normalized = Array.isArray(fallbackData)
           ? fallbackData
           : (Array.isArray(fallbackData?.data) ? fallbackData.data : []);
         setCoaAccounts(normalized);
-      } catch {
+      } catch (fallbackError) {
+        if (isAbortLikeError(fallbackError, signal)) return;
         setCoaAccounts([]);
       }
     }

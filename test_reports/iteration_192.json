@@ -1,0 +1,37 @@
+{
+  "summary": "Regression test for MAJOR routes_extended.py refactor (Jan 2026 — ~3,500 lines moved across 5 new router modules + app_state/mem_store shared modules). Backend: 20/20 pytest assertions PASS at /app/backend/tests/test_refactor_regression_iter192.py. All 5 extracted modules respond on original URL paths with correct behavior — Settings/Profile/Auth-OTP (routes_workshop_config.py), Approvals + Notifications + public-token 404 (routes_approvals.py), COA list/tree/transactions/init-defaults (routes_accounts_extended.py), Invoice-Templates/Print-Render/Templates (routes_templates_extended.py), Technicians GET+POST (routes_technicians.py). Firewall sanity: total_entries=63, balance_health_percent=100, unbalanced 100/50 entry rejected with HTTP 400. Frontend smoke: /accounting/firewall renders all stat cards (health=100%, rejections present, sidebar link 'جدار حماية' visible twice), /accounting/journal-entries renders without React crash (cards + search + sidebar), home loads after login as 'مدير'. 0 console errors, 0 page errors. NO REGRESSIONS — refactor is safe to ship.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_refactor_regression_iter192.py",
+    "/app/test_reports/pytest/iter192_refactor.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Refactor is structurally clean: each extracted module exposes a `router` + uses app_state.configure() pattern uniformly. URL paths preserved exactly.",
+    "Auth OTP endpoint returns BOTH 'token' and 'whatsappDeeplink' — preserved correctly per request contract.",
+    "Public approvals route correctly returns 404 for unknown tokens (verified) — proper not-leaking-info behavior.",
+    "Firewall stat cards on the UI panel use in-memory firewall_state (resets on backend restart) — UI shows '0/0 قيد' even though backend supabase has 63 entries. This is pre-existing & documented in iter190/191; UI binds to firewall_state events, not historical supabase counts. Consider adding a small note in the panel header to reduce confusion for auditors after a backend restart (low-priority enhancement, NOT a regression).",
+    "/api/templates duplicate-registration exists in BOTH routes_templates.py and routes_templates_extended.py — first include wins (still passes). Add a code comment to record intent (carried over from iter191 review).",
+    "routes_extended.py shrunk 8,639 → 5,093 (-41%). Good. Recommend continuing extraction (e.g., invoices, customers, vehicles) in similar fashion to keep file under 3,000 lines.",
+    "No new lint/syntax issues found; no MongoDB _id leakage observed in responses tested."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_refactor_regression_iter192.py (created — 20 tests across 6 classes)"
+  ],
+  "success_rate": {"backend": "100% (20/20)", "frontend": "100% (3/3 smoke pages — home, firewall, journal-entries; 0 console + 0 page errors)"},
+  "test_credentials": "Username: مدير (typed into login text input, then click 'دخول'). Workshop: finmodule-sync.",
+  "seed_data_creation": "Created during test run: 1 approval titled TEST_iter192_approval, 1 unbalanced journal entry TEST_iter192_unbalanced (rejected by firewall as expected), 1 technician 'فني تجريبي iter192' (POST accepted — technicians table likely 3→4 as anticipated in request context). 1 settings POST and 1 profile PUT with TEST_marker='iter192' (these update existing config — no new rows).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Refactor regression suite is at /app/backend/tests/test_refactor_regression_iter192.py — re-run after any future routes_extended.py split. Key API facts to remember: (1) /api/print/render replaces {{KEY}} placeholders with NO spaces inside braces ({{name}} not {{ name }}); (2) POST /api/finance/journal-entries needs workshop_id as QUERY parameter; (3) /api/firewall/status returns total_entries & balance_health_percent under 'summary' key, NOT top-level; (4) /api/auth/request-otp returns token + whatsappDeeplink (or whatsapp_deeplink); (5) /api/notifications/prepare returns whatsappUrl (or whatsapp_url); (6) Login UI: text input + click button labeled 'دخول' (no password). Known pre-existing 500 on /api/coa/tree when db is None (not tested in this regression — DB_PROVIDER=supabase active).",
+  "rca of the issue": "No issues. One initial test failure was a test-side bug: I used '{{ name }}' (with spaces) but the render endpoint matches '{{name}}' (no spaces) literally via str.replace. Fixed test, all 20 pass. The refactor itself is regression-free."
+}

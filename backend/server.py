@@ -45,6 +45,11 @@ from unified_document_service import create_unified_document_routes
 # Import extended routes
 from routes_extended import router as extended_router, set_db as set_db_extended
 from routes_templates_extended import router as templates_extended_router, set_db as set_db_templates_extended
+from routes_workshop_config import router as workshop_config_router, set_db as set_db_workshop_config
+from routes_approvals import router as approvals_router, set_db as set_db_approvals
+from routes_accounts_extended import router as accounts_extended_router, set_db as set_db_accounts_extended
+from routes_technicians import router as technicians_router
+import app_state as _app_state
 from routes_advanced import router as advanced_router, set_db as set_db_advanced
 
 # Import Import Routes
@@ -325,6 +330,10 @@ set_db_gemini_chat(db)
 set_db_payroll(db)
 set_db_extended(db)
 set_db_templates_extended(db)
+set_db_workshop_config(db)
+set_db_approvals(db)
+set_db_accounts_extended(db)
+_app_state.configure(db, DB_PROVIDER, supabase_service)
 set_db_advanced(db)
 set_db_finance(db)
 set_db_invoices(db)
@@ -527,6 +536,10 @@ app.include_router(whatsapp_bot_router)
 app.include_router(smart_inventory_router)
 app.include_router(extended_router)
 app.include_router(templates_extended_router)
+app.include_router(workshop_config_router)
+app.include_router(approvals_router)
+app.include_router(accounts_extended_router)
+app.include_router(technicians_router)
 app.include_router(advanced_router)
 app.include_router(finance_router)
 app.include_router(finance_bot_router)
@@ -2623,59 +2636,6 @@ async def delete_service(service_id: str):
     return {"status": "success", "message": "Service deleted"}
 
 
-@api_router.get("/technicians", response_model=List[Technician])
-async def get_technicians():
-    if DB_PROVIDER == "supabase":
-        rows = supabase_service.technicians_list()
-        return [Technician(**r) for r in rows]
-
-    if DB_PROVIDER == "memory":
-        return [Technician(**r) for r in _mem_read("technicians")]
-    technicians = await db.technicians.find().to_list(1000)
-    return [Technician(**t) for t in technicians]
-
-
-@api_router.post("/technicians", response_model=Technician)
-async def create_technician(technician: Technician):
-    """Add a new technician"""
-    if DB_PROVIDER == "supabase":
-        if not supabase_service.client or supabase_service.mock_mode:
-            raise HTTPException(
-                status_code=500, detail="Supabase client not configured"
-            )
-        # Convert to snake_case for Supabase
-        data = {
-            "name": technician.name,
-            "phone": technician.phone,
-            "specialty": technician.specialty,
-            "active_jobs": technician.activeJobs,
-            "completed_jobs": technician.completedJobs,
-            "rating": technician.rating,
-        }
-        res = supabase_service.client.table("technicians").insert(data).execute()
-        row = (res.data or [{}])[0]
-        # Convert back to camelCase
-        return Technician(
-            id=row.get("id"),
-            name=row.get("name"),
-            phone=row.get("phone", ""),
-            specialty=row.get("specialty", ""),
-            activeJobs=row.get("active_jobs", 0),
-            completedJobs=row.get("completed_jobs", 0),
-            rating=row.get("rating", 5.0),
-        )
-
-    if DB_PROVIDER == "memory":
-        rows = _mem_read("technicians")
-        new_t = {**technician.dict(), "id": str(uuid.uuid4())}
-        rows.append(new_t)
-        _mem_write("technicians", rows)
-        return Technician(**new_t)
-
-    tech_dict = technician.dict()
-    tech_dict["id"] = str(uuid.uuid4())
-    await db.technicians.insert_one(tech_dict)
-    return Technician(**tech_dict)
 
 
 @api_router.get("/parts", response_model=List[Part])

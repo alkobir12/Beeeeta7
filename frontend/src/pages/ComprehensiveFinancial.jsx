@@ -181,6 +181,7 @@ export default function ComprehensiveFinancial() {
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [closing, setClosing] = useState(false);
   const [closeResult, setCloseResult] = useState(null);
+  const [lastCloseInfo, setLastCloseInfo] = useState(null);
   const [budgetMonth, setBudgetMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -762,6 +763,22 @@ export default function ComprehensiveFinancial() {
   }, [startDate, endDate]);
 
   // 📅 Date range quick-presets
+  // Fetch last-close info on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await financeAPI.getLastClose(workshopId);
+        if (!cancelled) {
+          setLastCloseInfo(r?.data?.data || null);
+        }
+      } catch {
+        if (!cancelled) setLastCloseInfo(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [workshopId, closeResult]);
+
   const applyDatePreset = (presetKey) => {
     const today = new Date();
     const end = safeDate(today);
@@ -770,6 +787,18 @@ export default function ComprehensiveFinancial() {
       case 'today':
         start = end;
         break;
+      case 'after_close': {
+        // اقفز إلى أول يوم بعد آخر قيد إقفال
+        const closeDateStr = lastCloseInfo?.last_close_date;
+        if (closeDateStr) {
+          const cd = new Date(closeDateStr);
+          cd.setDate(cd.getDate() + 1);
+          start = safeDate(cd);
+        } else {
+          start = end;
+        }
+        break;
+      }
       case '7d': {
         const s = new Date(today);
         s.setDate(s.getDate() - 6);
@@ -1008,26 +1037,44 @@ export default function ComprehensiveFinancial() {
           <span className="text-[11px] text-slate-400 ml-2">عرض:</span>
           {[
             { k: 'today', label: 'اليوم' },
+            { k: 'after_close', label: 'بعد آخر إقفال' },
             { k: '7d', label: '٧ أيام' },
             { k: '30d', label: '٣٠ يوم' },
             { k: '90d', label: '٩٠ يوم' },
             { k: 'ytd', label: 'منذ بداية السنة' },
             { k: 'all', label: 'كل الفترة' },
-          ].map((p) => (
-            <button
-              key={p.k}
-              type="button"
-              onClick={() => applyDatePreset(p.k)}
-              data-testid={`financial-date-preset-${p.k}`}
-              className={`px-3 py-1.5 rounded-full text-[12px] border transition ${
-                activePreset === p.k
-                  ? 'bg-cyan-500/25 border-cyan-300/45 text-cyan-50'
-                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-              }`}
+          ].map((p) => {
+            const isAfterClose = p.k === 'after_close';
+            const disabled = isAfterClose && !lastCloseInfo?.last_close_date;
+            return (
+              <button
+                key={p.k}
+                type="button"
+                onClick={() => !disabled && applyDatePreset(p.k)}
+                disabled={disabled}
+                data-testid={`financial-date-preset-${p.k}`}
+                title={disabled ? 'لا يوجد قيد إقفال بعد' : undefined}
+                className={`px-3 py-1.5 rounded-full text-[12px] border transition ${
+                  activePreset === p.k
+                    ? (isAfterClose
+                        ? 'bg-amber-500/25 border-amber-300/45 text-amber-50'
+                        : 'bg-cyan-500/25 border-cyan-300/45 text-cyan-50')
+                    : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+          {lastCloseInfo?.last_close_date ? (
+            <span
+              data-testid="financial-last-close-badge"
+              className="ml-1 px-2.5 py-1.5 rounded-full text-[11px] bg-amber-500/10 border border-amber-400/30 text-amber-100"
+              title={`آخر قيد إقفال: ${lastCloseInfo.last_close_date}`}
             >
-              {p.label}
-            </button>
-          ))}
+              🧾 آخر إقفال: {lastCloseInfo.last_close_date}
+            </span>
+          ) : null}
           {activePreset === 'custom' ? (
             <span data-testid="financial-date-preset-custom-indicator" className="px-3 py-1.5 rounded-full text-[12px] border bg-violet-500/15 border-violet-400/30 text-violet-100">
               مخصص: {startDate} → {endDate}

@@ -163,6 +163,7 @@ const financeAPI = {
   getOperations: (params) => api.get('/finance/operations', { params }),
   getAlerts: (params) => api.get('/finance/alerts', { params }),
   closePeriod: (workshop_id, data) => api.post('/finance/period-close', data, { params: { workshop_id } }),
+  getLastClose: (workshop_id) => api.get('/finance/period-close/last', { params: { workshop_id } }),
 
 };
 

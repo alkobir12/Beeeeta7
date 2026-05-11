@@ -660,9 +660,11 @@ async def get_income_statement(
         for entry in entries:
             entry_source = str(entry.get("source") or "").strip().lower()
             entry_reference = str(entry.get("reference_id") or "").strip()
-            # 🧾 ملاحظة: قيود period_close تُحتسب عمداً ضمن الحساب — فهي تحمل اتجاهاً
-            # معاكساً للإيرادات/المصروفات، فتقاصّها طبيعياً إلى الصفر بعد الإقفال.
-            # فحص idempotency في endpoint /period-close يمنع التكرار.
+            # 🧾 قيود إقفال الفترة تُستثنى من حساب الإيراد/المصروف لأنها تحويلات
+            # للأرباح المحتجزة وليست حركة فعلية. الأرصدة المتأثرة تظهر صفراً
+            # في الحسابات (balance=0) — أما قائمة الدخل فتعرض حركة فعلية فقط.
+            if entry_source == "period_close":
+                continue
             if (
                 entry_source == "operation_payment_income"
                 and entry_reference
@@ -2612,6 +2614,40 @@ async def get_journal_entries(
             ],
             "total": 1,
         }
+
+
+@router.get("/period-close/last")
+async def get_last_close(workshop_id: str = Query(...)):
+    """🧾 يعيد تاريخ آخر قيد إقفال (لمساعدة الواجهة في إظهار فترة «ما بعد الإقفال»)."""
+    try:
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        if provider != "supabase":
+            return {"success": True, "data": {"last_close_date": None}}
+        from supabase_service import SupabaseService
+        supa = SupabaseService()
+        res = (
+            supa.client.table("journal_entries")
+            .select("id, date, total, created_at")
+            .eq("source", "period_close")
+            .order("date", desc=True)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if not res.data:
+            return {"success": True, "data": {"last_close_date": None}}
+        row = res.data[0]
+        return {
+            "success": True,
+            "data": {
+                "last_close_date": row.get("date"),
+                "journal_entry_id": row.get("id"),
+                "total": row.get("total"),
+                "created_at": row.get("created_at"),
+            },
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/period-close")

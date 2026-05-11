@@ -1,0 +1,37 @@
+{
+  "summary": "Iter 197 — Verified negative-numbers fix in Income Statement card + new after_close preset + new /api/finance/period-close/last endpoint. Backend pytest 5/5 PASS at /app/backend/tests/test_negative_fix_iter197.py. All target numbers confirmed POSITIVE on workshop=finmodule-sync: revenue=35,791 / expenses=1,836 / net_income=33,955 (both all-time and 30d window 2026-04-12→2026-05-11). New GET /api/finance/period-close/last returns success:true, last_close_date=2026-05-11, journal_entry_id=b1e9de0d-7f35-4fe9-a786-02f2924682db. POST /api/finance/period-close idempotent path now returns closed:false in 1.03s (was ~26s in iter196 — PERF FIXED). Firewall regression still 100% balance_health, unbalanced=0. Frontend on /accounting/comprehensive (login مدير, workshop finmodule-sync): all 10 critical data-testids present including the two NEW ones financial-date-preset-after_close + financial-last-close-badge. Visual confirmation on 30d preset shows Net Income card 33,955 ر.س, Revenue 35,791 ر.س, Expenses 1,836 ر.س — all positive with no sign-conflict (margin chip 94.9%). after_close preset is correctly disabled when no last_close exists for the active workshop (good UX); code path (ComprehensiveFinancial.jsx:790-800) verified to set start_date = last_close_date+1 day = 2026-05-12.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "ComprehensiveFinancial cards", "issues": ["أرباح القطع card legitimately shows -1,000 ر.س (Parts Profits gross-margin where parts COGS > parts revenue). Not related to the bug fix — distinct from Net Income/Revenue/Expenses cards which are all positive. Consider adding a tooltip clarifying that this card is a derived margin, not part of the income statement."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_negative_fix_iter197.py",
+    "/app/test_reports/pytest/iter197_negfix.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Income statement endpoint (routes_finance.py) correctly excludes period_close source entries from revenue/expense aggregation — proper accounting (period_close is a closing entry, not a P&L transaction). Numbers verified: revenue=35,791, expenses=1,836, net=33,955.",
+    "GET /api/finance/period-close/last endpoint correctly returns the latest period_close JE for the workshop with last_close_date, journal_entry_id, total, created_at. Used by frontend useEffect on mount.",
+    "ComprehensiveFinancial.jsx:1048 disabled logic for after_close preset is correct: disabled = !lastCloseInfo?.last_close_date — protects UX when workshop has no close history.",
+    "ComprehensiveFinancial.jsx:790-800 after_close preset logic correctly computes start_date = last_close_date + 1 day (so 2026-05-11 + 1 = 2026-05-12).",
+    "iter196 perf complaint RESOLVED: POST /api/finance/period-close idempotent path now takes ~1s (down from ~26s). Early-return on existing JE check appears to be in place."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_negative_fix_iter197.py (created — 5 pytest tests, all passing)"
+  ],
+  "success_rate": {"backend": "100% (5/5 pytest)", "frontend": "100% (all 10 testids + positive numbers + badge confirmed on finmodule-sync workshop)"},
+  "test_credentials": "Username: مدير (text input, no password). Workshop: finmodule-sync (display name 'ورشة اختبار 192').",
+  "seed_data_creation": "No new data created. Existing single period_close JE at 2026-05-11 (id b1e9de0d-7f35-4fe9-a786-02f2924682db) remains the only close entry.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "Regression suite is /app/backend/tests/test_negative_fix_iter197.py (5 tests passing). The frontend after_close preset is correctly disabled when the active workshop has no period_close entries — to test the click flow visually you must ensure the workshop is finmodule-sync (REACT_APP_WORKSHOP_ID). The browser sometimes loads the default workshop instead of finmodule-sync on fresh sessions; the badge `financial-last-close-badge` visibility is the canonical indicator that lastCloseInfo has loaded and after_close preset will be enabled. Expected after_close behavior: start_date=2026-05-12, end_date=today, all cards show 0 (no activity post-close). The negative-numbers bug is fixed: income-statement aggregation excludes period_close source so revenue/expense/net are all positive (35,791 / 1,836 / 33,955).",
+  "rca of the issue": "ROOT CAUSE (already fixed before this iteration): Previously the income-statement endpoint included period_close journal entries in revenue/expense aggregation. The period_close JE debits the revenue accounts (to zero them) and credits expense+retained-earnings — so revenue debit-credit-net became -35,691 (negative) and expense net became -1,836 (negative), giving a fake-negative net income display. FIX (verified in this iteration): routes_finance.py income_statement now filters out source='period_close' before aggregating, restoring proper positive accounting numbers. VERIFICATION: Backend pytest test_income_statement_all_time_positive + test_income_statement_last_30d_positive both PASS with revenue=35,791, expenses=1,836, net=33,955. Frontend visual confirmation on /accounting/comprehensive shows the same positive values on Net Income / Revenue / Expenses cards."
+}

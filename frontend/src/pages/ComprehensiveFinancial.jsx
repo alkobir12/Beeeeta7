@@ -45,31 +45,43 @@ const GlassCard = ({ title, value, subtitle, testId, accent = 'from-sky-500/25 t
 
 const ExpandableMetricCard = ({ title, value, subtitle, details = [], expanded, onToggle, testId, accent }) => (
   <div
-    className="rounded-3xl border border-white/15 bg-slate-950/45 backdrop-blur-2xl p-5 shadow-[0_10px_45px_-20px_rgba(14,165,233,0.55)]"
+    className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/70 to-slate-950/70 backdrop-blur-xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:border-white/20 transition"
     data-testid={`${testId}-card`}
   >
+    {/* Decorative accent stripe (top-right) */}
+    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accent}`} />
+    <div className={`pointer-events-none absolute -bottom-12 -right-12 w-32 h-32 rounded-full bg-gradient-to-br ${accent} opacity-[0.08] blur-2xl`} />
+
     <button type="button" onClick={onToggle} className="w-full text-right" data-testid={`${testId}-toggle`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className={`h-1.5 w-28 rounded-full bg-gradient-to-r ${accent}`} />
-          <p className="mt-3 text-xs text-slate-300" data-testid={`${testId}-title`}>{title}</p>
-          <p className="mt-2 text-2xl font-bold text-slate-50 tabular-nums" data-testid={testId}>{value}</p>
-          {subtitle && typeof subtitle === 'string' ? (
-            <p className="mt-2 text-xs text-slate-400" data-testid={`${testId}-subtitle`}>{subtitle}</p>
-          ) : null}
-          {subtitle && Array.isArray(subtitle) && subtitle.length > 0 ? (
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1" data-testid={`${testId}-subtitle`}>
-              {subtitle.map((chip, idx) => (
-                <span key={`${testId}-chip-${idx}`} className="text-[11px] text-slate-300 whitespace-nowrap">
-                  <span className="text-slate-400">{chip.label}:</span>{' '}
-                  <span className="text-slate-100 tabular-nums font-medium">{chip.value}</span>
-                </span>
-              ))}
-            </div>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold" data-testid={`${testId}-title`}>{title}</p>
+        <span className="text-slate-400 shrink-0 transition-transform" style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+          <ChevronRight size={14} />
+        </span>
+      </div>
+      <p className="text-3xl lg:text-4xl font-black text-white tabular-nums leading-tight" data-testid={testId}>{value}</p>
+
+      {subtitle && typeof subtitle === 'string' ? (
+        <p className="mt-2 text-xs text-slate-400" data-testid={`${testId}-subtitle`}>{subtitle}</p>
+      ) : null}
+      {subtitle && Array.isArray(subtitle) && subtitle.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-1.5" data-testid={`${testId}-subtitle`}>
+          {subtitle.slice(0, 3).map((chip, idx) => (
+            <span
+              key={`${testId}-chip-${idx}`}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-slate-200"
+            >
+              <span className="text-slate-400">{chip.label}</span>
+              <span className="tabular-nums font-semibold text-slate-50">{chip.value}</span>
+            </span>
+          ))}
+          {subtitle.length > 3 ? (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-slate-400">
+              +{subtitle.length - 3}
+            </span>
           ) : null}
         </div>
-        <span className="mt-1 text-slate-300 shrink-0">{expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-      </div>
+      ) : null}
     </button>
 
     {expanded && details.length > 0 ? (
@@ -165,6 +177,10 @@ export default function ComprehensiveFinancial() {
   });
   const [startDate, setStartDate] = useState('2000-01-01');
   const [endDate, setEndDate] = useState(() => safeDate(new Date()));
+  const [activePreset, setActivePreset] = useState('all');
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [closeResult, setCloseResult] = useState(null);
   const [budgetMonth, setBudgetMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -745,6 +761,77 @@ export default function ComprehensiveFinancial() {
     setSalesOpsPage(1);
   }, [startDate, endDate]);
 
+  // 📅 Date range quick-presets
+  const applyDatePreset = (presetKey) => {
+    const today = new Date();
+    const end = safeDate(today);
+    let start;
+    switch (presetKey) {
+      case 'today':
+        start = end;
+        break;
+      case '7d': {
+        const s = new Date(today);
+        s.setDate(s.getDate() - 6);
+        start = safeDate(s);
+        break;
+      }
+      case '30d': {
+        const s = new Date(today);
+        s.setDate(s.getDate() - 29);
+        start = safeDate(s);
+        break;
+      }
+      case '90d': {
+        const s = new Date(today);
+        s.setDate(s.getDate() - 89);
+        start = safeDate(s);
+        break;
+      }
+      case 'ytd': {
+        start = `${today.getFullYear()}-01-01`;
+        break;
+      }
+      case 'all':
+      default:
+        start = '2000-01-01';
+    }
+    setStartDate(start);
+    setEndDate(end);
+    setActivePreset(presetKey);
+  };
+
+  // 🧾 Close Period — creates a balanced closing entry
+  const handleClosePeriod = async () => {
+    if (closing) return;
+    setClosing(true);
+    setCloseResult(null);
+    try {
+      const res = await financeAPI.closePeriod(workshopId, {
+        as_of_date: endDate,
+        description: `إقفال الفترة حتى ${endDate}`,
+      });
+      const data = res?.data?.data || res?.data || {};
+      setCloseResult({ ok: true, data });
+      // Reset preset to "from today" so the cards show fresh state
+      const today = safeDate(new Date());
+      setStartDate(today);
+      setEndDate(today);
+      setActivePreset('today');
+      // Invalidate everything
+      setTimeout(() => {
+        queryClient.invalidateQueries();
+      }, 250);
+    } catch (err) {
+      setCloseResult({
+        ok: false,
+        error: err?.response?.data?.detail || err?.message || 'فشل الإقفال',
+      });
+    } finally {
+      setClosing(false);
+    }
+  };
+
   const refreshAll = () => {
     queryClient.invalidateQueries({ queryKey: ['financial-balance-sheet', workshopId] });
     queryClient.invalidateQueries({ queryKey: ['financial-income-statement', workshopId] });
@@ -866,7 +953,7 @@ export default function ComprehensiveFinancial() {
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => { setStartDate(e.target.value); setActivePreset('custom'); }}
                 className="bg-transparent text-sm text-slate-100 outline-none"
                 data-testid="financial-start-date-input"
               />
@@ -874,7 +961,7 @@ export default function ComprehensiveFinancial() {
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => { setEndDate(e.target.value); setActivePreset('custom'); }}
                 className="bg-transparent text-sm text-slate-100 outline-none"
                 data-testid="financial-end-date-input"
               />
@@ -888,6 +975,14 @@ export default function ComprehensiveFinancial() {
               تحديث
             </button>
             <button
+              onClick={() => setShowCloseDialog(true)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-amber-300/40 bg-amber-500/20 px-3 py-2 text-amber-50 font-medium hover:bg-amber-500/30 transition"
+              data-testid="financial-close-period-button"
+            >
+              <Scale size={16} />
+              إقفال الفترة
+            </button>
+            <button
               onClick={handleReclassifyPayments}
               disabled={isReclassifyingPayments}
               className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200/40 bg-emerald-500/20 px-3 py-2 text-emerald-50 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -898,6 +993,102 @@ export default function ComprehensiveFinancial() {
             </button>
           </div>
         </div>
+
+        {/* 📅 Date Range Quick Presets */}
+        <div className="flex flex-wrap items-center gap-1.5 mb-5" data-testid="financial-date-presets-bar">
+          <span className="text-[11px] text-slate-400 ml-2">عرض:</span>
+          {[
+            { k: 'today', label: 'اليوم' },
+            { k: '7d', label: '٧ أيام' },
+            { k: '30d', label: '٣٠ يوم' },
+            { k: '90d', label: '٩٠ يوم' },
+            { k: 'ytd', label: 'منذ بداية السنة' },
+            { k: 'all', label: 'كل الفترة' },
+          ].map((p) => (
+            <button
+              key={p.k}
+              type="button"
+              onClick={() => applyDatePreset(p.k)}
+              data-testid={`financial-date-preset-${p.k}`}
+              className={`px-3 py-1.5 rounded-full text-[12px] border transition ${
+                activePreset === p.k
+                  ? 'bg-cyan-500/25 border-cyan-300/45 text-cyan-50'
+                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+          {activePreset === 'custom' ? (
+            <span data-testid="financial-date-preset-custom-indicator" className="px-3 py-1.5 rounded-full text-[12px] border bg-violet-500/15 border-violet-400/30 text-violet-100">
+              مخصص: {startDate} → {endDate}
+            </span>
+          ) : null}
+        </div>
+
+        {/* 🧾 Close Period — confirmation dialog */}
+        {showCloseDialog ? (
+          <div
+            data-testid="financial-close-period-dialog"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => !closing && setShowCloseDialog(false)}
+          >
+            <div
+              className="max-w-lg w-full rounded-2xl border border-amber-400/40 bg-slate-900/95 p-5 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-2 text-amber-200 mb-3">
+                <Scale size={18} />
+                <h3 className="text-base font-bold">تأكيد إقفال الفترة</h3>
+              </div>
+              <div className="space-y-2 text-sm text-slate-200">
+                <p>هذا الإجراء سيُنشئ <strong className="text-amber-200">قيداً محاسبياً متوازناً</strong> ينقل كل أرصدة الإيرادات/المصروفات إلى <strong className="text-cyan-200">الأرباح المحتجزة</strong> ويُصفّرها للبدء من جديد.</p>
+                <ul className="text-xs text-slate-400 list-disc pr-5 space-y-0.5">
+                  <li>تاريخ الإقفال: <span className="text-slate-200 font-mono">{endDate}</span></li>
+                  <li>سيُنشأ قيد واحد متوازن (مدين = دائن)</li>
+                  <li>الجدار سيرفض القيد إذا لم يكن متوازناً</li>
+                  <li>الأرصدة التاريخية تُحفظ في «أرباح محتجزة» (023)</li>
+                  <li>كرت صافي الدخل سيظهر صفر بعد الإقفال</li>
+                </ul>
+                {closeResult?.ok ? (
+                  <div data-testid="financial-close-period-success" className="rounded-lg bg-emerald-500/10 border border-emerald-400/30 p-3 text-xs text-emerald-100 space-y-1">
+                    <div>✅ تم الإقفال بنجاح</div>
+                    <div>الإيرادات: {(closeResult.data.total_revenue_closed || 0).toLocaleString('ar-SA')} ر.س</div>
+                    <div>المصروفات: {(closeResult.data.total_expense_closed || 0).toLocaleString('ar-SA')} ر.س</div>
+                    <div>المنقول للأرباح المحتجزة: {(closeResult.data.net_income_transferred || 0).toLocaleString('ar-SA')} ر.س</div>
+                    <div className="font-mono opacity-70">JE: {(closeResult.data.journal_entry_id || '').slice(0, 12)}</div>
+                  </div>
+                ) : null}
+                {closeResult?.ok === false ? (
+                  <div data-testid="financial-close-period-error" className="rounded-lg bg-rose-500/10 border border-rose-400/30 p-3 text-xs text-rose-100">
+                    ❌ {String(closeResult.error)}
+                  </div>
+                ) : null}
+              </div>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  data-testid="financial-close-period-cancel"
+                  onClick={() => { setShowCloseDialog(false); setCloseResult(null); }}
+                  disabled={closing}
+                  className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-slate-200 hover:bg-white/10 disabled:opacity-50"
+                >
+                  إغلاق
+                </button>
+                {!closeResult?.ok ? (
+                  <button
+                    data-testid="financial-close-period-confirm"
+                    onClick={handleClosePeriod}
+                    disabled={closing}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/25 border border-amber-300/40 text-xs text-amber-50 font-medium hover:bg-amber-500/40 disabled:opacity-50"
+                  >
+                    <Scale size={13} className={closing ? 'animate-pulse' : ''} />
+                    {closing ? 'جاري الإقفال...' : 'تأكيد الإقفال'}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6" data-testid="financial-headline-cards-grid">
           {topCards.map((card) => (

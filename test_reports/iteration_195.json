@@ -1,0 +1,49 @@
+{
+  "summary": "Iter 195 — Period-Close endpoint + Comprehensive Financial dashboard (presets bar, close dialog, cleaner cards). Backend pytest 3/4 PASS at /app/backend/tests/test_period_close_iter195.py. POST /api/finance/period-close returns success:true with closed:true and a perfectly balanced JE (total_debit=total_credit=35,691 ر.س, 7 lines, net_income_transferred=33,855 ر.س to account 023). Firewall health remains 100% (69/69 balanced). /api/finance/journal-entries still loads the period_close JE and it is balanced. BUT: idempotency check FAILS — repeating POST /api/finance/period-close with the same as_of_date keeps returning closed:true and creates an additional period_close JE on every call. This contradicts the spec ('second call must return closed:false because period_close source is excluded from balance computation'). Each test run added an extra closing entry (66 → 69 in this iteration). Frontend FULL PASS at /accounting/comprehensive after login as 'مدير': all 12 required data-testids present (financial-dashboard-main-title, financial-date-presets-bar, financial-date-preset-{today,7d,30d,90d,ytd,all}, financial-close-period-button, financial-refresh-button, financial-start-date-input, financial-end-date-input). 30d preset highlights correctly and sets start=today-29d, end=today. Manual date edit shows financial-date-preset-custom-indicator and dehighlights 30d. Close dialog opens with cancel+confirm buttons. Clicking confirm flips button label to 'جاري الإقفال...'. After backend success, preset resets to 'today' and start=end=today as required. ONE FRONTEND ISSUE: financial-close-period-success element never appears during the 30-second wait window after a successful close (dialog appears to close itself / state-reset hides the success block before the user can see it). The dashboard's headline cards do refetch with start=end=today (so they correctly show 0/0 thereafter).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/finance/period-close",
+        "issue": "Not idempotent. Calling with the same as_of_date repeatedly keeps returning closed:true with full revenue/expense values and inserts a brand-new period_close JE each time. Root cause in routes_finance.py line ~2684: the balance computation explicitly SKIPS entries where source='period_close'. As a result the prior closing entry's offsetting debits/credits never neutralize the original revenue/expense balances, so the same balances re-surface and get closed again. Either (a) include period_close entries when computing balances (the prior closes will net revenues/expenses to 0, naturally short-circuiting via the existing closed:false branch), or (b) explicitly detect an existing close for the same as_of_date and return closed:false with a message. Spec/agent-context explicitly state second call must return closed:false."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ComprehensiveFinancial close-period dialog",
+        "issue": "financial-close-period-success element is not rendered (or vanishes immediately) after a successful close. End user cannot see total_revenue_closed/total_expense_closed/net_income_transferred summary inside the dialog. The headline cards refetch and preset resets to 'today' correctly, but the in-dialog success card is unreachable. Confirm button onClick is handleClosePeriod which sets closeResult={ok:true,data} but does not close the dialog — investigate whether setStartDate/setEndDate/setActivePreset side-effects or the queryClient.invalidateQueries setTimeout cause an unmount/re-render that hides the dialog.",
+        "selector": "[data-testid='financial-close-period-success']",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_period_close_iter195.py",
+    "/app/test_reports/pytest/iter195_period_close.xml"
+  ],
+  "action_items": [
+    "Backend: Make /api/finance/period-close idempotent. Recommended: REMOVE the `if str(je.get('source')).lower() == 'period_close': continue` filter (routes_finance.py ~line 2684) so existing closing entries DO contribute to balance computation and offset prior revenues/expenses to ~0, causing the closing_lines list to be empty and naturally returning closed:false on second runs. Alternative: query journal_entries for an existing period_close JE on the same as_of_date and short-circuit with closed:false + descriptive message.",
+    "Frontend: Ensure financial-close-period-success block stays visible after a successful close (currently disappears before users can see the closing summary). The setState batch (setStartDate/setEndDate/setActivePreset + setTimeout(invalidateQueries)) likely causes a re-render that hides the dialog or success card — confirm dialog stays open after success and add a brief auto-dismiss with toast OR keep it open until user clicks 'إغلاق'."
+  ],
+  "critical_code_review_comments": [
+    "routes_finance.py period-close: the period_close source filter at line 2684 is the direct cause of non-idempotency. Removing it makes the endpoint self-balancing without any other logic change.",
+    "routes_finance.py period-close: balance update (step 8) zeros revenue/expense account.balance but the close JE itself uses journal_entries for net computation — so the accounts.balance field and the JE-derived balance can drift. Prefer using either source consistently.",
+    "ComprehensiveFinancial.jsx handleClosePeriod: does NOT close the dialog on success — relies on user clicking 'إغلاق'. Combined with immediate setStartDate/setEndDate/setActivePreset state changes plus queryClient.invalidateQueries, the success card visibility is fragile. Consider deferring date/preset reset until after user closes the dialog, OR explicitly keep showCloseDialog=true and render success card synchronously.",
+    "ComprehensiveFinancial.jsx applyDatePreset: good coverage of presets. ExpandableMetricCard design (3xl-4xl values, top accent stripe, chips) verified visually."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_period_close_iter195.py (created — 4 tests)"
+  ],
+  "success_rate": {"backend": "75% (3/4 pytest — idempotency bug)", "frontend": "92% (12/12 testids + 4/5 flows; success-card visibility regression)"},
+  "test_credentials": "Username: مدير (text input, no password). Workshop: finmodule-sync.",
+  "seed_data_creation": "Side effect of testing: 3 additional period_close journal entries were inserted (journal_entries grew from 66 → 69) because each backend call to /api/finance/period-close inserts a new balanced closing JE due to the non-idempotency bug. Firewall remains 100% healthy (each JE is internally balanced).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression suite is /app/backend/tests/test_period_close_iter195.py. The idempotency test (TestPeriodClose.test_period_close_idempotent_second_call) will keep failing until the period_close source filter is removed or an existence-check is added on routes_finance.py around line 2684. Each pytest run inserts +2 period_close JEs into journal_entries (one per close in the success test, one per close in the idempotency test). For frontend retesting after fix, focus on financial-close-period-success element appearing within ≤10s after clicking confirm and remaining visible until user clicks 'إغلاق'. Frontend testids are all in /app/frontend/src/pages/ComprehensiveFinancial.jsx lines 942-1090.",
+  "rca of the issue": "ROOT CAUSE — period-close not idempotent: routes_finance.py line 2684 explicitly excludes source='period_close' entries from balance computation. This was likely intended to prevent the closing JE from being treated as opening balances, but the side-effect is that the OFFSETTING debits/credits of past closing entries are also excluded — so the original revenue/expense balances never neutralize. Every run sees the same gross balances and creates a new identical closing JE. REPRODUCTION: (1) curl POST /api/finance/period-close?workshop_id=finmodule-sync -d '{\"as_of_date\":\"2026-05-11\"}' → closed:true, net_income=33855. (2) Repeat same call → still closed:true, same net_income=33855, new journal_entry_id. MITIGATION: Remove the `if source == 'period_close': continue` filter on entries iteration. After fix, the second call's per-account net will be: revenue(-35691)+close_debit(+35691)=0, expense(+1836)+close_credit(-1836)=0 → all balances <0.01 → closing_lines empty → return closed:false naturally. ROOT CAUSE — frontend success element invisible: handleClosePeriod sets closeResult={ok:true,data} but then immediately mutates startDate/endDate/activePreset and schedules queryClient.invalidateQueries(), triggering a re-render cascade that appears to take the success card out of the visible DOM before the test can observe it (likely because the parent layout reflows during initial-load banner display). Verified: the post-close preset/date reset DID happen successfully, confirming the API call succeeded — only the user-facing success card is the problem."
+}

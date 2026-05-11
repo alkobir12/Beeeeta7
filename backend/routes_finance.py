@@ -2611,6 +2611,213 @@ async def get_journal_entries(
         }
 
 
+@router.post("/period-close")
+async def close_period(
+    workshop_id: str = Query(...),
+    payload: dict = Body(default=None),
+):
+    """
+    🧾 قيد إقفال محاسبي صحيح: يصفر الإيرادات والمصروفات إلى حساب «الأرباح المحتجزة» (023).
+
+    منطق المحاسبة:
+        - كل حساب إيراد له رصيد دائن ⇒ نخصمه (debit) لإقفاله.
+        - كل حساب مصروف له رصيد مدين ⇒ ندفعه (credit) لإقفاله.
+        - الفرق (صافي الدخل) يُرحَّل إلى الأرباح المحتجزة:
+            • ربح → credit للأرباح المحتجزة
+            • خسارة → debit للأرباح المحتجزة
+
+    Body اختياري:
+        {
+          "as_of_date": "2026-02-11",
+          "description": "إقفال الفترة المنتهية في 2026-02-11",
+          "equity_account_code": "023"  # افتراضي 023
+        }
+
+    Returns: تفاصيل القيد المنشأ + ملخص الإقفال.
+    """
+    try:
+        body = payload or {}
+        as_of = body.get("as_of_date") or datetime.now(timezone.utc).date().isoformat()
+        description = body.get("description") or f"إقفال الفترة حتى {as_of}"
+        equity_code = str(body.get("equity_account_code") or "023").strip()
+
+        provider = os.environ.get("DB_PROVIDER", "mongo").lower()
+        if provider != "supabase":
+            raise HTTPException(
+                status_code=400,
+                detail="Period-close requires Supabase provider",
+            )
+        from supabase_service import SupabaseService
+        supa = SupabaseService()
+
+        # 1) جلب كل الحسابات (لا يوجد عمود workshop_id في accounts)
+        accs_res = supa.client.table("accounts").select("*").execute()
+        accounts = accs_res.data or []
+
+        # 2) جلب جميع قيود اليومية حتى التاريخ
+        try:
+            je_res = (
+                supa.client.table("journal_entries")
+                .select("*")
+                .eq("workshop_id", workshop_id)
+                .lte("date", as_of)
+                .limit(20000)
+                .execute()
+            )
+            entries = je_res.data or []
+        except Exception:
+            entries = []
+        if not entries:
+            je_res = (
+                supa.client.table("journal_entries")
+                .select("*")
+                .lte("date", as_of)
+                .limit(20000)
+                .execute()
+            )
+            entries = je_res.data or []
+
+        # 3) لكل حساب اجمع debit/credit للوصول إلى الرصيد الحالي
+        balances: Dict[str, float] = {}
+        for je in entries:
+            # تخطي قيود إقفال سابقة لتفادي التكرار
+            if str(je.get("source") or "").lower() == "period_close":
+                continue
+            for ln in je.get("lines") or []:
+                code = str(ln.get("account") or ln.get("account_code") or "").strip()
+                if not code:
+                    continue
+                dr = float(ln.get("debit") or 0)
+                cr = float(ln.get("credit") or 0)
+                balances[code] = balances.get(code, 0.0) + dr - cr
+
+        # 4) بناء أسطر قيد الإقفال
+        closing_lines = []
+        total_revenue_closed = 0.0
+        total_expense_closed = 0.0
+
+        for acc in accounts:
+            code = str(acc.get("code") or "").strip()
+            t = (acc.get("type") or "").lower()
+            name = acc.get("name") or acc.get("name_ar") or code
+            if not code or code == equity_code:
+                continue
+            net = balances.get(code, 0.0)
+            if abs(net) < 0.01:
+                continue
+            if t == "revenue":
+                # رصيد دائن طبيعي: net سالب (لأن credits > debits) — نقفله بـ debit
+                amount = abs(net) if net <= 0 else net
+                closing_lines.append({
+                    "account": code,
+                    "account_name": name,
+                    "debit": round(amount, 2),
+                    "credit": 0,
+                })
+                total_revenue_closed += amount
+            elif t == "expense":
+                # رصيد مدين طبيعي: net موجب — نقفله بـ credit
+                amount = abs(net) if net >= 0 else net
+                closing_lines.append({
+                    "account": code,
+                    "account_name": name,
+                    "debit": 0,
+                    "credit": round(amount, 2),
+                })
+                total_expense_closed += amount
+
+        if not closing_lines:
+            return {
+                "success": True,
+                "data": {
+                    "closed": False,
+                    "message": "لا توجد أرصدة إيرادات/مصروفات للإقفال.",
+                    "as_of_date": as_of,
+                },
+            }
+
+        # 5) سطر التسوية إلى الأرباح المحتجزة
+        equity_acc = next((a for a in accounts if str(a.get("code") or "") == equity_code), None)
+        equity_name = (equity_acc or {}).get("name") or "أرباح محتجزة"
+        net_income = round(total_revenue_closed - total_expense_closed, 2)
+        if net_income >= 0:
+            # ربح ⇒ credit للأرباح المحتجزة
+            closing_lines.append({
+                "account": equity_code,
+                "account_name": equity_name,
+                "debit": 0,
+                "credit": net_income,
+            })
+        else:
+            # خسارة ⇒ debit للأرباح المحتجزة
+            closing_lines.append({
+                "account": equity_code,
+                "account_name": equity_name,
+                "debit": abs(net_income),
+                "credit": 0,
+            })
+
+        # 6) تحقق توازن (إجباري — الجدار سيرفض غير ذلك)
+        total_dr = round(sum(float(ln["debit"]) for ln in closing_lines), 2)
+        total_cr = round(sum(float(ln["credit"]) for ln in closing_lines), 2)
+        if abs(total_dr - total_cr) > 0.009:
+            raise HTTPException(
+                status_code=500,
+                detail=f"بناء قيد الإقفال أنتج فرقاً: مدين {total_dr} ≠ دائن {total_cr}",
+            )
+
+        # 7) أدرج القيد عبر نفس مسار create_journal_entry (يضمن الجدار)
+        new_entry = {
+            "id": str(uuid.uuid4()),
+            "workshop_id": workshop_id,
+            "date": as_of,
+            "description": description,
+            "transaction_type": "closing",
+            "source": "period_close",
+            "lines": closing_lines,
+            "total": total_dr,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        try:
+            supa.client.table("journal_entries").insert(new_entry).execute()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"فشل حفظ قيد الإقفال: {e}")
+
+        # 8) تحديث رصيد الحسابات (balance=0 للإيرادات/المصروفات، يضاف net للأرباح المحتجزة)
+        try:
+            for acc in accounts:
+                t = (acc.get("type") or "").lower()
+                if t in ("revenue", "expense"):
+                    supa.client.table("accounts").update({"balance": 0}).eq("id", acc["id"]).execute()
+            if equity_acc:
+                old_bal = float(equity_acc.get("balance") or 0)
+                new_bal = round(old_bal + net_income, 2)
+                supa.client.table("accounts").update({"balance": new_bal}).eq("id", equity_acc["id"]).execute()
+        except Exception as e:
+            print(f"period-close: balance update warning: {e}")
+
+        return {
+            "success": True,
+            "data": {
+                "closed": True,
+                "as_of_date": as_of,
+                "journal_entry_id": new_entry["id"],
+                "total_revenue_closed": round(total_revenue_closed, 2),
+                "total_expense_closed": round(total_expense_closed, 2),
+                "net_income_transferred": net_income,
+                "equity_account": {"code": equity_code, "name": equity_name},
+                "lines_count": len(closing_lines),
+                "total_debit": total_dr,
+                "total_credit": total_cr,
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/journal-entries")
 async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
     """إنشاء قيد محاسبي يدوي جديد في Supabase مع نوع حركة واضح.

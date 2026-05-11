@@ -18,7 +18,7 @@ import uuid
 import time
 
 # Get backend URL from environment
-BACKEND_URL = "https://unified-bot-audit.preview.emergentagent.com/api"
+BACKEND_URL = "https://smart-inventory-cogs.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

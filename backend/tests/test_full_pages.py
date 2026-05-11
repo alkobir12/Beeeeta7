@@ -4,7 +4,7 @@
 import requests, json, time
 from datetime import datetime
 
-BASE = "https://unified-bot-audit.preview.emergentagent.com/api"
+BASE = "https://smart-inventory-cogs.preview.emergentagent.com/api"
 WID  = "finmodule-sync"
 
 PASS = "✅"

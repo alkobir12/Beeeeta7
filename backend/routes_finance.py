@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 
 from accounting_auditor import AccountingSystemAuditor
 from bulk_delete_audit import list_bulk_delete_events, record_bulk_delete_event
+import firewall_state
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
@@ -2691,6 +2692,19 @@ async def create_journal_entry(entry: dict, workshop_id: str = Query(...)):
 
         diff = (total_debit - total_credit).copy_abs()
         if diff > Decimal("0.009"):
+            # 🛡️ Firewall: log rejection event before raising
+            firewall_state.log_event(
+                "unbalanced_rejection",
+                {
+                    "reason": "debit_credit_mismatch",
+                    "debit": float(total_debit),
+                    "credit": float(total_credit),
+                    "drift": float(diff),
+                    "description": entry.get("description") or "",
+                    "workshop_id": workshop_id,
+                    "source": entry.get("source") or "manual",
+                },
+            )
             raise HTTPException(
                 status_code=400,
                 detail=f"القيد غير متوازن: مدين {float(total_debit):.2f} ≠ دائن {float(total_credit):.2f}",

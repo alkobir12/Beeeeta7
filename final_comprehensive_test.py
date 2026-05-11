@@ -11,7 +11,7 @@ from datetime import datetime
 import uuid
 
 # Configuration
-BASE_URL = "https://unified-bot-audit.preview.emergentagent.com/api"
+BASE_URL = "https://smart-inventory-cogs.preview.emergentagent.com/api"
 USERNAME = "مدير"
 
 class Colors:

@@ -18,7 +18,7 @@ from datetime import datetime
 import uuid
 
 # Get backend URL from frontend/.env (REACT_APP_BACKEND_URL)
-BACKEND_URL = "https://unified-bot-audit.preview.emergentagent.com/api"
+BACKEND_URL = "https://smart-inventory-cogs.preview.emergentagent.com/api"
 
 # Test results tracking
 test_results = {

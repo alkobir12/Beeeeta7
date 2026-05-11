@@ -535,6 +535,8 @@ app.include_router(invoices_router)
 app.include_router(alkabeer_bot_router)
 app.include_router(moltbot_router)
 app.include_router(nlp_page_assistant_router)
+from routes_firewall import router as firewall_router
+app.include_router(firewall_router)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")

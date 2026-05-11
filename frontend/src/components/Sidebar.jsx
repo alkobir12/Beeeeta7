@@ -87,6 +87,7 @@ const Sidebar = ({
         { path: '/accounting/chart-of-accounts', label: t('nav.chart_of_accounts'), enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/accounting/comprehensive', label: `📊 ${t('nav.financial_statements')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/accounting/journal-entries', label: `📖 ${t('nav.journal')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
+        { path: '/accounting/firewall', label: `🛡️ ${i18n.language === 'ar' ? 'جدار حماية المحاسبة' : 'Accounting Firewall'}`, enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/finance/taxes', label: t('nav.taxes'), enabled: true, permission: { module: 'reports', action: 'view' } },
         // المساعد الذكي متاح عبر البوت العائم — أُزيل من القائمة لتخفيف الموقع
         // تم دمج تدقيق النظام داخل صفحة التحليل، لذلك لا نعرض مدخل منفصل له في القائمة

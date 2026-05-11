@@ -29,6 +29,7 @@ except Exception:
 from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from bulk_delete_audit import record_bulk_delete_event
 from supabase_service import SupabaseService
+import firewall_state
 
 from visit_sync import _sync_visit_to_operation
 router = APIRouter(prefix="/api")
@@ -3460,6 +3461,16 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                     idempotency_key,
                 )
                 if existing:
+                    firewall_state.log_event(
+                        "idempotency_hit",
+                        {
+                            "key": idempotency_key,
+                            "workshop_id": workshop_id,
+                            "operation_id": existing.get("id"),
+                            "partner": existing.get("partnerName"),
+                            "amount": existing.get("total") or existing.get("amount"),
+                        },
+                    )
                     return existing
 
             op = supa.operations_create(payload)
@@ -3511,6 +3522,15 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                 )
                 for cogs_entry in cogs_entries:
                     _safe_insert_journal_entry(supa, cogs_entry)
+                    firewall_state.log_event(
+                        "cogs_generated",
+                        {
+                            "operation_id": op.get("id"),
+                            "workshop_id": workshop_id,
+                            "amount": cogs_entry.get("total"),
+                            "reference_id": cogs_entry.get("reference_id"),
+                        },
+                    )
 
                 _invalidate_finance_caches_safe()
             except Exception as je_error:

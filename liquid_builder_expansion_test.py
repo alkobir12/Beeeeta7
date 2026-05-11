@@ -10,7 +10,7 @@ import sys
 from typing import Dict, Any, Optional
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://unified-bot-audit.preview.emergentagent.com/api"
+BACKEND_URL = "https://smart-inventory-cogs.preview.emergentagent.com/api"
 
 class LiquidBuilderExpansionTester:
     def __init__(self):

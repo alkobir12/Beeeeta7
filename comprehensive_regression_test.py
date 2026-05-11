@@ -13,7 +13,7 @@ from typing import Dict, Any, List
 import uuid
 
 # Backend URL from environment
-BACKEND_URL = "https://unified-bot-audit.preview.emergentagent.com/api"
+BACKEND_URL = "https://smart-inventory-cogs.preview.emergentagent.com/api"
 
 class Colors:
     GREEN = '\033[92m'

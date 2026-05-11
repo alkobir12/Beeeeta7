@@ -23,7 +23,7 @@ def get_backend_url():
                     return line.split('=', 1)[1].strip()
     except:
         pass
-    return "https://unified-bot-audit.preview.emergentagent.com"
+    return "https://smart-inventory-cogs.preview.emergentagent.com"
 
 API_URL = get_backend_url()
 print(f"🔗 Backend URL: {API_URL}")

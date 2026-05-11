@@ -19,7 +19,7 @@ from datetime import datetime
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 if not BASE_URL:
     # Fallback for testing
-    BASE_URL = "https://unified-bot-audit.preview.emergentagent.com"
+    BASE_URL = "https://smart-inventory-cogs.preview.emergentagent.com"
 
 WORKSHOP_ID = os.environ.get("DEFAULT_WORKSHOP_ID", "finmodule-sync")
 

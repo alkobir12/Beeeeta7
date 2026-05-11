@@ -1059,13 +1059,27 @@ export default function ComprehensiveFinancial() {
                   <li>الأرصدة التاريخية تُحفظ في «أرباح محتجزة» (023)</li>
                   <li>كرت صافي الدخل سيظهر صفر بعد الإقفال</li>
                 </ul>
-                {closeResult?.ok ? (
+                {closeResult?.ok && closeResult?.data?.closed === true ? (
                   <div data-testid="financial-close-period-success" className="rounded-lg bg-emerald-500/10 border border-emerald-400/30 p-3 text-xs text-emerald-100 space-y-1">
                     <div>✅ تم الإقفال بنجاح</div>
                     <div>الإيرادات: {(closeResult.data.total_revenue_closed || 0).toLocaleString('ar-SA')} ر.س</div>
                     <div>المصروفات: {(closeResult.data.total_expense_closed || 0).toLocaleString('ar-SA')} ر.س</div>
                     <div>المنقول للأرباح المحتجزة: {(closeResult.data.net_income_transferred || 0).toLocaleString('ar-SA')} ر.س</div>
                     <div className="font-mono opacity-70">JE: {(closeResult.data.journal_entry_id || '').slice(0, 12)}</div>
+                  </div>
+                ) : null}
+                {closeResult?.ok && closeResult?.data?.closed === false ? (
+                  <div
+                    data-testid="financial-close-period-already-closed"
+                    className="rounded-lg bg-amber-500/10 border border-amber-400/30 p-3 text-xs text-amber-100 space-y-1"
+                  >
+                    <div className="font-semibold">ℹ️ لا حاجة للإقفال</div>
+                    <div>{closeResult.data.message || 'لا توجد أرصدة لإقفالها.'}</div>
+                    {closeResult.data.existing_journal_entry_id ? (
+                      <div className="font-mono opacity-70">
+                        قيد سابق: {String(closeResult.data.existing_journal_entry_id).slice(0, 12)}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 {closeResult?.ok === false ? (
@@ -1083,7 +1097,7 @@ export default function ComprehensiveFinancial() {
                 >
                   إغلاق
                 </button>
-                {!closeResult?.ok ? (
+                {!(closeResult?.ok && closeResult?.data?.closed === true) && !(closeResult?.ok && closeResult?.data?.closed === false) ? (
                   <button
                     data-testid="financial-close-period-confirm"
                     onClick={handleClosePeriod}

@@ -2653,6 +2653,26 @@ async def close_period(
         from supabase_service import SupabaseService
         supa = SupabaseService()
 
+        # ⚡ Idempotency early-check — قبل أي جلب ثقيل (يوفر ~25ث على المسار idempotent)
+        existing_close = (
+            supa.client.table("journal_entries")
+            .select("id, date, total")
+            .eq("source", "period_close")
+            .eq("date", as_of)
+            .limit(1)
+            .execute()
+        )
+        if existing_close.data:
+            return {
+                "success": True,
+                "data": {
+                    "closed": False,
+                    "message": f"يوجد قيد إقفال مسبق بتاريخ {as_of}",
+                    "as_of_date": as_of,
+                    "existing_journal_entry_id": existing_close.data[0]["id"],
+                },
+            }
+
         # 1) جلب كل الحسابات (لا يوجد عمود workshop_id في accounts)
         accs_res = supa.client.table("accounts").select("*").execute()
         accounts = accs_res.data or []
@@ -2679,26 +2699,6 @@ async def close_period(
                 .execute()
             )
             entries = je_res.data or []
-
-        # 2a) Idempotency check — هل يوجد قيد إقفال بنفس التاريخ مسبقاً؟
-        existing_close = (
-            supa.client.table("journal_entries")
-            .select("id, date, total")
-            .eq("source", "period_close")
-            .eq("date", as_of)
-            .limit(1)
-            .execute()
-        )
-        if existing_close.data:
-            return {
-                "success": True,
-                "data": {
-                    "closed": False,
-                    "message": f"يوجد قيد إقفال مسبق بتاريخ {as_of}",
-                    "as_of_date": as_of,
-                    "existing_journal_entry_id": existing_close.data[0]["id"],
-                },
-            }
 
         # 3) لكل حساب اجمع debit/credit للوصول إلى الرصيد الحالي
         # نتخطّى قيود period_close السابقة لتجنّب احتسابها كحركة إيراد/مصروف.

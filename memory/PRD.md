@@ -29,7 +29,40 @@
 
 ## What's Been Implemented
 
-### 🩺 Firewall ↔ Auditor & Financial Assistant Integration + UX Upgrades (11 Feb 2026)
+### 💎 Financial Dashboard Upgrade + Period-Close Engine (11 Feb 2026)
+
+**1. POST /api/finance/period-close — قيد إقفال محاسبي صحيح**
+- يصفّر أرصدة الإيرادات (debit) والمصروفات (credit) إلى **الحساب 023 (أرباح محتجزة)**.
+- متوازن دوماً (مدين = دائن) — يمر عبر `Double-Entry Firewall`.
+- **Idempotency**: فحص مبكّر يمنع إنشاء قيد إقفال مكرر لنفس التاريخ. الإجابة الـ idempotent تنتهي خلال **~1.8 ثانية** (مقابل 26 ثانية قبل التحسين).
+- يُحدّث `balance=0` لكل حساب إيراد/مصروف ويُضيف `net_income` إلى رصيد 023.
+- المُحاسبة الذكية: `income_statement` يضم قيود `period_close` في الحساب فيتقاصّ الإيراد/المصروف إلى صفر طبيعياً.
+
+**2. تحسينات لوحة المؤشرات المالية**
+- **شريط أزرار سريعة للفترات**: اليوم، ٧ أيام، ٣٠ يوم، ٩٠ يوم، منذ بداية السنة، كل الفترة + مؤشر مخصص.
+- **زر «إقفال الفترة»** بلون كهرماني + dialog تأكيد بـ 5 نقاط تفصيلية:
+  - تاريخ الإقفال
+  - قيد متوازن واحد
+  - رفض تلقائي من الجدار
+  - الأرصدة → 023
+  - صافي الدخل = 0 بعد الإقفال
+- **3 حالات للنتيجة** (مفصولة بـ data-testid مستقلة):
+  - `financial-close-period-success` (أخضر): closed=true، تفاصيل المبلغ المُحوَّل.
+  - `financial-close-period-already-closed` (كهرماني): closed=false مع ID القيد السابق.
+  - `financial-close-period-error` (أحمر): على فشل الـ HTTP.
+- **بطاقات أنظف** (`ExpandableMetricCard`):
+  - قيمة كبيرة `text-3xl lg:text-4xl` بدلاً من `2xl`.
+  - شريط لون gradient في الأعلى + هالة decorative في الزاوية.
+  - chips مصغّرة (حد أقصى 3) مع علامة `+N` عند الزيادة.
+
+**Verification (`/app/test_reports/iteration_196.json` + post-fix)**
+- Backend pytest: **5/5 PASS** + اللاتنسي **26s → 1.8s** (14× أسرع).
+- Frontend: 12/12 testids + 3 states منفصلة + dialog flow كامل.
+- ✅ قبل الإقفال: Revenue=35,691، Expenses=1,836، Net=33,855
+- ✅ بعد الإقفال: Revenue=0، Expenses=0، Net=0، 23 (أرباح محتجزة) +=33,855
+- ✅ جدار الحماية: 66 قيد متوازن، 100% health.
+
+
 
 **1. Auditor Integration (`/api/finance/audit-system`)**
 - New method `AccountingSystemAuditor.check_firewall_health(firewall_data)`:

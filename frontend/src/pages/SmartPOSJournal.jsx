@@ -1,583 +1,1095 @@
-/**
- * 💳 SmartPOSJournal — POS-style fast journal entry creation
- *
- * Comprehensive yet simple:
- *  • 6 quick templates (cash sale / cash expense / collect from customer /
- *    pay supplier / bank deposit / bank withdrawal).
- *  • Numpad-style amount input + sub-account picker + payment method + note.
- *  • Optional "Cart mode" for multi-item ticket (services/parts) that
- *    builds a balanced invoice journal entry.
- *  • Side panel: latest 5 entries with one-click "Copy" to re-use as template.
- *
- * Builds a balanced double-entry journal entry and POSTs to
- * /api/finance/journal-entries (Double-Entry Firewall enforces balance).
- */
-
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import {
   Banknote,
-  Building2,
-  CheckCircle2,
+  CarFront,
   Copy,
   CreditCard,
-  Delete,
   HandCoins,
   Landmark,
   Loader2,
   Plus,
   Save,
   ShoppingCart,
+  Sparkles,
   Trash2,
-  UserCheck,
+  UserRound,
   Wallet,
-  Wrench,
-  X,
 } from 'lucide-react';
 
-const formatSAR = (n) =>
-  new Intl.NumberFormat('ar-SA', {
+const formatSAR = (value) => (
+  `${new Intl.NumberFormat('ar-SA', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(Number(n) || 0) + ' ر.س';
+  }).format(Number(value) || 0)} ر.س`
+);
 
-// ----- Quick templates -----
-const TEMPLATES = [
+const normalizeArray = (value) => (Array.isArray(value) ? value.filter(Boolean) : []);
+
+const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+const roundAmount = (value) => Number((Number(value) || 0).toFixed(2));
+
+const extractToken = (text = '', token = '') => {
+  if (!token) return '';
+  const match = String(text || '').match(new RegExp(`\\[${token}:([^\\]]+)\\]`, 'i'));
+  return String(match?.[1] || '').trim();
+};
+
+const stripTokens = (text = '') => String(text || '')
+  .replace(/\[PARTY:[^\]]+\]/gi, '')
+  .replace(/\[PARTY_TYPE:[^\]]+\]/gi, '')
+  .replace(/\[VEHICLE_REF:[^\]]+\]/gi, '')
+  .replace(/\s{2,}/g, ' ')
+  .trim();
+
+const PAYMENT_METHODS = [
+  { key: 'cash', label: 'نقدي', icon: Banknote },
+  { key: 'bank', label: 'بنك / تحويل', icon: Landmark },
+  { key: 'pos', label: 'نقاط بيع', icon: CreditCard },
+];
+
+const TEMPLATE_META = [
+  {
+    key: 'instant_sale',
+    title: '⚡ بيع فوري',
+    desc: 'فاتورة سريعة ببنود متعددة وعميل ومركبة',
+    color: 'emerald',
+    transactionType: 'sale',
+    partyRole: 'customer',
+    paymentSide: 'debit',
+    counterAccountKey: 'salesRevenue',
+    supportsItems: true,
+    supportsVehicle: true,
+    requiresParty: false,
+    defaultPaymentMethod: 'cash',
+  },
   {
     key: 'cash_sale',
     title: '💵 بيع نقدي',
-    color: 'emerald',
-    desc: 'إيراد نقدي مباشر',
-    debitAccount: '003',
-    debitName: 'النقد',
-    creditAccount: '042',
-    creditName: 'إيراد قطع الورشة',
-    needsPaymentMethod: true,
+    desc: 'قيد بيع سريع بمبلغ مباشر',
+    color: 'sky',
+    transactionType: 'sale',
+    partyRole: 'customer',
+    paymentSide: 'debit',
+    counterAccountKey: 'salesRevenue',
+    supportsItems: true,
+    supportsVehicle: true,
+    requiresParty: false,
+    defaultPaymentMethod: 'cash',
   },
   {
     key: 'card_sale',
     title: '💳 بيع بنكي/بطاقة',
-    color: 'sky',
-    desc: 'إيراد عبر البنك أو POS',
-    debitAccount: '004',
-    debitName: 'البنك',
-    creditAccount: '042',
-    creditName: 'إيراد قطع الورشة',
-    needsPaymentMethod: false,
+    desc: 'تحصيل مباشر عبر البنك أو نقاط البيع',
+    color: 'cyan',
+    transactionType: 'sale',
+    partyRole: 'customer',
+    paymentSide: 'debit',
+    counterAccountKey: 'salesRevenue',
+    supportsItems: true,
+    supportsVehicle: true,
+    requiresParty: false,
+    defaultPaymentMethod: 'bank',
+  },
+  {
+    key: 'salary',
+    title: '👷 رواتب',
+    desc: 'صرف رواتب الموظفين أو الفنيين من نفس الشاشة',
+    color: 'amber',
+    transactionType: 'expense',
+    partyRole: null,
+    paymentSide: 'credit',
+    counterAccountKey: 'salaryExpense',
+    supportsItems: true,
+    supportsVehicle: false,
+    requiresParty: false,
+    defaultPaymentMethod: 'bank',
   },
   {
     key: 'cash_expense',
     title: '🧾 صرف نقدي',
+    desc: 'مصروف تشغيلي مباشر',
     color: 'rose',
-    desc: 'مصروف نقدي مباشر',
-    debitAccount: '035',
-    debitName: 'مصروفات تشغيلية',
-    creditAccount: '003',
-    creditName: 'النقد',
-    needsPaymentMethod: false,
+    transactionType: 'expense',
+    partyRole: null,
+    paymentSide: 'credit',
+    counterAccountKey: 'operatingExpense',
+    supportsItems: false,
+    supportsVehicle: false,
+    requiresParty: false,
+    defaultPaymentMethod: 'cash',
   },
   {
     key: 'collect_customer',
     title: '🤝 تحصيل من عميل',
-    color: 'amber',
-    desc: 'دفعة من عميل آجل',
-    debitAccount: '003',
-    debitName: 'النقد',
-    creditAccount: '005',
-    creditName: 'العملاء (ذمم مدينة)',
-    needsPaymentMethod: true,
+    desc: 'تسوية ذمم عميل مقابل نقد أو بنك',
+    color: 'violet',
+    transactionType: 'settlement',
+    partyRole: 'customer',
+    paymentSide: 'debit',
+    counterAccountKey: 'customers',
+    supportsItems: false,
+    supportsVehicle: true,
+    requiresParty: true,
+    defaultPaymentMethod: 'cash',
   },
   {
     key: 'pay_supplier',
     title: '📦 سداد لمورد',
-    color: 'violet',
-    desc: 'تسوية مع مورد',
-    debitAccount: '2101',
-    debitName: 'الموردون (ذمم دائنة)',
-    creditAccount: '003',
-    creditName: 'النقد',
-    needsPaymentMethod: true,
+    desc: 'سداد رصيد مورد من الصندوق أو البنك',
+    color: 'indigo',
+    transactionType: 'settlement',
+    partyRole: 'supplier',
+    paymentSide: 'credit',
+    counterAccountKey: 'suppliers',
+    supportsItems: false,
+    supportsVehicle: false,
+    requiresParty: true,
+    defaultPaymentMethod: 'cash',
   },
   {
     key: 'bank_deposit',
     title: '🏧 إيداع بنكي',
-    color: 'cyan',
-    desc: 'نقل من النقد للبنك',
-    debitAccount: '004',
-    debitName: 'البنك',
-    creditAccount: '003',
-    creditName: 'النقد',
-    needsPaymentMethod: false,
+    desc: 'نقل رصيد من النقد إلى البنك',
+    color: 'slate',
+    transactionType: 'manual',
+    partyRole: null,
+    paymentSide: 'static',
+    supportsItems: false,
+    supportsVehicle: false,
+    requiresParty: false,
+    defaultPaymentMethod: 'bank',
   },
 ];
 
-const PAYMENT_METHODS = [
-  { key: 'cash', label: 'نقدي', account: '003' },
-  { key: 'bank', label: 'بنك / بطاقة', account: '004' },
-  { key: 'pos', label: 'نقاط بيع', account: '006' },
-];
+const toneClasses = (color) => ({
+  emerald: { bg: 'from-emerald-500/20 to-teal-500/10', border: 'border-emerald-400/30', text: 'text-emerald-100', ring: 'ring-emerald-400/40' },
+  sky: { bg: 'from-sky-500/20 to-cyan-500/10', border: 'border-sky-400/30', text: 'text-sky-100', ring: 'ring-sky-400/40' },
+  cyan: { bg: 'from-cyan-500/20 to-blue-500/10', border: 'border-cyan-400/30', text: 'text-cyan-100', ring: 'ring-cyan-400/40' },
+  amber: { bg: 'from-amber-500/20 to-orange-500/10', border: 'border-amber-400/30', text: 'text-amber-100', ring: 'ring-amber-400/40' },
+  rose: { bg: 'from-rose-500/20 to-pink-500/10', border: 'border-rose-400/30', text: 'text-rose-100', ring: 'ring-rose-400/40' },
+  violet: { bg: 'from-violet-500/20 to-fuchsia-500/10', border: 'border-violet-400/30', text: 'text-violet-100', ring: 'ring-violet-400/40' },
+  indigo: { bg: 'from-indigo-500/20 to-blue-500/10', border: 'border-indigo-400/30', text: 'text-indigo-100', ring: 'ring-indigo-400/40' },
+  slate: { bg: 'from-slate-500/20 to-slate-400/10', border: 'border-slate-400/30', text: 'text-slate-100', ring: 'ring-slate-300/30' },
+}[color] || {
+  bg: 'from-slate-500/20 to-slate-400/10',
+  border: 'border-slate-400/30',
+  text: 'text-slate-100',
+  ring: 'ring-slate-300/30',
+});
 
-const toneClasses = (color) => {
-  const map = {
-    emerald: { bg: 'from-emerald-500/25 to-teal-500/15', border: 'border-emerald-400/30', text: 'text-emerald-100', active: 'ring-emerald-400/40' },
-    sky: { bg: 'from-sky-500/25 to-cyan-500/15', border: 'border-sky-400/30', text: 'text-sky-100', active: 'ring-sky-400/40' },
-    rose: { bg: 'from-rose-500/25 to-pink-500/15', border: 'border-rose-400/30', text: 'text-rose-100', active: 'ring-rose-400/40' },
-    amber: { bg: 'from-amber-500/25 to-orange-500/15', border: 'border-amber-400/30', text: 'text-amber-100', active: 'ring-amber-400/40' },
-    violet: { bg: 'from-violet-500/25 to-fuchsia-500/15', border: 'border-violet-400/30', text: 'text-violet-100', active: 'ring-violet-400/40' },
-    cyan: { bg: 'from-cyan-500/25 to-teal-500/15', border: 'border-cyan-400/30', text: 'text-cyan-100', active: 'ring-cyan-400/40' },
-  };
-  return map[color] || map.sky;
+const pickAccount = (accounts = [], candidates = [], fallback = { code: '', name: 'حساب' }) => {
+  const safeAccounts = normalizeArray(accounts);
+  for (const candidate of candidates) {
+    const hit = safeAccounts.find((account) => {
+      const code = String(account?.code || '').trim();
+      const name = normalizeText(account?.name_ar || account?.name);
+      if (candidate.codes?.length && candidate.codes.includes(code)) return true;
+      if (candidate.includesAll?.length && candidate.includesAll.every((part) => name.includes(normalizeText(part)))) return true;
+      if (candidate.includesAny?.length && candidate.includesAny.some((part) => name.includes(normalizeText(part)))) return true;
+      return false;
+    });
+    if (hit) {
+      return {
+        code: String(hit.code || fallback.code || '').trim(),
+        name: hit.name_ar || hit.name || fallback.name,
+      };
+    }
+  }
+  return fallback;
+};
+
+const buildVehicleLabel = (vehicle) => {
+  const plate = String(vehicle?.plateNumber || vehicle?.fileNumber || '').trim();
+  const customer = String(vehicle?.customerName || '').trim();
+  return [plate, customer].filter(Boolean).join(' — ');
 };
 
 export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], recentEntries = [], onSaved }) {
-  const [activeTemplate, setActiveTemplate] = useState(TEMPLATES[0]);
+  const [activeTemplateKey, setActiveTemplateKey] = useState('instant_sale');
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
-  const [debitOverride, setDebitOverride] = useState('');
-  const [creditOverride, setCreditOverride] = useState('');
+  const [partyName, setPartyName] = useState('');
+  const [partyId, setPartyId] = useState('');
+  const [vehicleRef, setVehicleRef] = useState('');
+  const [vehicleId, setVehicleId] = useState('');
+  const [items, setItems] = useState([]);
+  const [itemDraft, setItemDraft] = useState({ name: '', price: '', qty: 1, itemType: 'service' });
+  const [customers, setCustomers] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [parts, setParts] = useState([]);
+  const [services, setServices] = useState([]);
+  const [lookupsLoading, setLookupsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedToast, setSavedToast] = useState(null);
-  const [mode, setMode] = useState('template'); // 'template' | 'cart'
-  const [cart, setCart] = useState([]);
-  const [cartItem, setCartItem] = useState({ name: '', price: '', qty: 1 });
 
-  // Reset overrides when template changes
-  useEffect(() => {
-    setDebitOverride('');
-    setCreditOverride('');
-  }, [activeTemplate?.key]);
+  const accountRefs = useMemo(() => {
+    const cash = pickAccount(accounts, [
+      { codes: ['003'] },
+      { includesAll: ['النقد'] },
+      { includesAny: ['cash'] },
+    ], { code: '003', name: 'النقد' });
 
-  // Compute effective accounts (apply overrides + payment method)
-  const effective = useMemo(() => {
-    if (mode === 'cart') {
-      // Cart mode: debit cash/bank (based on payment method), credit revenue 042
-      const pm = PAYMENT_METHODS.find((m) => m.key === paymentMethod) || PAYMENT_METHODS[0];
-      const cartTotal = cart.reduce((sum, c) => sum + (Number(c.price) || 0) * (Number(c.qty) || 1), 0);
+    const bank = pickAccount(accounts, [
+      { codes: ['004'] },
+      { includesAll: ['البنك'] },
+      { includesAny: ['bank'] },
+    ], { code: '004', name: 'البنك' });
+
+    const pos = pickAccount(accounts, [
+      { codes: ['006'] },
+      { includesAll: ['نقاط', 'بيع'] },
+      { includesAny: ['pos'] },
+    ], bank);
+
+    const customersAccount = pickAccount(accounts, [
+      { codes: ['005'] },
+      { includesAll: ['العملاء'] },
+    ], { code: '005', name: 'العملاء (ذمم مدينة)' });
+
+    const suppliersAccount = pickAccount(accounts, [
+      { codes: ['2101'] },
+      { includesAny: ['المورد', 'supplier'] },
+    ], { code: '2101', name: 'الموردون (ذمم دائنة)' });
+
+    const salesRevenue = pickAccount(accounts, [
+      { codes: ['042'] },
+      { includesAll: ['إيراد', 'قطع'] },
+      { includesAll: ['ايراد', 'قطع'] },
+      { codes: ['026', '025'] },
+    ], { code: '042', name: 'إيراد قطع الورشة' });
+
+    const operatingExpense = pickAccount(accounts, [
+      { codes: ['035'] },
+      { includesAll: ['المصروفات', 'التشغيلية'] },
+      { includesAny: ['مصروفات تشغيلية'] },
+      { codes: ['036'] },
+    ], { code: '035', name: 'المصروفات التشغيلية' });
+
+    const salaryExpense = pickAccount(accounts, [
+      { codes: ['037'] },
+      { includesAll: ['رواتب'] },
+      { includesAny: ['أجور'] },
+      { codes: ['036', '035'] },
+    ], { code: '037', name: 'رواتب إدارية' });
+
+    return {
+      cash,
+      bank,
+      pos,
+      customers: customersAccount,
+      suppliers: suppliersAccount,
+      salesRevenue,
+      operatingExpense,
+      salaryExpense,
+    };
+  }, [accounts]);
+
+  const getPaymentAccount = (method) => {
+    if (method === 'bank') return accountRefs.bank;
+    if (method === 'pos') return accountRefs.pos;
+    return accountRefs.cash;
+  };
+
+  const templates = useMemo(() => TEMPLATE_META.map((template) => {
+    if (template.key === 'bank_deposit') {
       return {
-        debitAccount: pm.account,
-        debitName: pm.label,
-        creditAccount: '042',
-        creditName: 'إيراد قطع الورشة',
-        amount: cartTotal,
+        ...template,
+        debitAccount: accountRefs.bank,
+        creditAccount: accountRefs.cash,
       };
     }
-    const tpl = activeTemplate || TEMPLATES[0];
-    let dr = debitOverride || tpl.debitAccount;
-    let drName = tpl.debitName;
-    if (tpl.needsPaymentMethod) {
-      const pm = PAYMENT_METHODS.find((m) => m.key === paymentMethod);
-      if (pm) {
-        if (tpl.key === 'cash_sale' || tpl.key === 'collect_customer') {
-          dr = pm.account;
-          drName = pm.label;
-        } else if (tpl.key === 'pay_supplier') {
-          // Pay from selected payment account (cash/bank)
-          return {
-            debitAccount: tpl.debitAccount,
-            debitName: tpl.debitName,
-            creditAccount: pm.account,
-            creditName: pm.label,
-            amount: Number(amount) || 0,
-          };
-        }
-      }
-    }
-    const cr = creditOverride || tpl.creditAccount;
+
     return {
-      debitAccount: dr,
-      debitName: drName,
-      creditAccount: cr,
-      creditName: tpl.creditName,
-      amount: Number(amount) || 0,
+      ...template,
+      counterAccount: accountRefs[template.counterAccountKey],
     };
-  }, [activeTemplate, amount, paymentMethod, debitOverride, creditOverride, mode, cart]);
+  }), [accountRefs]);
+
+  const activeTemplate = templates.find((template) => template.key === activeTemplateKey) || templates[0];
+
+  useEffect(() => {
+    if (activeTemplate?.defaultPaymentMethod) {
+      setPaymentMethod(activeTemplate.defaultPaymentMethod);
+    }
+  }, [activeTemplate?.defaultPaymentMethod, activeTemplate?.key]);
+
+  useEffect(() => {
+    if (activeTemplate?.partyRole !== 'customer') {
+      setVehicleRef('');
+      setVehicleId('');
+    }
+    if (!activeTemplate?.partyRole) {
+      setPartyName('');
+      setPartyId('');
+    }
+  }, [activeTemplate?.partyRole]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadLookups = async () => {
+      setLookupsLoading(true);
+      try {
+        const [customersRes, suppliersRes, vehiclesRes, partsRes, servicesRes] = await Promise.all([
+          axios.get(`${apiBase}/customers`),
+          axios.get(`${apiBase}/suppliers`),
+          axios.get(`${apiBase}/vehicles`, { params: { limit: 150 } }),
+          axios.get(`${apiBase}/parts`, { params: { limit: 150 } }),
+          axios.get(`${apiBase}/services`, { params: { limit: 150 } }),
+        ]);
+
+        if (!mounted) return;
+        setCustomers(normalizeArray(customersRes?.data));
+        setSuppliers(normalizeArray(suppliersRes?.data));
+        setVehicles(normalizeArray(vehiclesRes?.data));
+        setParts(normalizeArray(partsRes?.data));
+        setServices(normalizeArray(servicesRes?.data));
+      } catch {
+        if (!mounted) return;
+        setCustomers([]);
+        setSuppliers([]);
+        setVehicles([]);
+        setParts([]);
+        setServices([]);
+      } finally {
+        if (mounted) setLookupsLoading(false);
+      }
+    };
+
+    loadLookups();
+    return () => {
+      mounted = false;
+    };
+  }, [apiBase]);
+
+  const partyOptions = activeTemplate?.partyRole === 'supplier' ? suppliers : customers;
+
+  const filteredVehicles = useMemo(() => {
+    if (activeTemplate?.partyRole !== 'customer') return [];
+    const normalizedPartyId = String(partyId || '').trim();
+    const normalizedPartyName = normalizeText(partyName);
+    let matches = normalizeArray(vehicles);
+
+    if (normalizedPartyId) {
+      const byId = matches.filter((vehicle) => String(vehicle?.customerId || '').trim() === normalizedPartyId);
+      if (byId.length > 0) matches = byId;
+    } else if (normalizedPartyName) {
+      matches = matches.filter((vehicle) => {
+        const joined = normalizeText([
+          vehicle?.customerName,
+          vehicle?.plateNumber,
+          vehicle?.fileNumber,
+        ].filter(Boolean).join(' '));
+        return joined.includes(normalizedPartyName);
+      });
+    }
+
+    return matches.slice(0, 60);
+  }, [activeTemplate?.partyRole, vehicles, partyId, partyName]);
+
+  const catalogItems = useMemo(() => {
+    const serviceRows = normalizeArray(services).map((service, index) => ({
+      id: service?.id || `service-${index}`,
+      name: String(service?.name || '').trim(),
+      itemType: 'service',
+      price: roundAmount(service?.price),
+      secondary: String(service?.category || 'خدمة').trim(),
+    }));
+
+    const partRows = normalizeArray(parts).map((part, index) => ({
+      id: part?.id || `part-${index}`,
+      name: String(part?.name || '').trim(),
+      itemType: 'part',
+      price: roundAmount(part?.sellingPrice || part?.purchasePrice),
+      secondary: String(part?.partNumber || part?.category || 'قطعة').trim(),
+    }));
+
+    return [...serviceRows, ...partRows].filter((item) => item.name);
+  }, [services, parts]);
+
+  const suggestedCatalogItems = useMemo(() => {
+    const query = normalizeText(itemDraft.name);
+    const source = query
+      ? catalogItems.filter((item) => normalizeText(`${item.name} ${item.secondary}`).includes(query))
+      : catalogItems;
+    return source.slice(0, 8);
+  }, [catalogItems, itemDraft.name]);
+
+  const itemsTotal = useMemo(
+    () => items.reduce((sum, item) => sum + (Number(item?.price) || 0) * (Number(item?.qty) || 1), 0),
+    [items]
+  );
+
+  const effectiveAmount = useMemo(() => {
+    if (activeTemplate?.supportsItems && itemsTotal > 0) {
+      return roundAmount(itemsTotal);
+    }
+    return roundAmount(amount);
+  }, [activeTemplate?.supportsItems, itemsTotal, amount]);
+
+  const effectiveEntry = useMemo(() => {
+    const paymentAccount = getPaymentAccount(paymentMethod);
+    if (!activeTemplate) {
+      return {
+        debitAccount: accountRefs.cash,
+        creditAccount: accountRefs.salesRevenue,
+      };
+    }
+
+    if (activeTemplate.key === 'bank_deposit') {
+      return {
+        debitAccount: activeTemplate.debitAccount,
+        creditAccount: activeTemplate.creditAccount,
+      };
+    }
+
+    if (activeTemplate.paymentSide === 'debit') {
+      return {
+        debitAccount: paymentAccount,
+        creditAccount: activeTemplate.counterAccount,
+      };
+    }
+
+    return {
+      debitAccount: activeTemplate.counterAccount,
+      creditAccount: paymentAccount,
+    };
+  }, [activeTemplate, accountRefs, paymentMethod]);
 
   const isValid = useMemo(() => {
-    if (mode === 'cart') return cart.length > 0 && effective.amount > 0;
-    return Number(amount) > 0;
-  }, [mode, cart, amount, effective.amount]);
+    if (!(effectiveAmount > 0)) return false;
+    if (activeTemplate?.requiresParty && !String(partyName || '').trim()) return false;
+    return true;
+  }, [effectiveAmount, activeTemplate?.requiresParty, partyName]);
 
-  // ----- Numpad -----
-  const appendDigit = (d) => {
-    setAmount((prev) => {
-      if (d === '.' && prev.includes('.')) return prev;
-      if (prev === '0' && d !== '.') return String(d);
-      return String(prev || '') + String(d);
+  const handlePartyChange = (value) => {
+    const match = partyOptions.find((row) => normalizeText(row?.name) === normalizeText(value));
+    setPartyName(match?.name || value);
+    setPartyId(match?.id || '');
+
+    if (activeTemplate?.partyRole === 'supplier') {
+      setVehicleRef('');
+      setVehicleId('');
+    }
+  };
+
+  const handleVehicleChange = (value) => {
+    const match = filteredVehicles.find((vehicle) => {
+      const label = buildVehicleLabel(vehicle);
+      return normalizeText(label) === normalizeText(value)
+        || normalizeText(vehicle?.plateNumber) === normalizeText(value)
+        || normalizeText(vehicle?.fileNumber) === normalizeText(value);
+    });
+
+    setVehicleRef(match?.plateNumber || match?.fileNumber || value);
+    setVehicleId(match?.id || '');
+    if (match?.customerName) {
+      setPartyName(match.customerName);
+      setPartyId(match?.customerId || '');
+    }
+  };
+
+  const appendDigit = (digit) => {
+    setAmount((previous) => {
+      if (digit === '.' && String(previous).includes('.')) return previous;
+      if (String(previous) === '0' && digit !== '.') return String(digit);
+      return `${previous || ''}${digit}`;
     });
   };
-  const backspaceAmount = () => setAmount((prev) => String(prev).slice(0, -1));
+
+  const backspaceAmount = () => setAmount((previous) => String(previous || '').slice(0, -1));
   const clearAmount = () => setAmount('');
 
-  // ----- Cart helpers -----
-  const addCartItem = () => {
-    const n = cartItem.name.trim();
-    const p = Number(cartItem.price);
-    const q = Number(cartItem.qty) || 1;
-    if (!n || !(p > 0)) return;
-    setCart((prev) => [...prev, { id: Date.now() + Math.random(), name: n, price: p, qty: q }]);
-    setCartItem({ name: '', price: '', qty: 1 });
+  const applyCatalogItem = (catalogItem) => {
+    setItemDraft((previous) => ({
+      ...previous,
+      name: catalogItem?.name || previous.name,
+      itemType: catalogItem?.itemType || previous.itemType,
+      price: String(catalogItem?.price ?? previous.price ?? ''),
+    }));
   };
-  const removeCartItem = (id) => setCart((prev) => prev.filter((c) => c.id !== id));
 
-  // ----- Save -----
+  const handleItemNameChange = (value) => {
+    const match = catalogItems.find((item) => normalizeText(item.name) === normalizeText(value));
+    setItemDraft((previous) => ({
+      ...previous,
+      name: value,
+      price: match ? String(match.price) : previous.price,
+      itemType: match?.itemType || previous.itemType,
+    }));
+  };
+
+  const addItem = () => {
+    const name = String(itemDraft.name || '').trim();
+    const price = roundAmount(itemDraft.price);
+    const qty = Math.max(1, Number(itemDraft.qty) || 1);
+    if (!name || !(price > 0)) return;
+
+    setItems((previous) => ([
+      ...previous,
+      {
+        id: `${Date.now()}-${Math.random()}`,
+        name,
+        price,
+        qty,
+        itemType: itemDraft.itemType || 'service',
+      },
+    ]));
+    setItemDraft({ name: '', price: '', qty: 1, itemType: 'service' });
+  };
+
+  const removeItem = (id) => {
+    setItems((previous) => previous.filter((item) => item.id !== id));
+  };
+
+  const resetFormAfterSave = () => {
+    setAmount('');
+    setNote('');
+    setPartyName('');
+    setPartyId('');
+    setVehicleRef('');
+    setVehicleId('');
+    setItems([]);
+    setItemDraft({ name: '', price: '', qty: 1, itemType: 'service' });
+  };
+
   const handleSave = async () => {
     if (!isValid || saving) return;
     setSaving(true);
     setSavedToast(null);
-    try {
-      const totalAmount = Number(effective.amount.toFixed(2));
-      const description =
-        mode === 'cart'
-          ? `فاتورة سريعة — ${cart.map((c) => `${c.name}×${c.qty}`).join('، ')}`
-          : `${activeTemplate?.title || 'قيد'} — ${note || ''}`.trim();
 
-      const entry = {
+    try {
+      const cleanPartyName = String(partyName || '').trim();
+      const cleanVehicleRef = String(vehicleRef || '').trim();
+      const itemSummary = items.map((item) => `${item.name}×${item.qty}`).join('، ');
+      const descriptionParts = [
+        activeTemplate?.title || 'قيد ذكي',
+        itemSummary,
+        note,
+      ].filter(Boolean);
+
+      const description = [
+        descriptionParts.join(' — '),
+        cleanPartyName ? `[PARTY:${cleanPartyName}] [PARTY_TYPE:${activeTemplate?.partyRole || 'open'}]` : '',
+        cleanVehicleRef ? `[VEHICLE_REF:${cleanVehicleRef}]` : '',
+      ].filter(Boolean).join(' ').trim();
+
+      const total = roundAmount(effectiveAmount);
+      const payload = {
         date: new Date().toISOString().slice(0, 10),
         description,
-        transaction_type: mode === 'cart' ? 'invoice' : 'manual',
-        source: mode === 'cart' ? 'pos_cart' : 'pos_template',
-        total: totalAmount,
+        transaction_type: activeTemplate?.transactionType || 'manual',
+        source: activeTemplate?.key === 'instant_sale' ? 'pos_instant_sale' : 'pos_template',
+        total,
+        reference_id: vehicleId || partyId || undefined,
         lines: [
           {
-            account: effective.debitAccount,
-            account_name: effective.debitName,
-            debit: totalAmount,
+            account: effectiveEntry.debitAccount?.code,
+            account_name: effectiveEntry.debitAccount?.name,
+            debit: total,
             credit: 0,
           },
           {
-            account: effective.creditAccount,
-            account_name: effective.creditName,
+            account: effectiveEntry.creditAccount?.code,
+            account_name: effectiveEntry.creditAccount?.name,
             debit: 0,
-            credit: totalAmount,
+            credit: total,
           },
         ],
       };
 
-      const res = await axios.post(
-        `${apiBase}/finance/journal-entries`,
-        entry,
-        { params: { workshop_id: workshopId } }
-      );
+      const response = await axios.post(`${apiBase}/finance/journal-entries`, payload, {
+        params: { workshop_id: workshopId },
+      });
 
-      if (res?.data?.success || res?.data?.id) {
-        setSavedToast({ ok: true, id: res.data.id, total: totalAmount });
-        // Reset
-        setAmount('');
-        setNote('');
-        setCart([]);
-        if (typeof onSaved === 'function') onSaved(res.data);
+      if (response?.data?.success || response?.data?.id) {
+        resetFormAfterSave();
+        setSavedToast({ ok: true, total });
+        if (typeof onSaved === 'function') onSaved(response.data);
       } else {
-        setSavedToast({ ok: false, error: 'استجابة غير متوقعة' });
+        setSavedToast({ ok: false, error: 'استجابة غير متوقعة من الخادم' });
       }
-    } catch (err) {
+    } catch (error) {
       setSavedToast({
         ok: false,
-        error: err?.response?.data?.detail || err?.message || 'فشل الحفظ',
+        error: error?.response?.data?.detail || error?.response?.data?.message || error?.message || 'تعذر حفظ القيد',
       });
     } finally {
       setSaving(false);
-      setTimeout(() => setSavedToast(null), 4500);
+      window.setTimeout(() => setSavedToast(null), 4500);
     }
   };
 
-  // ----- Copy from a recent entry -----
   const copyFromRecent = (entry) => {
-    const lines = entry?.lines || [];
-    const debitLine = lines.find((l) => Number(l.debit) > 0);
-    const creditLine = lines.find((l) => Number(l.credit) > 0);
+    const lines = normalizeArray(entry?.lines);
+    const debitLine = lines.find((line) => Number(line?.debit) > 0);
+    const creditLine = lines.find((line) => Number(line?.credit) > 0);
     if (!debitLine || !creditLine) return;
-    const total = Number(entry.total || debitLine.debit || 0);
-    setMode('template');
-    // Find matching template (best-effort)
-    const tpl = TEMPLATES.find(
-      (t) => t.debitAccount === debitLine.account && t.creditAccount === creditLine.account
-    );
-    if (tpl) setActiveTemplate(tpl);
-    setDebitOverride(debitLine.account);
-    setCreditOverride(creditLine.account);
-    setAmount(String(total));
-    setNote(String(entry.description || ''));
+
+    const paymentAccountByCode = {
+      [accountRefs.cash.code]: 'cash',
+      [accountRefs.bank.code]: 'bank',
+      [accountRefs.pos.code]: 'pos',
+    };
+
+    let templateKey = 'cash_sale';
+    if (debitLine.account === accountRefs.suppliers.code) templateKey = 'pay_supplier';
+    else if (creditLine.account === accountRefs.customers.code) templateKey = 'collect_customer';
+    else if (debitLine.account === accountRefs.salaryExpense.code) templateKey = 'salary';
+    else if (debitLine.account === accountRefs.operatingExpense.code) templateKey = 'cash_expense';
+    else if (debitLine.account === accountRefs.bank.code && creditLine.account === accountRefs.cash.code) templateKey = 'bank_deposit';
+    else if (creditLine.account === accountRefs.salesRevenue.code) {
+      templateKey = stripTokens(entry?.description || '').includes('فاتورة') ? 'instant_sale' : 'cash_sale';
+    }
+
+    setActiveTemplateKey(templateKey);
+    setPaymentMethod(paymentAccountByCode[debitLine.account] || paymentAccountByCode[creditLine.account] || 'cash');
+    setAmount(String(roundAmount(entry?.total || debitLine?.debit || creditLine?.credit || 0)));
+    setNote(stripTokens(entry?.description || ''));
+    setPartyName(extractToken(entry?.description || '', 'PARTY'));
+    setVehicleRef(extractToken(entry?.description || '', 'VEHICLE_REF'));
+    setItems([]);
   };
 
-  const tone = toneClasses(activeTemplate?.color || 'sky');
+  const tone = toneClasses(activeTemplate?.color || 'slate');
+  const showItemsSection = Boolean(activeTemplate?.supportsItems);
+  const showPartyField = Boolean(activeTemplate?.partyRole);
+  const showVehicleField = Boolean(activeTemplate?.supportsVehicle);
+  const showPaymentMethods = activeTemplate?.paymentSide !== 'static';
 
   return (
-    <div className="space-y-4" dir="rtl" data-testid="pos-journal-root">
-      {/* Mode toggle */}
-      <div className="flex items-center gap-2" data-testid="pos-mode-toggle">
-        <button
-          type="button"
-          onClick={() => setMode('template')}
-          data-testid="pos-mode-template-button"
-          className={`px-4 py-2 rounded-xl text-sm border transition ${
-            mode === 'template'
-              ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-50'
-              : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-          }`}
+    <div className="space-y-5" dir="rtl" data-testid="pos-journal-root">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-black text-white" data-testid="pos-journal-title">الـ POS الذكي</h2>
+          <p className="text-sm text-slate-300 max-w-2xl" data-testid="pos-journal-subtitle">
+            شاشة واحدة لإنشاء بيع فوري ورواتب وتسويات سريعة مع حقول العميل والمركبة والبنود.
+          </p>
+        </div>
+
+        <div
+          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300"
+          data-testid="pos-lookups-status"
         >
-          <Wallet size={14} className="inline-block ml-1" />
-          قوالب سريعة
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('cart')}
-          data-testid="pos-mode-cart-button"
-          className={`px-4 py-2 rounded-xl text-sm border transition ${
-            mode === 'cart'
-              ? 'bg-violet-500/20 border-violet-400/40 text-violet-50'
-              : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-          }`}
-        >
-          <ShoppingCart size={14} className="inline-block ml-1" />
-          سلة كاشير
-        </button>
+          {lookupsLoading ? 'جاري تحميل العملاء والمركبات والبنود...' : `جاهز: ${customers.length} عميل · ${vehicles.length} مركبة · ${catalogItems.length} بند`}
+        </div>
       </div>
 
-      {mode === 'template' ? (
-        <>
-          {/* Template grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2" data-testid="pos-templates-grid">
-            {TEMPLATES.map((tpl) => {
-              const tt = toneClasses(tpl.color);
-              const active = tpl.key === activeTemplate?.key;
-              return (
-                <button
-                  key={tpl.key}
-                  type="button"
-                  onClick={() => setActiveTemplate(tpl)}
-                  data-testid={`pos-template-${tpl.key}`}
-                  className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br p-3 text-right transition ${tt.bg} ${tt.border} ${tt.text} ${
-                    active ? `ring-2 ${tt.active}` : 'opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <div className="text-lg font-bold">{tpl.title}</div>
-                  <div className="text-[11px] opacity-80 mt-0.5">{tpl.desc}</div>
-                </button>
-              );
-            })}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3" data-testid="pos-templates-grid">
+        {templates.map((template) => {
+          const templateTone = toneClasses(template.color);
+          const isActive = template.key === activeTemplate?.key;
+          return (
+            <button
+              key={template.key}
+              type="button"
+              onClick={() => setActiveTemplateKey(template.key)}
+              data-testid={`pos-template-${template.key}`}
+              className={`rounded-[22px] border bg-gradient-to-br p-4 text-right transition ${templateTone.bg} ${templateTone.border} ${templateTone.text} ${isActive ? `ring-2 ${templateTone.ring}` : 'opacity-80 hover:opacity-100'}`}
+            >
+              <div className="text-lg font-bold leading-tight">{template.title}</div>
+              <div className="mt-1 text-xs opacity-80 leading-6">{template.desc}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.4fr)_360px] gap-4 items-start">
+        <div className="space-y-4">
+          <div className={`rounded-[28px] border bg-gradient-to-br ${tone.bg} ${tone.border} p-5`} data-testid="pos-amount-display">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.25em] text-slate-300/80 mb-2">إجمالي الحركة</div>
+                <div className={`text-4xl sm:text-5xl lg:text-6xl font-black tabular-nums ${tone.text}`} data-testid="pos-amount-value">
+                  {formatSAR(effectiveAmount)}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-slate-100" data-testid="pos-entry-accounts">
+                  مدين {effectiveEntry.debitAccount?.code} ↔ دائن {effectiveEntry.creditAccount?.code}
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-slate-100" data-testid="pos-items-count">
+                  البنود: {items.length}
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-slate-100" data-testid="pos-selected-party">
+                  الطرف: {partyName || 'مفتوح'}
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-slate-100" data-testid="pos-selected-vehicle">
+                  المركبة: {vehicleRef || 'غير محددة'}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm text-slate-200">
+              <div className="rounded-2xl border border-white/10 bg-black/15 px-4 py-3">
+                <div className="text-xs text-slate-400 mb-1">الحساب المدين</div>
+                <div className="font-semibold">{effectiveEntry.debitAccount?.code} · {effectiveEntry.debitAccount?.name}</div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/15 px-4 py-3">
+                <div className="text-xs text-slate-400 mb-1">الحساب الدائن</div>
+                <div className="font-semibold">{effectiveEntry.creditAccount?.code} · {effectiveEntry.creditAccount?.name}</div>
+              </div>
+            </div>
           </div>
-        </>
-      ) : (
-        <>
-          {/* Cart builder */}
-          <div className="rounded-2xl border border-violet-400/30 bg-violet-500/5 p-3 space-y-3" data-testid="pos-cart-builder">
-            <div className="grid grid-cols-12 gap-2">
+
+          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {showPartyField ? (
+                <div>
+                  <label className="mb-2 block text-sm text-slate-200">
+                    {activeTemplate?.partyRole === 'supplier' ? 'المورد' : 'العميل'}
+                  </label>
+                  <div className="relative">
+                    <UserRound className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                      type="text"
+                      value={partyName}
+                      list={`pos-party-options-${activeTemplate?.partyRole || 'open'}`}
+                      onChange={(event) => handlePartyChange(event.target.value)}
+                      placeholder={activeTemplate?.partyRole === 'supplier' ? 'اختر مورد أو اكتب الاسم' : 'اختر عميل أو اكتب الاسم'}
+                      data-testid="pos-party-input"
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950/40 py-3 pr-10 pl-4 text-sm text-slate-100 outline-none transition focus:border-cyan-400/50"
+                    />
+                    <datalist id={`pos-party-options-${activeTemplate?.partyRole || 'open'}`}>
+                      {partyOptions.map((party, index) => (
+                        <option key={party?.id || `party-${index}`} value={party?.name || ''} />
+                      ))}
+                    </datalist>
+                  </div>
+                </div>
+              ) : null}
+
+              {showVehicleField ? (
+                <div>
+                  <label className="mb-2 block text-sm text-slate-200">المركبة</label>
+                  <div className="relative">
+                    <CarFront className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                      type="text"
+                      value={vehicleRef}
+                      list="pos-vehicle-options"
+                      onChange={(event) => handleVehicleChange(event.target.value)}
+                      placeholder="اختر مركبة أو اكتب رقم اللوحة"
+                      data-testid="pos-vehicle-input"
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950/40 py-3 pr-10 pl-4 text-sm text-slate-100 outline-none transition focus:border-cyan-400/50"
+                    />
+                    <datalist id="pos-vehicle-options">
+                      {filteredVehicles.map((vehicle, index) => (
+                        <option key={vehicle?.id || `vehicle-${index}`} value={buildVehicleLabel(vehicle)} />
+                      ))}
+                    </datalist>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm text-slate-200">المبلغ اليدوي</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                placeholder={showItemsSection ? 'اختياري — يُستخدم عند عدم وجود بنود' : 'أدخل المبلغ'}
+                data-testid="pos-amount-input"
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-lg tabular-nums text-slate-100 outline-none transition focus:border-cyan-400/50"
+              />
+              {showItemsSection && items.length > 0 ? (
+                <p className="mt-2 text-xs text-emerald-200" data-testid="pos-items-total-hint">
+                  يتم اعتماد مجموع البنود تلقائياً: {formatSAR(itemsTotal)}
+                </p>
+              ) : null}
+            </div>
+
+            {showPaymentMethods ? (
+              <div>
+                <label className="mb-2 block text-sm text-slate-200">طريقة الدفع</label>
+                <div className="flex flex-wrap gap-2" data-testid="pos-payment-method-row">
+                  {PAYMENT_METHODS.map((method) => {
+                    const Icon = method.icon;
+                    const isActive = paymentMethod === method.key;
+                    return (
+                      <button
+                        key={method.key}
+                        type="button"
+                        onClick={() => setPaymentMethod(method.key)}
+                        data-testid={`pos-payment-method-${method.key}`}
+                        className={`rounded-full border px-4 py-2 text-sm transition ${isActive ? 'border-cyan-400/40 bg-cyan-500/20 text-cyan-50' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
+                      >
+                        <Icon size={14} className="inline-block ml-1" />
+                        {method.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            <div>
+              <label className="mb-2 block text-sm text-slate-200">ملاحظة</label>
               <input
                 type="text"
-                placeholder="اسم الخدمة/القطعة"
-                value={cartItem.name}
-                onChange={(e) => setCartItem((s) => ({ ...s, name: e.target.value }))}
-                className="col-span-6 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-slate-100 placeholder:text-slate-500"
-                data-testid="pos-cart-item-name"
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                placeholder="مثال: دفعة فورية / راتب أبريل / تحصيل فاتورة"
+                data-testid="pos-note-input"
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-400/50"
               />
-              <input
-                type="number"
-                placeholder="السعر"
-                value={cartItem.price}
-                onChange={(e) => setCartItem((s) => ({ ...s, price: e.target.value }))}
-                className="col-span-3 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-slate-100 placeholder:text-slate-500 tabular-nums"
-                data-testid="pos-cart-item-price"
-              />
-              <input
-                type="number"
-                min="1"
-                placeholder="الكمية"
-                value={cartItem.qty}
-                onChange={(e) => setCartItem((s) => ({ ...s, qty: e.target.value }))}
-                className="col-span-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-slate-100 placeholder:text-slate-500 tabular-nums"
-                data-testid="pos-cart-item-qty"
-              />
-              <button
-                type="button"
-                onClick={addCartItem}
-                disabled={!cartItem.name || !Number(cartItem.price)}
-                data-testid="pos-cart-add-item"
-                className="col-span-1 rounded-lg bg-violet-500/30 border border-violet-300/40 text-violet-50 disabled:opacity-40 flex items-center justify-center"
-              >
-                <Plus size={16} />
-              </button>
             </div>
-            {cart.length === 0 ? (
-              <div className="text-xs text-slate-400 text-center py-4">السلة فارغة — أضف خدمات/قطع لبناء الفاتورة</div>
-            ) : (
-              <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                {cart.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg bg-white/5 px-3 py-2 text-xs" data-testid="pos-cart-row">
-                    <div className="flex-1 truncate text-slate-100">{c.name}</div>
-                    <div className="text-slate-400 tabular-nums">{c.qty} × {formatSAR(c.price)}</div>
-                    <div className="text-emerald-200 font-semibold tabular-nums">{formatSAR((Number(c.price) || 0) * (Number(c.qty) || 1))}</div>
-                    <button onClick={() => removeCartItem(c.id)} className="text-rose-300 hover:text-rose-200">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </>
-      )}
 
-      {/* Amount + Numpad + Payment + Save */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="lg:col-span-2 space-y-3">
-          {/* Amount display */}
-          <div className={`rounded-2xl border bg-gradient-to-br ${tone.bg} ${tone.border} p-4`} data-testid="pos-amount-display">
-            <div className="text-[10px] uppercase tracking-wider text-slate-300/80 mb-1">المبلغ</div>
-            <div className={`text-4xl lg:text-5xl font-black tabular-nums ${tone.text}`} data-testid="pos-amount-value">
-              {mode === 'cart' ? formatSAR(effective.amount) : (amount ? formatSAR(amount) : '٠٫٠٠ ر.س')}
-            </div>
-            <div className="mt-2 text-[11px] text-slate-300/80 flex flex-wrap gap-x-2">
-              <span>مدين: <span className="font-mono">{effective.debitAccount}</span> · {effective.debitName}</span>
-              <span>↔</span>
-              <span>دائن: <span className="font-mono">{effective.creditAccount}</span> · {effective.creditName}</span>
-            </div>
-          </div>
-
-          {/* Numpad — only for template mode */}
-          {mode === 'template' ? (
             <div className="grid grid-cols-4 gap-2" data-testid="pos-numpad">
-              {['7', '8', '9', 'C', '4', '5', '6', '⌫', '1', '2', '3', '.', '0', '00', '000', 'OK'].map((k) => {
-                const isAction = ['C', '⌫', 'OK'].includes(k);
-                const handler = () => {
-                  if (k === 'C') return clearAmount();
-                  if (k === '⌫') return backspaceAmount();
-                  if (k === 'OK') return handleSave();
-                  return appendDigit(k);
+              {['7', '8', '9', 'C', '4', '5', '6', '⌫', '1', '2', '3', '.', '0', '00', '000', 'OK'].map((key) => {
+                const handleClick = () => {
+                  if (key === 'C') return clearAmount();
+                  if (key === '⌫') return backspaceAmount();
+                  if (key === 'OK') return handleSave();
+                  return appendDigit(key);
                 };
+
                 return (
                   <button
-                    key={k}
+                    key={key}
                     type="button"
-                    onClick={handler}
-                    disabled={k === 'OK' && (!isValid || saving)}
-                    data-testid={`pos-numpad-${k === '⌫' ? 'backspace' : k === '.' ? 'dot' : k.toLowerCase()}`}
-                    className={`h-12 rounded-xl text-lg font-bold tabular-nums transition ${
-                      k === 'OK'
-                        ? 'bg-emerald-500/30 border border-emerald-300/40 text-emerald-50 disabled:opacity-40 col-span-1'
-                        : k === 'C'
-                        ? 'bg-rose-500/15 border border-rose-300/30 text-rose-100'
-                        : k === '⌫'
-                        ? 'bg-amber-500/15 border border-amber-300/30 text-amber-100'
-                        : 'bg-white/5 border border-white/10 text-slate-100 hover:bg-white/10'
-                    }`}
+                    onClick={handleClick}
+                    disabled={key === 'OK' && (!isValid || saving)}
+                    data-testid={`pos-numpad-${key === '⌫' ? 'backspace' : key === '.' ? 'dot' : key.toLowerCase()}`}
+                    className={`h-12 rounded-2xl border text-lg font-bold transition ${key === 'OK' ? 'border-emerald-300/40 bg-emerald-500/30 text-emerald-50 disabled:opacity-40' : key === 'C' ? 'border-rose-300/30 bg-rose-500/15 text-rose-100' : key === '⌫' ? 'border-amber-300/30 bg-amber-500/15 text-amber-100' : 'border-white/10 bg-white/5 text-slate-100 hover:bg-white/10'}`}
                   >
-                    {k === '⌫' ? <Delete size={18} className="inline-block" /> : k}
+                    {key}
                   </button>
                 );
               })}
             </div>
-          ) : null}
+          </div>
 
-          {/* Payment method (when applicable) */}
-          {(activeTemplate?.needsPaymentMethod || mode === 'cart') ? (
-            <div className="flex items-center gap-2" data-testid="pos-payment-method-row">
-              <span className="text-xs text-slate-400">طريقة الدفع:</span>
-              {PAYMENT_METHODS.map((m) => (
-                <button
-                  key={m.key}
-                  type="button"
-                  onClick={() => setPaymentMethod(m.key)}
-                  data-testid={`pos-payment-method-${m.key}`}
-                  className={`px-3 py-1.5 rounded-full text-xs border ${
-                    paymentMethod === m.key
-                      ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-50'
-                      : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
-                  }`}
-                >
-                  {m.key === 'cash' ? <Banknote size={12} className="inline-block ml-1" /> : null}
-                  {m.key === 'bank' ? <Landmark size={12} className="inline-block ml-1" /> : null}
-                  {m.key === 'pos' ? <CreditCard size={12} className="inline-block ml-1" /> : null}
-                  {m.label}
-                </button>
-              ))}
+          {showItemsSection ? (
+            <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 space-y-4" data-testid="pos-items-section">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-white font-semibold">
+                    <ShoppingCart size={16} />
+                    البنود
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    تم دمج سلة الكاشير داخل هذا القسم — أضف خدمات أو قطع أو بنود رواتب ثم احفظ مباشرة.
+                  </p>
+                </div>
+
+                <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-slate-200" data-testid="pos-items-total-badge">
+                  إجمالي البنود: {formatSAR(itemsTotal)}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+                <div className="md:col-span-2">
+                  <select
+                    value={itemDraft.itemType}
+                    onChange={(event) => setItemDraft((previous) => ({ ...previous, itemType: event.target.value }))}
+                    data-testid="pos-item-type-select"
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-400/50"
+                  >
+                    <option value="service">خدمة</option>
+                    <option value="part">قطعة</option>
+                    <option value="custom">مخصص</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-5">
+                  <input
+                    type="text"
+                    value={itemDraft.name}
+                    list="pos-item-catalog"
+                    onChange={(event) => handleItemNameChange(event.target.value)}
+                    placeholder={activeTemplate?.key === 'salary' ? 'اسم الموظف أو البدل' : 'اسم الخدمة أو القطعة'}
+                    data-testid="pos-item-name-input"
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-400/50"
+                  />
+                  <datalist id="pos-item-catalog">
+                    {catalogItems.map((item) => (
+                      <option key={item.id} value={item.name} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div className="md:col-span-2">
+                  <input
+                    type="number"
+                    value={itemDraft.price}
+                    onChange={(event) => setItemDraft((previous) => ({ ...previous, price: event.target.value }))}
+                    placeholder="السعر"
+                    data-testid="pos-item-price-input"
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm tabular-nums text-slate-100 outline-none transition focus:border-cyan-400/50"
+                  />
+                </div>
+
+                <div className="md:col-span-1">
+                  <input
+                    type="number"
+                    min="1"
+                    value={itemDraft.qty}
+                    onChange={(event) => setItemDraft((previous) => ({ ...previous, qty: event.target.value }))}
+                    placeholder="1"
+                    data-testid="pos-item-qty-input"
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm tabular-nums text-slate-100 outline-none transition focus:border-cyan-400/50"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    disabled={!itemDraft.name || !(roundAmount(itemDraft.price) > 0)}
+                    data-testid="pos-item-add-button"
+                    className="flex h-full w-full items-center justify-center gap-2 rounded-2xl border border-emerald-300/40 bg-emerald-500/25 px-4 py-3 text-sm font-semibold text-emerald-50 transition disabled:opacity-40"
+                  >
+                    <Plus size={16} />
+                    إضافة
+                  </button>
+                </div>
+              </div>
+
+              {suggestedCatalogItems.length > 0 ? (
+                <div className="flex flex-wrap gap-2" data-testid="pos-item-suggestions-row">
+                  {suggestedCatalogItems.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => applyCatalogItem(item)}
+                      data-testid={`pos-item-suggestion-${item.id}`}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
+                    >
+                      <Sparkles size={12} className="inline-block ml-1" />
+                      {item.name} · {formatSAR(item.price)}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              {items.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-4 py-6 text-center text-sm text-slate-400" data-testid="pos-items-empty-state">
+                  لا توجد بنود بعد — أضف البنود ليُحسب الإجمالي تلقائياً.
+                </div>
+              ) : (
+                <div className="space-y-2" data-testid="pos-items-list">
+                  {items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/15 px-4 py-3"
+                      data-testid={`pos-item-row-${item.id}`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-slate-100">{item.name}</div>
+                        <div className="text-xs text-slate-400">{item.itemType === 'part' ? 'قطعة' : item.itemType === 'custom' ? 'مخصص' : 'خدمة'} · {item.qty} × {formatSAR(item.price)}</div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="text-sm font-semibold tabular-nums text-emerald-200">{formatSAR(item.price * item.qty)}</div>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.id)}
+                          data-testid={`pos-item-remove-${item.id}`}
+                          className="rounded-full border border-rose-300/30 bg-rose-500/10 p-2 text-rose-100 transition hover:bg-rose-500/20"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : null}
 
-          {/* Note */}
-          {mode === 'template' ? (
-            <input
-              type="text"
-              placeholder="ملاحظة (اختياري)"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              data-testid="pos-note-input"
-              className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-slate-100 placeholder:text-slate-500"
-            />
-          ) : null}
-
-          {/* Big Save button (mainly for cart, since numpad has OK for templates) */}
-          {mode === 'cart' ? (
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!isValid || saving}
-              data-testid="pos-save-button"
-              className="w-full h-12 rounded-xl bg-emerald-500/30 hover:bg-emerald-500/40 border border-emerald-300/40 text-emerald-50 font-semibold disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              {saving ? 'جاري الحفظ...' : `حفظ القيد (${formatSAR(effective.amount)})`}
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!isValid || saving}
+            data-testid="pos-save-button"
+            className="flex w-full items-center justify-center gap-2 rounded-[24px] border border-emerald-300/40 bg-emerald-500/30 px-4 py-4 text-base font-bold text-emerald-50 transition hover:bg-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+            {saving ? 'جاري حفظ القيد...' : `حفظ القيد الآن (${formatSAR(effectiveAmount)})`}
+          </button>
 
           {savedToast ? (
             <div
               data-testid="pos-save-toast"
-              className={`rounded-xl border p-3 text-sm ${
-                savedToast.ok
-                  ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-100'
-                  : 'bg-rose-500/10 border-rose-400/30 text-rose-100'
-              }`}
+              className={`rounded-2xl border px-4 py-3 text-sm ${savedToast.ok ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}`}
             >
-              {savedToast.ok ? (
-                <span className="flex items-center gap-2">
-                  <CheckCircle2 size={16} />
-                  تم حفظ قيد بقيمة {formatSAR(savedToast.total)}
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <X size={16} />
-                  {savedToast.error}
-                </span>
-              )}
+              {savedToast.ok ? `تم حفظ القيد المتوازن بنجاح بقيمة ${formatSAR(savedToast.total)}` : savedToast.error}
             </div>
           ) : null}
         </div>
 
-        {/* Side: Recent entries */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-3" data-testid="pos-recent-entries-panel">
-          <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2 flex items-center gap-2">
-            <HandCoins size={12} />
+        <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4" data-testid="pos-recent-entries-panel">
+          <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+            <HandCoins size={14} />
             آخر القيود
           </div>
-          {(recentEntries || []).length === 0 ? (
-            <div className="text-xs text-slate-500 text-center py-4">لا توجد قيود سابقة</div>
+
+          {normalizeArray(recentEntries).length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-4 py-8 text-center text-sm text-slate-500" data-testid="pos-recent-entries-empty">
+              لا توجد قيود سابقة للنسخ.
+            </div>
           ) : (
-            <ul className="space-y-1.5 max-h-[480px] overflow-y-auto">
-              {(recentEntries || []).slice(0, 5).map((e, idx) => (
-                <li key={e?.id || idx} className="rounded-lg border border-white/10 bg-white/5 p-2 text-xs" data-testid="pos-recent-entry-row">
-                  <div className="flex items-center justify-between">
-                    <div className="text-slate-200 truncate flex-1" title={e?.description}>
-                      {e?.description || '—'}
+            <div className="space-y-2 max-h-[720px] overflow-y-auto pr-1">
+              {normalizeArray(recentEntries).slice(0, 5).map((entry, index) => (
+                <div
+                  key={entry?.id || `recent-${index}`}
+                  className="rounded-2xl border border-white/10 bg-black/15 p-3"
+                  data-testid={`pos-recent-entry-row-${entry?.id || index}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-slate-100" title={entry?.description || ''}>
+                        {stripTokens(entry?.description || 'قيد')}
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
+                        <span>{entry?.date || ''}</span>
+                        <span>·</span>
+                        <span>{formatSAR(entry?.total)}</span>
+                      </div>
                     </div>
+
                     <button
                       type="button"
-                      onClick={() => copyFromRecent(e)}
-                      data-testid="pos-recent-entry-copy"
-                      className="shrink-0 text-cyan-300 hover:text-cyan-100"
-                      title="نسخ"
+                      onClick={() => copyFromRecent(entry)}
+                      data-testid={`pos-recent-entry-copy-${entry?.id || index}`}
+                      className="rounded-full border border-cyan-300/30 bg-cyan-500/10 p-2 text-cyan-100 transition hover:bg-cyan-500/20"
                     >
-                      <Copy size={13} />
+                      <Copy size={14} />
                     </button>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-[11px]">
-                    <span className="text-emerald-200 tabular-nums">{formatSAR(e?.total)}</span>
-                    <span className="text-slate-400">{e?.date || ''}</span>
+
+                  <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-slate-300">
+                    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                      الطرف: {extractToken(entry?.description || '', 'PARTY') || 'مفتوح'}
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                      المركبة: {extractToken(entry?.description || '', 'VEHICLE_REF') || 'غير محددة'}
+                    </div>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
+
+          <div className="mt-4 rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-cyan-950/40 p-4" data-testid="pos-smart-summary-panel">
+            <div className="mb-2 flex items-center gap-2 text-white font-semibold">
+              <Wallet size={16} />
+              ملخص الذكاء الحالي
+            </div>
+            <ul className="space-y-2 text-sm text-slate-300 leading-7">
+              <li>• البيع الفوري والبيع النقدي أصبحا في نفس الشاشة.</li>
+              <li>• تمت إضافة قالب رواتب وربط العميل/المركبة والبنود.</li>
+              <li>• الحفظ يرسل قيداً متوازناً مباشرة إلى دفتر اليومية.</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

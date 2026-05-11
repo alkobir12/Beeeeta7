@@ -532,6 +532,35 @@
   - منع ردود "تقرير/كشف"
   - ظهور قسم المركبات وزر الإضافة الجديدة.
 
+### Test Data Cleanup + Full Pages Smoke Test (10 May 2026)
+
+**طلب المستخدم:**
+- حذف جميع البيانات الاختبارية/التجريبية، بما يشمل: الحسابات، الخدمات، القطع، وباقي الجداول.
+- ثم اختبار كل الصفحات.
+
+**التنظيف المنفذ (Supabase):**
+- تم حذف البيانات التي تطابق كلمات تجريبية مثل:
+  - test/demo/dummy/sample/qa
+  - اختبار/تجريبي
+  - BOT_TEMPLATE / BOT_CREATE
+
+**نتيجة التنظيف (counts):**
+- `vehicle_visits`: deleted 34
+- `operations`: deleted 13
+- `journal_entries`: deleted 4
+- `customers`: deleted 6
+- `services`: 0 matched
+- `parts`: 0 matched
+- `accounts`: 0 matched
+- `vehicles`: 0 matched
+- `suppliers`: جدول غير موجود في schema الحالي (PGRST205)
+
+**اختبار شامل بعد التنظيف:**
+- تقرير: `/app/test_reports/iteration_185.json`
+- Frontend smoke/integration: **100% PASS**
+- الصفحات المختبرة: operations, vehicle details, suppliers, debts follow-up, journal entries, inventory, vehicles
+- Unified Bot: PASS على كل التبويبات والفتح/الإغلاق.
+
 ### P1: Auto-Linking + Contradiction Engine + Escalation Workflow (26 Apr 2026)
 
 **3 محركات جديدة في `routes_finance_bot.py`:**

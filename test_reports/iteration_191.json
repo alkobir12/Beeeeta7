@@ -1,0 +1,34 @@
+{
+  "summary": "Regression test for templates extraction refactor (Jan 2026 — ~640 lines moved from routes_extended.py to routes_templates_extended.py + 16 test records cleanup). Backend: 13/13 pytest assertions PASS. All moved endpoints respond on their original URL paths (GET /api/invoice-templates returns 200, POST /api/print/render renders placeholders correctly with Ahmed/1500, POST /api/templates accepted). Firewall status returns total_entries=63 and balance_health_percent=100.0 as expected. All extended endpoints not moved still respond 200 (operations/pending, operations, biz-accounts, accounts, accounts/tree, vehicles, finance/reports/trial-balance). Double-entry firewall still rejects unbalanced 100/50 entries with 400 and lifetime_rejections counter increments. Frontend: /accounting/firewall renders all stat cards including firewall-stat-health (100%, 63/63) and firewall-stat-rejections (1). /accounting/journal-entries loads with 0 JS errors. Sidebar link '🛡️ جدار حماية المحاسبة' is present and visible. NO REGRESSIONS DETECTED — refactor is safe.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_templates_refactor_regression.py",
+    "/app/test_reports/pytest/refactor_regression.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes_templates_extended.py (670 lines) — clean extraction; both modules expose `router` and `set_db` symmetrically (good).",
+    "Potential URL conflict noted: /api/templates exists in BOTH routes_templates.py and routes_templates_extended.py. routes_templates.py wins by FastAPI include order, which matches the documented intent. Consider adding a comment in routes_templates_extended.py near the @router.get('/templates') decorator to record this so future devs do not accidentally remove the routes_templates.py duplicate.",
+    "firewall_state is still in-memory only (counters reset on backend restart) — existing observation from iter 190; not affected by this refactor.",
+    "Pre-existing 500s on /api/coa/tree and /api/print/resolve-template (when db is None) were NOT exercised in this regression run since DB_PROVIDER=supabase is active and supabase client is bound; they are documented as pre-existing in the request context."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_templates_refactor_regression.py (created — 13 tests)"
+  ],
+  "success_rate": {"backend": "100% (13/13)", "frontend": "100% (firewall page + journal-entries page + sidebar link)"},
+  "test_credentials": "Username: مدير (no password). Workshop: finmodule-sync.",
+  "seed_data_creation": "Created 1 rejected unbalanced journal entry TEST_refactor_regression_unbalanced_v2 (verified visible in firewall recent_rejections panel). Created 1 throwaway template named TEST_refactor_regression_template.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Refactor regression suite at /app/backend/tests/test_templates_refactor_regression.py is now part of regression baseline — re-run it after any future split of routes_extended.py. Firewall status payload shape: response.summary.total_entries / response.summary.balance_health_percent / response.summary.lifetime_rejections — note: NOT at top level. POST /api/finance/journal-entries requires workshop_id as a QUERY parameter.",
+  "rca of the issue": "No issues found. Initial 3 pytest failures were test-assertion shape mismatches (I asserted top-level total_entries/health keys; actual response wraps them under `summary`). Fixed assertions and all 13 tests pass. Refactor itself is clean — no URL regressions, no broken integrations."
+}

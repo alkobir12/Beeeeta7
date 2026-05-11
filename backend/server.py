@@ -44,6 +44,7 @@ from unified_document_service import create_unified_document_routes
 
 # Import extended routes
 from routes_extended import router as extended_router, set_db as set_db_extended
+from routes_templates_extended import router as templates_extended_router, set_db as set_db_templates_extended
 from routes_advanced import router as advanced_router, set_db as set_db_advanced
 
 # Import Import Routes
@@ -323,6 +324,7 @@ set_db_injectors(db)
 set_db_gemini_chat(db)
 set_db_payroll(db)
 set_db_extended(db)
+set_db_templates_extended(db)
 set_db_advanced(db)
 set_db_finance(db)
 set_db_invoices(db)
@@ -524,6 +526,7 @@ app.include_router(cleanup_router)
 app.include_router(whatsapp_bot_router)
 app.include_router(smart_inventory_router)
 app.include_router(extended_router)
+app.include_router(templates_extended_router)
 app.include_router(advanced_router)
 app.include_router(finance_router)
 app.include_router(finance_bot_router)

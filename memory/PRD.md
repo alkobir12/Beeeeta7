@@ -29,6 +29,34 @@
 
 ## What's Been Implemented
 
+### 🧹 Test Data Cleanup + 🧩 Templates Router Extraction (11 Feb 2026)
+
+**Cleanup:**
+- اكتشاف الجداول الفعلية في Supabase (suppliers غير موجود — مدمج مع customers/business_accounts).
+- حذف **16 سجل اختبار** نظيف عبر `/app/backend/scripts/cleanup_test_data_feb2026.py`:
+  - 15 قيد يومية (TEST-PRECISION × 10, TEST-SALE × 1, DEMO_FIREWALL × 4)
+  - 1 عملية شراء تجريبية (DEMO-IDEMP)
+- ✅ post-cleanup: journal_entries 78→63، operations 70→69، balance health 100%.
+
+**Refactoring — Templates Domain Extraction:**
+- Extracted lines 7999-8640 of `routes_extended.py` into new module `routes_templates_extended.py`.
+- Moved domains (~640 سطر):
+  - `/api/templates` GET/POST/DELETE + `/templates/{id}/make-default` + `/templates/{id}/apply-to-all`
+  - `/api/print/render`, `/api/print/resolve-template`, `/api/print/invoice-xlsx`
+  - `/api/invoice-templates` (GET list/single, POST create-blank, PUT, DELETE soft, design, save-json, save-named, auto-save, update-mapping, make-default)
+  - `/api/public-agent/chat` (+ **fixed** missing `LlmChat`/`UserMessage` import using local lazy import)
+- Wired in `server.py` via `templates_extended_router` + `set_db_templates_extended(db)`.
+- **No URL path changes** — fully backwards-compatible.
+- `routes_extended.py`: 8,639 → **7,998 lines** (-7.4%, -641 lines).
+- New file `routes_templates_extended.py`: **670 lines** (clean & self-contained).
+
+**Verification:**
+- Backend restart: ✅ all routers loaded.
+- Smoke test (curl): `/api/templates`, `/api/invoice-templates`, `/api/print/render`, `/api/firewall/status`, `/api/operations`, `/api/accounts`, `/api/vehicles`, `/api/finance/reports/trial-balance` → all HTTP 200.
+- Pre-existing 500s (`/api/coa/tree`, `/api/print/resolve-template` in non-mongo path) are **not regressions** — they were broken in master before the refactor.
+
+
+
 ### 🛡️ Accounting Firewall Dashboard (11 Feb 2026)
 
 **طلب المستخدم:** بناء لوحة جدار حماية المحاسبة لعرض حالة الحماية لحظياً.
@@ -785,8 +813,14 @@
 ## Prioritized Backlog
 
 ### P1 (Next)
-- تنظيف بيانات الاختبار المتبقية بأسماء جداول Supabase الصحيحة (بدون كسر القيود).
 - Auto-map لعبارة «من قطع راكان» إلى الحساب `042` داخل بطاقات إنشاء Unified Bot.
+
+### Refactoring (in progress)
+- ✅ Templates domain extracted from routes_extended.py (642 lines → routes_templates_extended.py).
+- ⏳ Settings/Profile section (~300 lines) — candidate for next extraction from routes_extended.py.
+- ⏳ Approvals section (~500 lines) — candidate for next extraction from routes_extended.py.
+- ⏳ Accounts/COA section (~1100 lines) — candidate for next extraction from routes_extended.py.
+- ⏳ server.py: 43 inline endpoints (vehicles/customers/services/parts/suppliers/technicians) — deeply coupled with globals; needs careful extraction with shared deps module.
 
 ### P2
 - OCR / التحقق من المستندات المرفوعة في البوت المالي.

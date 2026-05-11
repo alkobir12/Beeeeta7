@@ -124,6 +124,93 @@ class AccountingSystemAuditor:
         
         return consistency_report
     
+    def check_firewall_health(self, firewall_data: Dict) -> Dict:
+        """
+        🛡️ فحص حالة جدار حماية المحاسبة في الوقت الفعلي.
+        يحلل: قيود غير متوازنة، رفضيات، ضربات منع تكرار، انحراف عشري.
+        """
+        report = {
+            "status": "ok",
+            "issues": [],
+            "warnings": [],
+            "metrics": {},
+        }
+
+        try:
+            summary = (firewall_data or {}).get("summary", {}) or {}
+            drift = (firewall_data or {}).get("drift", {}) or {}
+
+            total = int(summary.get("total_entries") or 0)
+            balanced = int(summary.get("balanced_entries") or 0)
+            unbalanced_db = int(summary.get("unbalanced_entries_in_db") or 0)
+            rejections = int(summary.get("lifetime_rejections") or 0)
+            idemp_hits = int(summary.get("lifetime_idempotency_hits") or 0)
+            cogs_count = int(summary.get("cogs_entries") or 0)
+            cogs_total = float(summary.get("cogs_total_amount") or 0)
+            health_pct = float(summary.get("balance_health_percent") or 100.0)
+            max_drift = float(drift.get("max") or 0)
+            threshold = float(drift.get("threshold") or 0.009)
+
+            report["metrics"] = {
+                "total_entries": total,
+                "balanced_entries": balanced,
+                "unbalanced_entries_in_db": unbalanced_db,
+                "balance_health_percent": health_pct,
+                "lifetime_rejections": rejections,
+                "lifetime_idempotency_hits": idemp_hits,
+                "cogs_entries": cogs_count,
+                "cogs_total_amount": cogs_total,
+                "max_drift": max_drift,
+                "drift_threshold": threshold,
+            }
+
+            # CRITICAL: any unbalanced entry persisted in DB is a red flag
+            if unbalanced_db > 0:
+                msg = f"❌ يوجد {unbalanced_db} قيد(قيود) غير متوازنة في قاعدة البيانات"
+                self.log_audit(msg, "ERROR")
+                report["issues"].append(msg)
+                self.corrections_needed.append({
+                    "issue": "قيود تسربت غير متوازنة",
+                    "count": unbalanced_db,
+                    "suggestion": "افتح لوحة جدار الحماية وادرس كل قيد مكسور؛ الجدار يجب أن يرفض كل قيد غير متوازن.",
+                })
+
+            # CRITICAL: precision drift above tolerance
+            if max_drift > threshold:
+                msg = f"❌ انحراف عشري عبر العتبة: {max_drift:.6f} > {threshold:.4f}"
+                self.log_audit(msg, "ERROR")
+                report["issues"].append(msg)
+
+            # WARNING: high rejection volume (likely user/UX problem)
+            if rejections >= 20:
+                msg = f"⚠️ رفضيات مرتفعة هذه الجلسة: {rejections}"
+                self.log_audit(msg, "WARNING")
+                report["warnings"].append(msg)
+                self.corrections_needed.append({
+                    "issue": "رفضيات مرتفعة",
+                    "details": f"{rejections} قيود غير متوازنة رُفضت",
+                    "suggestion": "راجع نموذج إدخال القيود؛ المستخدمون يدخلون قيوداً غير متوازنة بكثرة.",
+                })
+
+            # INFO: COGS coverage (just observe)
+            if cogs_count == 0 and total > 5:
+                msg = "ℹ️ لا توجد قيود COGS رغم وجود حركة قيود"
+                report["warnings"].append(msg)
+
+            # OK
+            if not report["issues"] and not report["warnings"]:
+                self.log_audit("✅ جدار حماية المحاسبة سليم تماماً", "SUCCESS")
+                report["status"] = "ok"
+            elif report["issues"]:
+                report["status"] = "critical"
+            else:
+                report["status"] = "warning"
+        except Exception as e:
+            self.log_audit(f"❌ خطأ في فحص جدار الحماية: {e}", "ERROR")
+            report["error"] = str(e)
+            report["status"] = "error"
+        return report
+
     def run_comprehensive_audit(self, financial_data: Dict) -> Dict:
         """
         تشغيل تدقيق شامل للنظام المحاسبي
@@ -159,11 +246,16 @@ class AccountingSystemAuditor:
                     financial_data['cash_flow']
                 )
                 audit_report["details"]["consistency_analysis"] = consistency
-            
-            # 3. حساب درجة الصحة النهائية
+
+            # 3. 🛡️ فحص جدار حماية المحاسبة (Firewall Health)
+            if 'firewall' in financial_data:
+                firewall_check = self.check_firewall_health(financial_data['firewall'])
+                audit_report["details"]["firewall_check"] = firewall_check
+
+            # 4. حساب درجة الصحة النهائية
             audit_report["health_score"] = max(0, min(100, self.system_health_score))
-            
-            # 4. إنشاء الملخص
+
+            # 5. إنشاء الملخص
             audit_report["summary"] = {
                 "total_issues": len(self.detected_issues),
                 "corrections_needed": len(self.corrections_needed),

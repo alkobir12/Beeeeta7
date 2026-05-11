@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { resolveBackendBase } from '../utils/backendBase';
 import axios from 'axios';
 import {
@@ -15,6 +16,13 @@ import {
   Zap,
   TrendingDown,
   FlaskConical,
+  Stethoscope,
+  Bot,
+  Download,
+  Settings,
+  Bell,
+  Clipboard,
+  X,
 } from 'lucide-react';
 
 const API_URL = (
@@ -122,7 +130,28 @@ const PanelCard = ({ title, icon: Icon, tone = 'sky', children, testid, action }
   );
 };
 
+const SETTINGS_KEY = 'firewallPanelSettings.v1';
+const DEFAULT_SETTINGS = {
+  rejectionAlertThreshold: 10,   // toast when lifetime_rejections crosses this
+  healthAlertPercent: 99,         // toast when health < X%
+  refreshIntervalSec: 15,
+  enableAlerts: true,
+};
+const loadSettings = () => {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return { ...DEFAULT_SETTINGS };
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch (e) {
+    return { ...DEFAULT_SETTINGS };
+  }
+};
+const saveSettings = (s) => {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (e) { /* noop */ }
+};
+
 export default function FirewallPanel() {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -130,6 +159,13 @@ export default function FirewallPanel() {
   const [refreshedAt, setRefreshedAt] = useState(null);
   const [demoRunning, setDemoRunning] = useState(false);
   const [demoLog, setDemoLog] = useState([]);
+  const [settings, setSettings] = useState(loadSettings);
+  const [showSettings, setShowSettings] = useState(false);
+  const [auditRunning, setAuditRunning] = useState(false);
+  const [auditResult, setAuditResult] = useState(null);
+  const [pulseTick, setPulseTick] = useState(0);
+  const [toast, setToast] = useState(null);
+  const [showRejectionDetail, setShowRejectionDetail] = useState(null);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -139,6 +175,7 @@ export default function FirewallPanel() {
       });
       setData(res.data || null);
       setRefreshedAt(new Date());
+      setPulseTick((t) => t + 1);
     } catch (err) {
       setError(err?.response?.data?.detail || err?.message || 'تعذر تحميل البيانات');
     } finally {
@@ -152,9 +189,110 @@ export default function FirewallPanel() {
 
   useEffect(() => {
     if (!autoRefresh) return undefined;
-    const id = setInterval(fetchStatus, 15000);
+    const ms = Math.max(5, Number(settings.refreshIntervalSec) || 15) * 1000;
+    const id = setInterval(fetchStatus, ms);
     return () => clearInterval(id);
-  }, [autoRefresh, fetchStatus]);
+  }, [autoRefresh, fetchStatus, settings.refreshIntervalSec]);
+
+  // 🔔 Alert engine — fire a transient toast when thresholds cross
+  useEffect(() => {
+    if (!settings.enableAlerts || !data?.summary) return;
+    const s = data.summary;
+    const rej = Number(s.lifetime_rejections || 0);
+    const hp = Number(s.balance_health_percent ?? 100);
+    if (rej >= Number(settings.rejectionAlertThreshold || 9999)) {
+      setToast({
+        tone: 'warning',
+        title: 'تنبيه: رفضيات مرتفعة',
+        body: `تجاوز عدد الرفضيات الحد (${rej} ≥ ${settings.rejectionAlertThreshold})`,
+      });
+    } else if (hp < Number(settings.healthAlertPercent || 0)) {
+      setToast({
+        tone: 'critical',
+        title: 'تنبيه: تراجع سلامة التوازن',
+        body: `نسبة السلامة ${hp.toFixed(2)}% < ${settings.healthAlertPercent}%`,
+      });
+    }
+  }, [data?.summary, settings]);
+
+  useEffect(() => { saveSettings(settings); }, [settings]);
+
+  // Auto-dismiss toast after 6s
+  useEffect(() => {
+    if (!toast) return undefined;
+    const id = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  // 🩺 Run live audit and link it back to the firewall
+  const runAuditNow = async () => {
+    if (auditRunning) return;
+    setAuditRunning(true);
+    setAuditResult(null);
+    try {
+      const res = await axios.post(`${API_URL}/finance/audit-system`, null, {
+        params: { workshop_id: WORKSHOP_ID },
+      });
+      setAuditResult(res.data?.data || null);
+    } catch (err) {
+      setAuditResult({ error: err?.response?.data?.detail || err?.message });
+    } finally {
+      setAuditRunning(false);
+    }
+  };
+
+  // 📥 Export rejections as CSV
+  const exportRejectionsCSV = () => {
+    const rows = data?.recent_rejections || [];
+    if (rows.length === 0) {
+      setToast({ tone: 'info', title: 'لا توجد رفضيات للتصدير', body: '' });
+      return;
+    }
+    const header = ['الوقت', 'السبب', 'مدين', 'دائن', 'انحراف', 'الوصف', 'المصدر'];
+    const csv = [
+      header.join(','),
+      ...rows.map((r) => [
+        r.ts || '',
+        r.reason || '',
+        r.debit || 0,
+        r.credit || 0,
+        r.drift || 0,
+        (r.description || '').replace(/,/g, '،').replace(/\n/g, ' '),
+        r.source || '',
+      ].map((v) => `"${String(v)}"`).join(',')),
+    ].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `firewall-rejections-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  // 📋 Copy a one-line status report to clipboard
+  const copyStatusReport = async () => {
+    const s = data?.summary || {};
+    const text = [
+      `🛡️ تقرير جدار حماية المحاسبة`,
+      `الوقت: ${new Date().toLocaleString('ar-SA')}`,
+      `إجمالي القيود: ${s.total_entries || 0}`,
+      `سلامة التوازن: ${s.balance_health_percent || 100}%`,
+      `قيود مكسورة في DB: ${s.unbalanced_entries_in_db || 0}`,
+      `رفضيات الجلسة: ${s.lifetime_rejections || 0}`,
+      `ضربات منع التكرار: ${s.lifetime_idempotency_hits || 0}`,
+      `قيود COGS: ${s.cogs_entries || 0} (${formatCurrency(s.cogs_total_amount || 0)})`,
+      `أقصى انحراف: ${data?.drift?.max || 0}`,
+    ].join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      setToast({ tone: 'success', title: 'تم النسخ', body: 'التقرير الآن في الحافظة.' });
+    } catch (e) {
+      setToast({ tone: 'critical', title: 'فشل النسخ', body: String(e) });
+    }
+  };
 
   const summary = data?.summary || {};
   const drift = data?.drift || {};
@@ -322,11 +460,230 @@ export default function FirewallPanel() {
                 onChange={(e) => setAutoRefresh(e.target.checked)}
                 className="accent-emerald-500"
               />
-              تحديث تلقائي (15ث)
+              تحديث تلقائي ({settings.refreshIntervalSec}ث)
+              {autoRefresh ? (
+                <span
+                  key={pulseTick}
+                  data-testid="firewall-live-pulse"
+                  className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"
+                />
+              ) : null}
             </label>
+            <button
+              data-testid="firewall-settings-button"
+              onClick={() => setShowSettings((v) => !v)}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-sm transition"
+            >
+              <Settings className="w-4 h-4" />
+              الإعدادات
+            </button>
           </div>
         </div>
       </div>
+
+      {/* 🔔 Toast */}
+      {toast ? (
+        <div
+          data-testid="firewall-toast"
+          className={`fixed top-6 left-6 z-50 max-w-md rounded-xl border p-3 shadow-2xl backdrop-blur-xl ${
+            toast.tone === 'critical'
+              ? 'bg-rose-500/15 border-rose-400/40 text-rose-100'
+              : toast.tone === 'warning'
+              ? 'bg-amber-500/15 border-amber-400/40 text-amber-100'
+              : toast.tone === 'success'
+              ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-100'
+              : 'bg-sky-500/15 border-sky-400/40 text-sky-100'
+          }`}
+        >
+          <div className="flex items-start gap-2">
+            <Bell className="w-4 h-4 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <div className="text-sm font-semibold">{toast.title}</div>
+              {toast.body ? <div className="text-xs opacity-80 mt-1">{toast.body}</div> : null}
+            </div>
+            <button
+              data-testid="firewall-toast-close"
+              onClick={() => setToast(null)}
+              className="opacity-70 hover:opacity-100"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ⚙️ Settings Panel (collapsible) */}
+      {showSettings ? (
+        <div
+          data-testid="firewall-settings-panel"
+          className="rounded-2xl border border-violet-400/30 bg-violet-500/10 backdrop-blur-xl p-4 md:p-5 mb-5"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Settings className="w-4 h-4 text-violet-300" />
+            <h3 className="text-sm font-semibold text-violet-100">إعدادات لوحة الحماية والتنبيهات</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs text-slate-200">
+            <label className="flex flex-col gap-1">
+              <span>عتبة تنبيه الرفضيات</span>
+              <input
+                data-testid="firewall-setting-rejection-threshold"
+                type="number"
+                min="1"
+                value={settings.rejectionAlertThreshold}
+                onChange={(e) =>
+                  setSettings((s) => ({ ...s, rejectionAlertThreshold: Number(e.target.value) || 0 }))
+                }
+                className="rounded-lg bg-white/5 border border-white/10 px-2 py-1.5"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span>حد سلامة التوازن (٪)</span>
+              <input
+                data-testid="firewall-setting-health-percent"
+                type="number"
+                min="50"
+                max="100"
+                value={settings.healthAlertPercent}
+                onChange={(e) =>
+                  setSettings((s) => ({ ...s, healthAlertPercent: Number(e.target.value) || 0 }))
+                }
+                className="rounded-lg bg-white/5 border border-white/10 px-2 py-1.5"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span>فاصل التحديث (ث)</span>
+              <input
+                data-testid="firewall-setting-refresh-interval"
+                type="number"
+                min="5"
+                max="600"
+                value={settings.refreshIntervalSec}
+                onChange={(e) =>
+                  setSettings((s) => ({ ...s, refreshIntervalSec: Number(e.target.value) || 15 }))
+                }
+                className="rounded-lg bg-white/5 border border-white/10 px-2 py-1.5"
+              />
+            </label>
+            <label className="flex items-end gap-2">
+              <input
+                data-testid="firewall-setting-enable-alerts"
+                type="checkbox"
+                checked={settings.enableAlerts}
+                onChange={(e) => setSettings((s) => ({ ...s, enableAlerts: e.target.checked }))}
+                className="accent-violet-400 w-4 h-4"
+              />
+              <span>تفعيل التنبيهات</span>
+            </label>
+          </div>
+        </div>
+      ) : null}
+
+      {/* 🔗 Quick Actions — wires the panel to Auditor + Financial Assistant */}
+      <div
+        data-testid="firewall-quick-actions"
+        className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-4 mb-5"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs uppercase tracking-wider text-slate-400 ml-2">
+            إجراءات سريعة:
+          </span>
+          <button
+            data-testid="firewall-run-audit-button"
+            onClick={runAuditNow}
+            disabled={auditRunning}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-emerald-100 text-xs font-medium transition disabled:opacity-50"
+          >
+            <Stethoscope className={`w-4 h-4 ${auditRunning ? 'animate-pulse' : ''}`} />
+            {auditRunning ? 'جارٍ التدقيق...' : 'تشغيل تدقيق المحاسبة'}
+          </button>
+          <button
+            data-testid="firewall-open-assistant-button"
+            onClick={() => navigate('/ai-financial')}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-100 text-xs font-medium transition"
+          >
+            <Bot className="w-4 h-4" />
+            افتح المساعد المالي
+          </button>
+          <button
+            data-testid="firewall-export-csv-button"
+            onClick={exportRejectionsCSV}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs transition"
+          >
+            <Download className="w-4 h-4" />
+            تصدير الرفضيات CSV
+          </button>
+          <button
+            data-testid="firewall-copy-report-button"
+            onClick={copyStatusReport}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 text-xs transition"
+          >
+            <Clipboard className="w-4 h-4" />
+            نسخ تقرير الحالة
+          </button>
+        </div>
+      </div>
+
+      {/* 🩺 Audit Result Card */}
+      {auditResult ? (
+        <div
+          data-testid="firewall-audit-result-card"
+          className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 backdrop-blur-xl p-4 md:p-5 mb-5"
+        >
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2 text-emerald-200">
+              <Stethoscope className="w-4 h-4" />
+              <h3 className="text-sm font-semibold">نتيجة التدقيق المحاسبي</h3>
+            </div>
+            <button
+              data-testid="firewall-audit-result-close"
+              onClick={() => setAuditResult(null)}
+              className="text-slate-400 hover:text-slate-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          {auditResult.error ? (
+            <div className="text-rose-200 text-sm" data-testid="firewall-audit-error">
+              ❌ {String(auditResult.error)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="rounded-lg bg-white/5 border border-white/10 p-3">
+                <div className="text-slate-400 mb-1">درجة الصحة</div>
+                <div className="text-2xl font-bold text-emerald-200">
+                  {auditResult.health_score ?? 0}
+                </div>
+              </div>
+              <div className="rounded-lg bg-white/5 border border-white/10 p-3">
+                <div className="text-slate-400 mb-1">حالة الجدار من التدقيق</div>
+                <div className="text-base font-semibold text-slate-100" data-testid="firewall-audit-fw-status">
+                  {auditResult?.details?.firewall_check?.status || '—'}
+                </div>
+              </div>
+              <div className="rounded-lg bg-white/5 border border-white/10 p-3">
+                <div className="text-slate-400 mb-1">الحكم النهائي</div>
+                <div className="text-xs text-slate-200">
+                  {auditResult?.summary?.final_verdict || '—'}
+                </div>
+              </div>
+              {(auditResult?.details?.firewall_check?.issues || []).length > 0 ? (
+                <div className="sm:col-span-3 rounded-lg bg-rose-500/10 border border-rose-400/30 p-3 text-rose-100 text-xs space-y-1">
+                  {(auditResult.details.firewall_check.issues || []).map((m, i) => (
+                    <div key={i}>{m}</div>
+                  ))}
+                </div>
+              ) : null}
+              {(auditResult?.details?.firewall_check?.warnings || []).length > 0 ? (
+                <div className="sm:col-span-3 rounded-lg bg-amber-500/10 border border-amber-400/30 p-3 text-amber-100 text-xs space-y-1">
+                  {(auditResult.details.firewall_check.warnings || []).map((m, i) => (
+                    <div key={i}>{m}</div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
+      ) : null}
 
       {error ? (
         <div
@@ -427,10 +784,12 @@ export default function FirewallPanel() {
           ) : (
             <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
               {(data?.recent_rejections || []).map((r, idx) => (
-                <div
+                <button
                   key={idx}
+                  type="button"
                   data-testid="firewall-rejection-row"
-                  className="rounded-lg border border-rose-400/20 bg-rose-500/5 p-3 text-xs"
+                  onClick={() => setShowRejectionDetail(r)}
+                  className="w-full text-right rounded-lg border border-rose-400/20 bg-rose-500/5 hover:bg-rose-500/10 p-3 text-xs transition"
                 >
                   <div className="flex items-center justify-between text-rose-200">
                     <span className="font-semibold">{r.reason || 'unbalanced'}</span>
@@ -457,7 +816,7 @@ export default function FirewallPanel() {
                       {r.description}
                     </div>
                   ) : null}
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -584,6 +943,60 @@ export default function FirewallPanel() {
           )}
         </PanelCard>
       </div>
+
+      {/* 🔍 Rejection Detail Modal */}
+      {showRejectionDetail ? (
+        <div
+          data-testid="firewall-rejection-detail-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowRejectionDetail(null)}
+        >
+          <div
+            className="max-w-lg w-full rounded-2xl border border-rose-400/40 bg-slate-900/95 p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 text-rose-200">
+                <ShieldAlert className="w-5 h-5" />
+                <h3 className="text-sm font-bold">تفاصيل القيد المرفوض</h3>
+              </div>
+              <button
+                data-testid="firewall-rejection-detail-close"
+                onClick={() => setShowRejectionDetail(null)}
+                className="text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <pre
+              data-testid="firewall-rejection-detail-json"
+              dir="ltr"
+              className="text-[11px] font-mono bg-black/40 text-slate-200 p-3 rounded-lg overflow-auto max-h-[60vh] whitespace-pre-wrap break-all"
+            >
+              {JSON.stringify(showRejectionDetail, null, 2)}
+            </pre>
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(
+                      JSON.stringify(showRejectionDetail, null, 2)
+                    );
+                    setToast({ tone: 'success', title: 'تم النسخ' });
+                  } catch (e) {
+                    /* noop */
+                  }
+                }}
+                data-testid="firewall-rejection-detail-copy"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-slate-200"
+              >
+                <Clipboard className="w-3.5 h-3.5" />
+                نسخ JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

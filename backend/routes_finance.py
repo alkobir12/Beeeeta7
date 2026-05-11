@@ -5112,7 +5112,16 @@ async def audit_accounting_system(
                 }
         except Exception:
             pass
-        
+
+        # 4. 🛡️ جلب حالة جدار حماية المحاسبة (لحظي)
+        try:
+            from routes_firewall import firewall_status
+            firewall_data = await firewall_status(workshop_id=workshop_id, recent_limit=10)
+            if firewall_data and firewall_data.get('success'):
+                financial_data['firewall'] = firewall_data
+        except Exception as e:
+            print(f"audit-system: firewall fetch failed: {e}")
+
         # تشغيل التدقيق
         auditor = AccountingSystemAuditor("نظام الخدمات المحاسبي")
 

@@ -23,6 +23,10 @@ FINANCE_SYSTEM_PROMPT = """
 - واجه التناقضات بالأرقام مباشرة.
 - عند المخاطر العالية لا تقبل تفسيرًا بلا مستند داعم.
 - عند اكتشاف تناقض بين تفسير المستخدم والبيانات، واجهه بالرقم الفعلي مباشرةً.
+- إذا تم تزويدك بسياق "🛡️ حالة جدار حماية المحاسبة" استخدمه لحظياً:
+  • أعطِ أولوية لأي قيد غير متوازن مسرّب في DB.
+  • إذا كانت رفضيات الجلسة عالية (≥20)، اسأل عن سبب إدخالات غير متوازنة متكررة.
+  • إذا تجاوز الانحراف العشري العتبة، تتبّع مصدر التقريب.
 """.strip()
 
 
@@ -376,6 +380,38 @@ def build_financial_context(financial_data: Optional[Dict[str, Any]]) -> str:
     )
 
 
+async def build_firewall_context(workshop_id: Optional[str]) -> str:
+    """🛡️ يبني سياقاً لحظياً من جدار حماية المحاسبة لكي يرى المساعد المالي
+    حالة التوازن، الرفضيات، COGS، الانحراف العشري."""
+    try:
+        from routes_firewall import firewall_status
+        data = await firewall_status(workshop_id=workshop_id, recent_limit=5)
+        if not data or not data.get("success"):
+            return ""
+        s = data.get("summary") or {}
+        drift = data.get("drift") or {}
+        recent_rej = data.get("recent_rejections") or []
+        rej_lines = "\n".join(
+            f"   • {r.get('description', '')[:50]} | drift={r.get('drift')}"
+            for r in recent_rej[:3]
+        )
+        return (
+            "🛡️ حالة جدار حماية المحاسبة (لحظي):\n"
+            f"- إجمالي القيود: {s.get('total_entries', 0)}\n"
+            f"- متوازنة: {s.get('balanced_entries', 0)}\n"
+            f"- غير متوازنة بـ DB: {s.get('unbalanced_entries_in_db', 0)}\n"
+            f"- نسبة سلامة التوازن: {s.get('balance_health_percent', 100)}%\n"
+            f"- رفضيات هذه الجلسة: {s.get('lifetime_rejections', 0)}\n"
+            f"- ضربات منع التكرار: {s.get('lifetime_idempotency_hits', 0)}\n"
+            f"- قيود COGS مولّدة: {s.get('cogs_entries', 0)} (مبلغ: {s.get('cogs_total_amount', 0)})\n"
+            f"- أقصى انحراف عشري: {drift.get('max', 0)} (عتبة: {drift.get('threshold', 0.009)})\n"
+            + (f"- آخر الرفضيات:\n{rej_lines}\n" if rej_lines else "")
+        )
+    except Exception as e:
+        print(f"build_firewall_context failed: {e}")
+        return ""
+
+
 def _get_llm_chat(conversation_id: Optional[str]) -> LlmChat:
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     if not api_key:
@@ -597,6 +633,13 @@ async def finance_bot_chat(payload: FinanceBotChatRequest):
                     context_parts.append(account_context)
             if payload.financial_data:
                 context_parts.append(build_financial_context(payload.financial_data))
+            # 🛡️ Always include firewall context (live snapshot)
+            try:
+                firewall_ctx = await build_firewall_context(workshop_id)
+                if firewall_ctx:
+                    context_parts.append(firewall_ctx)
+            except Exception:
+                pass
 
             full_text = user_text
             if context_parts:

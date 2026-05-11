@@ -63,6 +63,10 @@ def set_db(database, bucket: Optional[AsyncIOMotorGridFSBucket] = None):
 
 
 # --------------------- Templates (Compatibility minimal) ---------------------
+# NOTE: /api/templates is ALSO defined in routes_templates.py (prefix=/api/templates).
+# Because routes_templates router is included BEFORE this one in server.py, that
+# router wins for GET /api/templates. The endpoints below remain for backward
+# compatibility with older callers that hit the (legacy) extended route.
 @router.get("/templates")
 async def list_templates():
     # compat: map to invoice templates list

@@ -29,7 +29,28 @@
 
 ## What's Been Implemented
 
-### 💎 Financial Dashboard Upgrade + Period-Close Engine (11 Feb 2026)
+### 🩹 Fix Negative Numbers Bug + "After Last Close" Preset (11 Feb 2026)
+
+**🐛 المشكلة المُكتشفة (من قبل المستخدم)**: كرت صافي الدخل يعرض أرقاماً سالبة خاطئة بعد الإقفال:
+- Revenue: -23,775 ر.س ❌
+- Net Income card top: +23,539 ❌ (علامة معكوسة مقابل detail)
+- السبب: قيود `period_close` كانت تُحتسب ضمن إيراد/مصروف، فتطرح من نشاط فترة الفلتر.
+
+**🔧 الإصلاح المحاسبي الصحيح**
+- `income_statement` يستثني الآن `source="period_close"` من حساب الإيراد/المصروف (لأنها تحويلات للأرباح المحتجزة، ليست حركة فعلية).
+- الأرقام الآن **موجبة وصحيحة**: revenue=35,791، expenses=1,836، net=33,955، margin=94.9%.
+
+**🆕 ميزات إضافية**
+- **Endpoint جديد**: `GET /api/finance/period-close/last?workshop_id=...` يُرجع آخر قيد إقفال للورشة.
+- **Preset جديد «بعد آخر إقفال»** في شريط الفترات: يقفز تلقائياً إلى `last_close_date + 1 day`. معطّل إذا لا يوجد إقفال سابق.
+- **شارة «🧾 آخر إقفال: YYYY-MM-DD»** بجوار الـ presets — مرجع بصري دائم لتاريخ الإقفال الفعّال.
+
+**Verification (`/app/test_reports/iteration_197.json`)**
+- Backend pytest: **5/5 PASS** — Revenue موجب، Expenses موجب، Net موجب على نافذة كل الفترة + نافذة 30 يوم.
+- Frontend: **100%** — 10 testids + preset جديد + badge + قيم موجبة بصرية.
+- ⚡ المسار الـ idempotent: 1.03 ثانية (من 26 ثانية في iter196 → **25× أسرع**).
+
+
 
 **1. POST /api/finance/period-close — قيد إقفال محاسبي صحيح**
 - يصفّر أرصدة الإيرادات (debit) والمصروفات (credit) إلى **الحساب 023 (أرباح محتجزة)**.

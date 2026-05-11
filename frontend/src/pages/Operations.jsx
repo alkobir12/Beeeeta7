@@ -3210,10 +3210,6 @@ const Operations = () => {
                 {missingPartnerForSettlement && (
                   <div>التسوية تتطلب اختيار عميل أو مورد.</div>
                 )}
-
-                {missingCustomerOrVehicleForRakan && (
-                  <div>حدد عميل أو مركبة لعملية قطع راكان قبل الحفظ</div>
-                )}
               </div>
             </div>
             </div>
@@ -3231,7 +3227,7 @@ const Operations = () => {
             </div>
           </div>
 
-          {(workshopCreditSummary.overdue > 0 || rakanCreditSummary.overdue > 0) && (
+          {workshopCreditSummary.overdue > 0 && (
             <div
               className="glass-card border border-rose-500/30 bg-rose-500/10 p-4 flex flex-col gap-2"
               data-testid="operations-credit-reminder-card"
@@ -3253,9 +3249,6 @@ const Operations = () => {
               <div className="text-base text-white space-y-1">
                 <div>
                   ورشة: <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-workshop-count">{workshopCreditSummary.total}</span> عملية آجل (متأخرة: {workshopCreditSummary.overdue}).
-                </div>
-                <div>
-                  قطع راكان: <span className="text-rose-300 font-semibold" data-testid="operations-credit-reminder-rakan-count">{rakanCreditSummary.total}</span> عملية آجل (متأخرة: {rakanCreditSummary.overdue}).
                 </div>
               </div>
               <div className="text-xs text-rose-200/80">التنبيه يظهر عند تجاوز مدة التذكير المحددة.</div>
@@ -3296,7 +3289,7 @@ const Operations = () => {
           ) : activeOpsTotalCount === 0 ? (
             <div className="apple-card p-4 text-center" data-testid="operations-active-tab-empty">
               <div className="text-sm text-slate-400">
-                {isRakanTabActive ? 'لا توجد عمليات قطع راكان حالياً' : 'لا توجد عمليات ورشة حالياً'}
+                لا توجد عمليات ورشة حالياً
               </div>
             </div>
           ) : (

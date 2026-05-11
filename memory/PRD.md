@@ -29,7 +29,44 @@
 
 ## What's Been Implemented
 
-### 🏗️ Major Refactor — 4 Domain Extractions (11 Feb 2026)
+### 🔥 Rakan Radical Removal + Services/Parts Refactor (11 Feb 2026)
+
+**Phase 1 — Database Purge (Supabase)**
+- Deleted **9 Rakan accounts** (043, 044, 048, 053-058, 21010001) + 1 part + 1 operation.
+- **Created NEW account `0421`** = «تكلفة قطع الورشة» (expense) — mirror of `042` (revenue).
+- Audit + purge scripts at `/app/backend/scripts/rakan_audit.py` & `rakan_purge.py` & `rakan_purge_phase1b.py`.
+
+**Phase 2 — Backend Code Neutralization**
+- `routes_smart_inventory.py`: Removed `/api/inventory/rakan-analytics` endpoint (returns 404 now).
+- `smart_inventory_service.py`: All `_is_rakan_*` helpers now return `False`; `get_rakan_analytics()` returns a stub `{removed: True}`.
+- `routes_finance.py`: `_is_rakan_account_code`, `_is_rakan_journal_entry`, `_is_rakan_operation_row` all return `False`.
+- `routes_extended.py`: Same — Rakan helpers neutered. `OPERATION_KIND` mapper redirects `RAKAN_PARTS_OPERATION` → `WORKSHOP_OPERATION`.
+- **COGS routing changed** from `030 (تكلفة الخدمات)` → `0421 (تكلفة قطع الورشة)` (verified end-to-end via real operation test).
+
+**Phase 3 — Frontend Radical Removal**
+- **Deleted entirely**: `RakanPriceTimelinePanel.jsx`, `RakanExpenseTrackingPanel.jsx`.
+- **PartsDashboard.jsx**: Rakan tab + state + fetches all deleted (1072→715 lines, -33%). Now uses NEW `WORKSHOP_ACCOUNT_TARGETS` with 3 cards: workshop-parts-revenue (042), workshop-parts-cost (0421), engine-repair.
+- **Operations.jsx**: Removed Rakan tab buttons, credit-reminder line, validation messages, empty-state text. `OPERATION_KIND_LABELS/META` no longer contain Rakan.
+- **PartsInventory.jsx**: `loadBusinessAccounts` no longer auto-creates a Rakan biz account.
+- **VehicleDetails.jsx**: `RakanLinkedPartPicker` returns `null` (never renders).
+- **UnifiedBotWidget.jsx**: Removed `rakanRev` from finContext + SPECIAL_ACCOUNTS no longer lists 043/044/053.
+
+**Phase 4 — Test Cleanup**
+- Deleted 7 Rakan-specific test files: `test_rakan_5000_routing.py`, `test_rakan_operations.py`, `test_full_operations.py`, `test_parts_operations.py`, `test_reset_totals.py`, `test_smart_inventory.py`, `test_operation_kinds_validation.py`.
+
+**Phase 5 — server.py Continued Refactor**
+- Extracted Services CRUD → `routes_services.py` (89 lines, -69 from server.py).
+- Extracted Parts GET/POST/PUT → `routes_parts.py` (98 lines, -81 from server.py).
+- `server.py`: **3,418 → 3,219 lines** (cumulative -199, -5.8%).
+
+**Verification (`/app/test_reports/iteration_193.json`):**
+- Backend: **100% (20/20 pytest PASS)** at `/app/backend/tests/test_rakan_removal_iter193.py`.
+- Frontend smoke: PartsDashboard renders 3 workshop cards only (no Rakan), Operations has no Rakan tabs/reminders, Firewall + Journal Entries pages clean.
+- COGS routing **verified end-to-end** via real operation: account 0421 (debit) + 1105 (credit), perfectly balanced.
+- Firewall: 100% balance health, 0 unbalanced entries (no historical data corrupted).
+- 0 Rakan accounts remain in chart of accounts.
+
+
 
 **Goal:** تقسيم `routes_extended.py` و `server.py` إلى Routers أصغر دون كسر أي شيء.
 
@@ -841,13 +878,15 @@
 - Auto-map لعبارة «من قطع راكان» إلى الحساب `042` داخل بطاقات إنشاء Unified Bot.
 
 ### Refactoring (in progress)
-- ✅ Templates domain extracted from routes_extended.py (642 lines → routes_templates_extended.py).
-- ✅ Workshop Config (Settings/Profile/Auth-OTP) extracted (348 lines → routes_workshop_config.py).
-- ✅ Approvals (+ SSE + Notifications) extracted (591 lines → routes_approvals.py).
-- ✅ Accounts/COA extracted (1,966 lines → routes_accounts_extended.py).
-- ✅ Technicians extracted from server.py (54 lines → routes_technicians.py).
-- ⏳ **Backlog candidates from routes_extended.py (5,093 سطر متبقية):** Visits APIs (~400 lines), Operations CRUD (~700 lines), Vehicles (~200 lines), Reports/Analytics.
-- ⏳ **Backlog candidates from server.py (3,364 سطر متبقية):** Vehicles, Customers, Parts, Services, Suppliers — كلها تستخدم نمط `app_state` الجاهز الآن.
+- ✅ **Templates** domain extracted (642 lines → routes_templates_extended.py).
+- ✅ **Workshop Config** (Settings/Profile/Auth-OTP) extracted (348 lines → routes_workshop_config.py).
+- ✅ **Approvals** (+ SSE + Notifications) extracted (591 lines → routes_approvals.py).
+- ✅ **Accounts/COA** extracted (1,966 lines → routes_accounts_extended.py).
+- ✅ **Technicians** extracted from server.py (54 lines → routes_technicians.py).
+- ✅ **Services** extracted from server.py (69 lines → routes_services.py).
+- ✅ **Parts** GET/POST/PUT extracted from server.py (81 lines → routes_parts.py).
+- ⏳ **Backlog candidates from routes_extended.py (5,094 سطر متبقية):** Visits APIs (~400 lines), Operations CRUD (~700 lines), Vehicles (~200 lines).
+- ⏳ **Backlog candidates from server.py (3,219 سطر متبقية):** Vehicles, Customers, Suppliers, Parts sell/restock.
 
 ### P2
 - OCR / التحقق من المستندات المرفوعة في البوت المالي.

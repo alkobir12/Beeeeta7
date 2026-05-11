@@ -29,6 +29,26 @@
 
 ## What's Been Implemented
 
+### AI Financial Page → Assistant-Only Mode (11 May 2026)
+
+**طلب المستخدم:** تحويل صفحة `/ai-financial` إلى صفحة مساعد فقط، وإزالة البيانات/القوائم المالية الجذرية لتفادي أخطاء الربط المالي.
+
+**ما تم تنفيذه في `AIFinancial.jsx`:**
+1. تفعيل وضع `assistantOnlyMode = true` مع **early return** لواجهة مساعد فقط.
+2. تعطيل استدعاءات البيانات المالية الجذرية في الصفحة (income/balance/trial/accounts/vehicle) عبر حراسة `useEffect`.
+3. إظهار واجهة واضحة تتضمن:
+   - `data-testid="ai-financial-assistant-only-page"`
+   - `data-testid="assistant-only-description"`
+   - `data-testid="assistant-only-workshop-panel"`
+4. الاعتماد على `WorkshopAIBot` فقط داخل الصفحة، مع رسالة توجيه أن القوائم الرسمية في:
+   - `/accounting/comprehensive`
+
+**التحقق:**
+- Frontend testing agent: ✅ PASS كامل
+  - العناصر الجديدة ظهرت بنجاح
+  - العناصر المالية القديمة اختفت (مثل `trial-balance-count` و`unified-assistant-tab-finance`)
+  - الصفحة تعمل كمساعد فقط بدون عرض قوائم مالية.
+
 ### Centralizing Financial Statements (11 May 2026)
 
 **طلب المستخدم:** إزالة القوائم المالية من صفحة المساعد المالي (تبويب التحليل المالي)، واعتماد القوائم الرئيسية فقط في صفحة القوائم المالية بالقسم المالي.

@@ -21,20 +21,17 @@ const ACCOUNTS = {
   '006': 'نقاط بيع','027': 'خدمات ميكانيكية','028': 'إصلاح محركات',
   '029': 'فرامل وتعليق','030': 'تكلفة الخدمات','035': 'المصروفات التشغيلية',
   '036': 'مصروفات عامة','037': 'رواتب','042': 'ايراد قطع الورشه',
+  '0421': 'تكلفة قطع الورشة',
   '2101': 'الموردون (آجل)', '211': 'فروقات ترحيل',
-  '043': 'قطع غيار راكان (شراء)', '044': 'قطع غيار راكان (بيع)',
-  '053': 'رسوم شحن راكان',
 };
 
 // حسابات خاصة تظهر في قائمة الاختيار
 const SPECIAL_ACCOUNTS = [
   { code: '042', name: 'ايراد قطع الورشه', group: 'الورشة' },
+  { code: '0421', name: 'تكلفة قطع الورشة', group: 'الورشة' },
   { code: '027', name: 'إيرادات خدمات ميكانيكية', group: 'الورشة' },
   { code: '028', name: 'إيرادات إصلاح محركات', group: 'الورشة' },
   { code: '029', name: 'إيرادات فرامل وتعليق', group: 'الورشة' },
-  { code: '043', name: 'قطع غيار راكان (شراء)', group: 'راكان' },
-  { code: '044', name: 'قطع غيار راكان (بيع)', group: 'راكان' },
-  { code: '053', name: 'رسوم شحن راكان', group: 'راكان' },
   { code: '035', name: 'المصروفات التشغيلية', group: 'مصروفات' },
   { code: '036', name: 'مصروفات عامة وإدارية', group: 'مصروفات' },
   { code: '037', name: 'رواتب', group: 'مصروفات' },
@@ -147,8 +144,7 @@ const ADMIN_PATTERNS = [
         `💰 الإيرادات: ${finCtx.revenue.toLocaleString('ar-SA')} ر.س\n` +
         `📉 المصروفات: ${finCtx.expenses.toLocaleString('ar-SA')} ر.س\n` +
         `📊 صافي الدخل: ${finCtx.net.toLocaleString('ar-SA')} ر.س\n` +
-        `📈 هامش الربح: ${margin}%\n` +
-        `🔧 إيرادات راكان: ${finCtx.rakanRev.toLocaleString('ar-SA')} ر.س\n\n` +
+        `📈 هامش الربح: ${margin}%\n\n` +
         (finCtx.alerts.length ? `⚠️ تنبيهات: ${finCtx.alerts.map(a => a.title).join(' | ')}` : '✅ لا تنبيهات مالية');
     },
   },
@@ -237,7 +233,6 @@ const ADMIN_PATTERNS = [
         `💰 الإيرادات: **${finCtx.revenue.toLocaleString('ar-SA')} ر.س**\n` +
         `📉 المصروفات: **${finCtx.expenses.toLocaleString('ar-SA')} ر.س**\n` +
         `📊 صافي الدخل: **${finCtx.net.toLocaleString('ar-SA')} ر.س** (${margin}%)\n` +
-        `🔧 إيرادات راكان: **${finCtx.rakanRev.toLocaleString('ar-SA')} ر.س**\n` +
         `⚖️ الميزان: **${balanced ? '✅ متوازن' : `❌ يوجد فرق ${Math.abs((finCtx.totalDebit||0)-(finCtx.totalCredit||0)).toLocaleString('ar-SA')} ر.س`}**\n\n` +
         (finCtx.alerts?.length ? `⚠️ تنبيهات: ${finCtx.alerts.map(a=>a.title).join(' | ')}` : '✅ لا تنبيهات');
     },
@@ -346,21 +341,18 @@ export default function UnifiedBotWidget() {
     if (tab !== 'quick' || finContext) return;
     const load = async () => {
       try {
-        const [isR, alertsR, rakanR, tbR] = await Promise.all([
+        const [isR, alertsR, tbR] = await Promise.all([
           axios.get(`${API}/api/finance/reports/income-statement`).catch(() => ({ data: {} })),
           axios.get(`${API}/api/finance/alerts?workshop_id=${WID}`).catch(() => ({ data: {} })),
-          axios.get(`${API}/api/inventory/rakan-analytics?days=90`).catch(() => ({ data: {} })),
           axios.get(`${API}/api/finance/reports/trial-balance?workshop_id=${WID}`).catch(() => ({ data: {} })),
         ]);
         const totals   = isR.data?.data?.totals || {};
         const alerts   = alertsR.data?.data?.alerts || [];
-        const rakan    = rakanR.data || {};
         const tbTotals = tbR.data?.data?.totals || {};
         const ctx = {
           revenue:  Number(totals.revenue   || 0),
           expenses: Number(totals.expenses  || 0),
           net:      Number(totals.net_income|| 0),
-          rakanRev: Number(rakan.revenue    || 0),
           totalDebit:  Number(tbTotals.total_debit  || 0),
           totalCredit: Number(tbTotals.total_credit || 0),
           alerts,
@@ -375,7 +367,6 @@ export default function UnifiedBotWidget() {
             `💰 الإيرادات: **${ctx.revenue.toLocaleString('ar-SA')} ر.س**\n` +
             `📉 المصروفات: **${ctx.expenses.toLocaleString('ar-SA')} ر.س**\n` +
             `📊 صافي الدخل: **${ctx.net.toLocaleString('ar-SA')} ر.س** (هامش ${margin}%)\n` +
-            `🔧 إيرادات راكان: **${ctx.rakanRev.toLocaleString('ar-SA')} ر.س**\n` +
             `⚖️ الميزان: **${balanced ? '✅ متوازن' : `❌ فرق ${Math.abs(ctx.totalDebit-ctx.totalCredit).toLocaleString('ar-SA')} ر.س`}**\n\n` +
             (alerts.length ? `⚠️ **${alerts.length} تنبيه:** ${alerts.map(a=>a.title).join(' | ')}` : '✅ لا تنبيهات') +
             `\n\n**أوامر سريعة:** اكتب الوضع العام | الذمم | العمليات الأخيرة | المركبات | الموردين | "أنشئ قيد"`,
@@ -662,7 +653,7 @@ export default function UnifiedBotWidget() {
 
       // إضافة السياق المالي الفعلي مع الرسالة للـ LLM
       const contextNote = finContext
-        ? `[بيانات مباشرة من النظام: إيرادات=${finContext.revenue.toLocaleString('ar-SA')} ر.س | مصروفات=${finContext.expenses.toLocaleString('ar-SA')} ر.س | صافي=${finContext.net.toLocaleString('ar-SA')} ر.س | راكان=${finContext.rakanRev.toLocaleString('ar-SA')} ر.س | تنبيهات=${finContext.alerts.map(a=>a.title).join(',')||'لا تنبيهات'}]\nالسؤال: `
+        ? `[بيانات مباشرة من النظام: إيرادات=${finContext.revenue.toLocaleString('ar-SA')} ر.س | مصروفات=${finContext.expenses.toLocaleString('ar-SA')} ر.س | صافي=${finContext.net.toLocaleString('ar-SA')} ر.س | تنبيهات=${finContext.alerts.map(a=>a.title).join(',')||'لا تنبيهات'}]\nالسؤال: `
         : '';
       const r = await axios.post(`${API}/api/finance-bot/chat`, {
         message: contextNote + text,

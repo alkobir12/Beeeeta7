@@ -49,6 +49,8 @@ from routes_workshop_config import router as workshop_config_router, set_db as s
 from routes_approvals import router as approvals_router, set_db as set_db_approvals
 from routes_accounts_extended import router as accounts_extended_router, set_db as set_db_accounts_extended
 from routes_technicians import router as technicians_router
+from routes_services import router as services_router
+from routes_parts import router as parts_router
 import app_state as _app_state
 from routes_advanced import router as advanced_router, set_db as set_db_advanced
 
@@ -540,6 +542,8 @@ app.include_router(workshop_config_router)
 app.include_router(approvals_router)
 app.include_router(accounts_extended_router)
 app.include_router(technicians_router)
+app.include_router(services_router)
+app.include_router(parts_router)
 app.include_router(advanced_router)
 app.include_router(finance_router)
 app.include_router(finance_bot_router)
@@ -2448,31 +2452,6 @@ async def update_customer(customer_id: str, customer: CustomerUpdate):
     return Customer(**updated)
 
 
-@api_router.get("/services", response_model=List[Service])
-async def get_services():
-    if DB_PROVIDER == "supabase":
-        rows = supabase_service.services_list()
-        return [Service(**r) for r in rows]
-
-    if DB_PROVIDER == "memory":
-        return [Service(**r) for r in _mem_read("services")]
-    services = await db.services.find().to_list(1000)
-    return [Service(**s) for s in services]
-
-
-@api_router.post("/services", response_model=Service)
-async def create_service(service: Service):
-    if DB_PROVIDER == "supabase":
-        s = supabase_service.services_create(service.dict())
-        return Service(**s)
-
-    if DB_PROVIDER == "memory":
-        rows = _mem_read("services")
-        rows.append(service.dict())
-        _mem_write("services", rows)
-        return service
-    await db.services.insert_one(service.dict())
-
 
 @api_router.post("/admin/reset-inventory")
 async def reset_inventory_data():
@@ -2591,132 +2570,8 @@ async def download_vehicle_file(vehicle_id: str, file_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@api_router.put("/services/{service_id}", response_model=Service)
-async def update_service(service_id: str, service: Service):
-    if DB_PROVIDER == "supabase":
-        s = supabase_service.services_update(service_id, service.dict())
-        if not s:
-            raise HTTPException(status_code=404, detail="Service not found")
-        return Service(**s)
-
-    if DB_PROVIDER == "memory":
-        rows = _mem_read("services")
-        for i, s in enumerate(rows):
-            if s.get("id") == service_id:
-                rows[i] = {**service.dict(), "id": service_id}
-                _mem_write("services", rows)
-                return Service(**rows[i])
-        raise HTTPException(status_code=404, detail="Service not found")
-
-    result = await db.services.update_one({"id": service_id}, {"$set": service.dict()})
-    if result.modified_count == 0:
-        raise HTTPException(status_code=404, detail="Service not found")
-    return service
 
 
-@api_router.delete("/services/{service_id}")
-async def delete_service(service_id: str):
-    if DB_PROVIDER == "supabase":
-        success = supabase_service.services_delete(service_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="Service not found")
-        return {"status": "success", "message": "Service deleted"}
-
-    if DB_PROVIDER == "memory":
-        rows = _mem_read("services")
-        filtered = [s for s in rows if s.get("id") != service_id]
-        if len(filtered) == len(rows):
-            raise HTTPException(status_code=404, detail="Service not found")
-        _mem_write("services", filtered)
-        return {"status": "success", "message": "Service deleted"}
-
-    result = await db.services.delete_one({"id": service_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Service not found")
-    return {"status": "success", "message": "Service deleted"}
-
-
-
-
-@api_router.get("/parts", response_model=List[Part])
-async def get_parts(search: str = "", low_stock: bool = False):
-    if DB_PROVIDER == "supabase":
-        try:
-            rows = supabase_service.parts_list()
-            result = []
-            for r in rows:
-                # filter in python since list is small/med
-                p = Part(**r)
-                if search and search.lower() not in str(p.dict()).lower():
-                    continue
-                if low_stock and p.quantity >= p.minQuantity:
-                    continue
-                result.append(p)
-            return result
-        except Exception as e:
-            print(f"Supabase parts error: {e}")
-            # Fallback to empty list if table missing or error
-            return []
-
-    if DB_PROVIDER == "memory":
-        parts = _mem_read("parts")
-        result = []
-        for p in parts:
-            if search and search.lower() not in str(p).lower():
-                continue
-            if low_stock and p.get("quantity", 0) >= p.get("minQuantity", 0):
-                continue
-            result.append(Part(**p))
-        return result
-
-    query = {}
-    if search:
-        query["$or"] = [
-            {"name": {"$regex": search, "$options": "i"}},
-            {"partNumber": {"$regex": search, "$options": "i"}},
-        ]
-    if low_stock:
-        query["$expr"] = {"$lt": ["$quantity", "$minQuantity"]}
-    parts = await db.parts.find(query, {"_id": 0}).to_list(1000)
-    return [Part(**p) for p in parts]
-
-
-@api_router.post("/parts", response_model=Part)
-async def create_part(part: PartCreate):
-    if DB_PROVIDER == "supabase":
-        p = supabase_service.parts_create(part.dict())
-        return Part(**p)
-    if DB_PROVIDER == "memory":
-        parts = _mem_read("parts")
-        new_p = {**part.dict(), "id": str(uuid.uuid4())}
-        parts.append(new_p)
-        _mem_write("parts", parts)
-        return Part(**new_p)
-    part_dict = part.dict()
-    part_dict["id"] = str(uuid.uuid4())
-    await db.parts.insert_one(part_dict)
-    return Part(**part_dict)
-
-
-@api_router.put("/parts/{part_id}", response_model=Part)
-async def update_part(part_id: str, part: PartUpdate):
-    upd = {k: v for k, v in part.dict().items() if v is not None}
-    if DB_PROVIDER == "supabase":
-        p = supabase_service.parts_update(part_id, upd)
-        return Part(**p)
-    if DB_PROVIDER == "memory":
-        parts = _mem_read("parts")
-        for i, p in enumerate(parts):
-            if p.get("id") == part_id:
-                parts[i].update(upd)
-                _mem_write("parts", parts)
-                return Part(**parts[i])
-        raise HTTPException(status_code=404, detail="Part not found")
-    await db.parts.update_one({"id": part_id}, {"$set": upd})
-    p = await db.parts.find_one({"id": part_id})
-    if not p:
-        raise HTTPException(status_code=404, detail="Part not found")
-    return Part(**p)
 
 
 @api_router.post("/parts/{part_id}/sell")

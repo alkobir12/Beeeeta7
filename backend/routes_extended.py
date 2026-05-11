@@ -726,6 +726,7 @@ ACCOUNT_NAME_MAP = {
     "010": "معدات ميكانيكية",
     "1105": "مخزون قطع غيار",
     "042": "ايراد قطع الورشه",
+    "0421": "تكلفة قطع الورشة",
     "2101": "الموردون (ذمم دائنة)",
     "211":  "حساب فروقات ترحيل",
     # ─── أكواد قديمة (للتوافق مع القيود التاريخية) ───
@@ -932,11 +933,11 @@ def _adjust_supabase_inventory_and_build_cogs_entries(
             "id": str(uuid.uuid4()),
             "workshop_id": workshop_id,
             "date": op.get("date") or op.get("op_date") or datetime.now(timezone.utc).isoformat(),
-            "description": f"تكلفة بضاعة مباعة - عملية {op.get('id')}",
+            "description": f"تكلفة قطع الورشة - عملية {op.get('id')}",
             "lines": [
                 {
-                    "account": "030",
-                    "account_name": ACCOUNT_NAME_MAP.get("030", "تكلفة الخدمات"),
+                    "account": "0421",
+                    "account_name": ACCOUNT_NAME_MAP.get("0421", "تكلفة قطع الورشة"),
                     "debit": cogs_total,
                     "credit": 0,
                 },
@@ -1020,15 +1021,13 @@ def _normalize_account_code(value: Any) -> str:
 
 
 def _is_rakan_account_code(value: Any) -> bool:
-    return _normalize_account_code(value).startswith(RAKAN_ACCOUNT_CODE_PREFIX)
+    # 🔥 Rakan logic permanently removed (Feb 2026) — always returns False.
+    return False
 
 
 def _is_rakan_business_account_doc(account: Dict[str, Any]) -> bool:
-    return (
-        _is_rakan_text(account.get("name"))
-        or _is_rakan_text(account.get("code"))
-        or _is_rakan_account_code(account.get("code"))
-    )
+    # 🔥 Rakan logic permanently removed (Feb 2026) — always returns False.
+    return False
 
 
 def _build_chart_account_ref_map(chart_accounts: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
@@ -2829,22 +2828,24 @@ def _normalize_operation_kind(payload: Dict[str, Any]) -> str:
         return "WORKSHOP_OPERATION"
     if raw in ["VEHICLE_OPERATION", "VEHICLE"]:
         return "VEHICLE_OPERATION"
+    # 🔥 Rakan logic removed: RAKAN_PARTS_OPERATION → WORKSHOP_OPERATION
     if raw in ["RAKAN_PARTS_OPERATION", "RAKAN_PARTS", "RAKAN"]:
-        return "RAKAN_PARTS_OPERATION"
+        return "WORKSHOP_OPERATION"
 
     scope = str(payload.get("scope") or "").strip().lower()
     if scope == "vehicle":
         return "VEHICLE_OPERATION"
+    # 🔥 Rakan logic removed: scope "rakan_parts" → WORKSHOP_OPERATION
     if scope == "rakan_parts":
-        return "RAKAN_PARTS_OPERATION"
+        return "WORKSHOP_OPERATION"
     if payload.get("vehicleId") or payload.get("vehicle_id"):
         return "VEHICLE_OPERATION"
     return "WORKSHOP_OPERATION"
 
 
 def _is_rakan_text(value: Any) -> bool:
-    txt = str(value or "").strip().lower()
-    return "راكان" in txt or "rakan" in txt
+    # 🔥 Rakan logic permanently removed (Feb 2026) — always returns False.
+    return False
 
 
 def _pick_business_account(

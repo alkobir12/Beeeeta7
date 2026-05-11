@@ -105,90 +105,26 @@ class SmartInventoryService:
         return raw
 
     def _is_rakan_account_code(self, value: Any) -> bool:
-        return self._normalize_account_code(value).startswith("5000")
+        # 🔥 Rakan logic permanently removed (Feb 2026) — always returns False.
+        return False
 
     def _is_rakan_business_account(self, account: Dict[str, Any]) -> bool:
-        text = " ".join(
-            [
-                self._normalize_text(account.get("name")),
-                self._normalize_text(account.get("code")),
-            ]
-        )
-        return (
-            "راكان" in text
-            or "rakan" in text
-            or self._is_rakan_account_code(account.get("code"))
-        )
+        # 🔥 Rakan logic permanently removed (Feb 2026).
+        return False
 
     def _is_rakan_chart_account(self, account: Dict[str, Any]) -> bool:
-        if self._is_rakan_account_code(account.get("code")):
-            return True
-        text = " ".join(
-            [
-                self._normalize_text(account.get("name_ar")),
-                self._normalize_text(account.get("name")),
-                self._normalize_text(account.get("code")),
-                self._normalize_text(account.get("category")),
-            ]
-        )
-        return "راكان" in text or "rakan" in text
+        # 🔥 Rakan logic permanently removed (Feb 2026).
+        return False
 
     def _is_rakan_operation(
         self, operation: Dict[str, Any], rakan_biz_ids: set[str]
     ) -> bool:
-        scope = self._normalize_text(operation.get("scope"))
-        source = self._normalize_text(operation.get("source"))
-        business_unit = self._normalize_text(
-            operation.get("businessUnit") or operation.get("business_unit")
-        )
-        notes = self._normalize_text(operation.get("notes"))
-        account_id = str(operation.get("accountId") or operation.get("account_id") or "")
-        accounting_ref = str(
-            operation.get("accountingAccountId")
-            or operation.get("accounting_account_id")
-            or ""
-        )
-        account_code_in_notes = ""
-        notes_text = str(operation.get("notes") or "")
-        if "ACCOUNT_CODE:" in notes_text:
-            try:
-                account_code_in_notes = notes_text.split("ACCOUNT_CODE:", 1)[1].split()[0].split("|")[0].strip()
-            except Exception:
-                account_code_in_notes = ""
-
-        if (
-            account_id in rakan_biz_ids
-            or scope == "rakan_parts"
-            or source == "rakan_parts_pos"
-            or business_unit == "rakan_parts"
-            or "[rakan_parts]" in notes
-            or self._is_rakan_account_code(accounting_ref)
-            or self._is_rakan_account_code(account_code_in_notes)
-        ):
-            return True
-
-        # Also detect Rakan via visit items (supplier items whose name contains راكان)
-        for item in (operation.get("items") or []):
-            if item.get("itemType") in ("supplier", "part"):
-                item_name = self._normalize_text(str(item.get("name") or ""))
-                if "راكان" in item_name or "rakan" in item_name:
-                    return True
+        # 🔥 Rakan logic permanently removed (Feb 2026).
         return False
 
     def _rakan_items_total(self, operation: Dict[str, Any]) -> float:
-        """Return the sum of Rakan supplier items from a mixed visit operation."""
-        total = 0.0
-        for item in (operation.get("items") or []):
-            if item.get("itemType") in ("supplier", "part"):
-                item_name = self._normalize_text(str(item.get("name") or ""))
-                if "راكان" in item_name or "rakan" in item_name:
-                    total += self._safe_float(item.get("total") or item.get("price") or 0)
-        # fall back to supplierArchiveTotal stored on the operation
-        if total <= 0:
-            total = self._safe_float(
-                operation.get("supplierArchiveTotal") or operation.get("supplier_archive_total") or 0
-            )
-        return total
+        # 🔥 Rakan logic permanently removed (Feb 2026).
+        return 0.0
 
     @staticmethod
     def _clean_note_reason(value: Any) -> str:
@@ -1867,122 +1803,19 @@ class SmartInventoryService:
         )
 
     async def get_rakan_analytics(self, days: int = 30) -> Dict[str, Any]:
-        days = max(7, min(days, 365))
-        now = datetime.now(timezone.utc)
-        current_start = now - timedelta(days=days)
-        previous_start = current_start - timedelta(days=days)
-
-        parts = await self.list_parts()
-        operations = await self.list_operations()
-        operations, totals_reset_at = await self._filter_operations_by_reset_cutoff(operations)
-        chart_accounts = await self.list_chart_accounts()
-        business_accounts = await self.list_business_accounts()
-
-        parts_map = {part.id: part for part in parts}
-        chart_by_id = {
-            str(account.get("id") or account.get("code") or ""): account
-            for account in chart_accounts
-        }
-        rakan_biz_ids = {
-            str(account.get("id") or account.get("code") or "")
-            for account in business_accounts
-            if self._is_rakan_business_account(account)
-        }
-        rakan_chart_ids = {
-            str(account.get("id") or account.get("code") or "")
-            for account in chart_accounts
-            if self._is_rakan_chart_account(account)
-        }
-
-        current_ops: List[Dict[str, Any]] = []
-        previous_ops: List[Dict[str, Any]] = []
-        for op in operations:
-            op_date = self._operation_date(op)
-            if op_date.tzinfo is None:
-                op_date = op_date.replace(tzinfo=timezone.utc)
-
-            accounting_ref = str(
-                op.get("accountingAccountId")
-                or op.get("accounting_account_id")
-                or ""
-            )
-            is_rakan = self._is_rakan_operation(op, rakan_biz_ids) or accounting_ref in rakan_chart_ids
-            if not is_rakan:
-                continue
-
-            # For mixed visit-operations (workshop + Rakan items), use only the
-            # Rakan-specific item amounts so we don't inflate with workshop revenue.
-            scope = self._normalize_text(op.get("scope"))
-            source = self._normalize_text(op.get("source"))
-            is_pure_rakan = (
-                scope == "rakan_parts"
-                or source == "rakan_parts_pos"
-                or "[rakan_parts]" in self._normalize_text(op.get("notes"))
-            )
-            if not is_pure_rakan:
-                rakan_amt = self._rakan_items_total(op)
-                if rakan_amt > 0:
-                    op = {**op, "total": rakan_amt, "type": "sale", "scope": "rakan_parts"}
-            if op_date >= current_start:
-                current_ops.append(op)
-            elif previous_start <= op_date < current_start:
-                previous_ops.append(op)
-
-        current_summary = self._summarize_rakan_operations(current_ops, parts_map, chart_by_id)
-        previous_summary = self._summarize_rakan_operations(previous_ops, parts_map, chart_by_id)
-        current_summary["sell_rate_per_day"] = round(
-            current_summary.get("sold_qty", 0) / float(days), 2
-        )
-
-        comparison = {
-            "revenue": self._delta_payload(
-                current_summary.get("revenue", 0), previous_summary.get("revenue", 0)
-            ),
-            "expense": self._delta_payload(
-                current_summary.get("expense", 0), previous_summary.get("expense", 0)
-            ),
-            "profit": self._delta_payload(
-                current_summary.get("profit", 0), previous_summary.get("profit", 0)
-            ),
-            "sold_qty": self._delta_payload(
-                current_summary.get("sold_qty", 0), previous_summary.get("sold_qty", 0)
-            ),
-        }
-
-        insights: List[str] = []
-        if current_summary.get("profit", 0) < 0:
-            insights.append(
-                "تنبيه: صافي نتيجة حسابات قطع راكان سالب في الفترة المحددة، راجع المشتريات والمصروفات التشغيلية."
-            )
-        if comparison["profit"]["delta"] < 0:
-            insights.append(
-                "الربحية تراجعت مقارنة بالفترة السابقة؛ راقب المصروفات غير المرتبطة بالمخزون وهوامش التسعير."
-            )
-        if current_summary.get("other_expense", 0) > current_summary.get("purchase_expense", 0) > 0:
-            insights.append(
-                "المصروفات التشغيلية/الشخصية أعلى من قيمة مشتريات القطع، يوصى بمراجعة أسباب الصرف وربطها بحسابات أدق."
-            )
-        if current_summary.get("sell_rate_per_day", 0) < 1:
-            insights.append(
-                "معدل البيع اليومي منخفض نسبيًا؛ قد تحتاج لتجديد التشكيلة أو تفعيل عروض سريعة على الأصناف الراكدة."
-            )
-        if any(row.get("sale_change", 0) <= -10 for row in current_summary.get("price_trend", [])):
-            insights.append(
-                "بعض القطع انخفض سعر بيعها في آخر التسعيرات، تحقّق من أثر ذلك على الهامش الربحي."
-            )
-        if any(row.get("purchase_change", 0) >= 10 for row in current_summary.get("price_trend", [])):
-            insights.append(
-                "تكلفة شراء بعض القطع ارتفعت بشكل ملحوظ؛ راجع الأسعار النهائية أو تفاوض مع المورد."
-            )
-        if not insights:
-            insights.append(
-                "الأداء مستقر حاليًا؛ استمر في متابعة فروقات الأسعار وتوزيع المصروفات أسبوعيًا."
-            )
-
+        # 🔥 Rakan analytics permanently removed (Feb 2026).
+        # Kept as a no-op stub for any lingering callers; safe to delete once
+        # all front-end references are gone.
         return {
-            **current_summary,
-            "period_days": days,
-            "totals_reset_at": totals_reset_at.isoformat() if totals_reset_at else None,
-            "period_comparison": comparison,
-            "insights": insights,
+            "removed": True,
+            "message": "تم إزالة تحليلات راكان بشكل دائم.",
+            "period_days": max(7, min(days, 365)),
+            "totals": {},
+            "ledger": [],
+            "price_trend": [],
+            "learned_pricing": [],
+            "price_timeline": [],
+            "recent_ops": [],
+            "period_comparison": {},
+            "insights": [],
         }

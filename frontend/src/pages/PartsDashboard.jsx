@@ -1,10 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, BarChart3, Boxes, ClipboardList, Loader2, RefreshCw, ShoppingCart, TrendingUp, Wrench, Cog } from 'lucide-react';
+import { AlertTriangle, BarChart3, Boxes, ClipboardList, Loader2, RefreshCw, ShoppingCart, TrendingUp, Wrench, Cog, Receipt } from 'lucide-react';
 import { api, financeAPI, operationsAPI, partAPI } from '../services/api';
 import { Button } from '../components/ui/button';
 import { InventoryPlannerTab } from '../components/parts-dashboard/InventoryPlannerTab';
-import { RakanExpenseTrackingPanel } from '../components/parts-dashboard/RakanExpenseTrackingPanel';
-import { RakanPriceTimelinePanel } from '../components/parts-dashboard/RakanPriceTimelinePanel';
 
 const formatCurrency = (value) => `${Number(value || 0).toLocaleString('ar-SA')} ر.س`;
 
@@ -48,17 +46,29 @@ const normalizeAccountCode = (value) => {
 
 const WORKSHOP_ACCOUNT_TARGETS = [
   {
-    key: 'workshop-parts',
-    title: 'حساب قطع غيار الورشة',
+    key: 'workshop-parts-revenue',
+    title: 'إيراد قطع الورشة',
     icon: Wrench,
-    color: '#38bdf8',
-    keywords: ['قطع غيار الورشة', 'قطع غيار الورشه', 'قطع الورشة', 'قطع الورشه'],
+    color: '#22c55e',
+    accountType: 'revenue',
+    codes: ['042'],
+    keywords: ['ايراد قطع الورشه', 'إيراد قطع الورشة', 'ايراد قطع الورشة', 'إيراد قطع الورشه'],
+  },
+  {
+    key: 'workshop-parts-cost',
+    title: 'تكلفة قطع الورشة',
+    icon: Receipt,
+    color: '#f97316',
+    accountType: 'expense',
+    codes: ['0421'],
+    keywords: ['تكلفة قطع الورشة', 'تكلفة قطع الورشه'],
   },
   {
     key: 'engine-repair',
     title: 'حساب إصلاح المحركات',
     icon: Cog,
     color: '#f59e0b',
+    codes: [],
     keywords: ['إصلاح المحركات', 'اصلاح المحركات', 'إصلاح محركات', 'اصلاح محركات'],
   },
 ];
@@ -71,14 +81,10 @@ const PartsDashboard = () => {
   const [backorderStatusFilter, setBackorderStatusFilter] = useState('all');
   const [loadingBackorders, setLoadingBackorders] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [rakanAnalytics, setRakanAnalytics] = useState(null);
-  const [loadingRakanAnalytics, setLoadingRakanAnalytics] = useState(true);
   const [inventoryArchitecture, setInventoryArchitecture] = useState(null);
   const [loadingInventoryArchitecture, setLoadingInventoryArchitecture] = useState(true);
   const [workshopAccountStats, setWorkshopAccountStats] = useState([]);
   const [loadingWorkshopAccountStats, setLoadingWorkshopAccountStats] = useState(true);
-  const [expandedRakanCard, setExpandedRakanCard] = useState('profitability');
-  const [selectedExpenseCategory, setSelectedExpenseCategory] = useState('all');
   const [savingBackorder, setSavingBackorder] = useState(false);
   const [resettingTotals, setResettingTotals] = useState(false);
   const [partsList, setPartsList] = useState([]);
@@ -97,6 +103,10 @@ const PartsDashboard = () => {
     const periodStart = Date.now() - (Number(daysFilter || 30) * 24 * 60 * 60 * 1000);
     return WORKSHOP_ACCOUNT_TARGETS.map((target) => {
       const account = accounts.find((acc) => {
+        const accCode = String(acc?.code || '').trim();
+        if (target.codes && target.codes.length > 0 && target.codes.includes(accCode)) {
+          return true;
+        }
         const haystack = [acc?.name, acc?.name_ar, acc?.code].map((v) => normalizeText(v)).join(' ');
         return target.keywords.some((keyword) => haystack.includes(normalizeText(keyword)));
       });
@@ -189,18 +199,6 @@ const PartsDashboard = () => {
     }
   };
 
-  const loadRakanAnalytics = async () => {
-    setLoadingRakanAnalytics(true);
-    try {
-      const { data } = await api.get('/inventory/rakan-analytics', { params: { days: daysFilter } });
-      setRakanAnalytics(data || null);
-    } catch (error) {
-      setRakanAnalytics(null);
-    } finally {
-      setLoadingRakanAnalytics(false);
-    }
-  };
-
   const loadInventoryArchitecture = async () => {
     setLoadingInventoryArchitecture(true);
     try {
@@ -282,7 +280,6 @@ const PartsDashboard = () => {
       await api.post('/inventory/reset-totals');
       await Promise.all([
         loadControlPanel(),
-        loadRakanAnalytics(),
         loadWorkshopAccountStats(),
       ]);
     } finally {
@@ -292,7 +289,6 @@ const PartsDashboard = () => {
 
   useEffect(() => {
     loadControlPanel();
-    loadRakanAnalytics();
     loadInventoryArchitecture();
     loadWorkshopAccountStats();
   }, [daysFilter]);
@@ -347,10 +343,6 @@ const PartsDashboard = () => {
   };
 
   const overview = analytics?.overview || {};
-  const priceTrendHighlights = rakanAnalytics?.price_trend || [];
-  const expenseBreakdown = rakanAnalytics?.expense_breakdown || [];
-  const learnedPricing = rakanAnalytics?.learned_pricing || [];
-  const periodDelta = rakanAnalytics?.period_delta || {};
   const cards = useMemo(
     () => [
       { key: 'inventory-cost', label: 'قيمة المخزون (تكلفة)', value: formatCurrency(overview.inventory_cost_value), icon: ShoppingCart, color: '#22c55e' },
@@ -388,7 +380,7 @@ const PartsDashboard = () => {
             type="button"
             variant="outline"
             className="bg-white/10 text-white border-white/20"
-            onClick={() => Promise.all([loadControlPanel(), loadBackorders(), loadRakanAnalytics(), loadInventoryArchitecture(), loadWorkshopAccountStats()])}
+            onClick={() => Promise.all([loadControlPanel(), loadBackorders(), loadInventoryArchitecture(), loadWorkshopAccountStats()])}
             data-testid="parts-control-refresh-button"
           >
             <RefreshCw size={16} className="ml-1" /> تحديث
@@ -407,9 +399,9 @@ const PartsDashboard = () => {
         </div>
       </div>
 
-      {(overview?.totals_reset_at || rakanAnalytics?.totals_reset_at) && (
+      {(overview?.totals_reset_at) && (
         <div className="glass-card p-3 text-xs text-amber-200" data-testid="parts-control-reset-totals-note">
-          أرشيف العمليات السابقة مفعل من تاريخ: {new Date(overview?.totals_reset_at || rakanAnalytics?.totals_reset_at).toLocaleString('ar-SA')}
+          أرشيف العمليات السابقة مفعل من تاريخ: {new Date(overview?.totals_reset_at).toLocaleString('ar-SA')}
         </div>
       )}
 
@@ -454,7 +446,7 @@ const PartsDashboard = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2" data-testid="parts-control-tabs">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2" data-testid="parts-control-tabs">
         <button
           type="button"
           onClick={() => setActiveTab('overview')}
@@ -462,14 +454,6 @@ const PartsDashboard = () => {
           data-testid="parts-control-tab-overview"
         >
           النظرة العامة
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('rakan')}
-          className={`px-4 py-2.5 rounded-xl text-sm border ${activeTab === 'rakan' ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-100' : 'bg-white/5 border-white/10 text-slate-300'}`}
-          data-testid="parts-control-tab-rakan"
-        >
-          تحليلات قطع راكان
         </button>
         <button
           type="button"
@@ -573,347 +557,6 @@ const PartsDashboard = () => {
         </>
       )}
 
-      {activeTab === 'rakan' && (
-        <>
-          {loadingRakanAnalytics ? (
-            <div className="glass-card p-5 text-slate-300 flex items-center gap-2" data-testid="parts-control-rakan-loading">
-              <Loader2 className="animate-spin" size={16} /> جاري تحميل تحليلات قطع راكان...
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" data-testid="parts-control-rakan-cards">
-                <button
-                  type="button"
-                  className={`glass-card p-4 border-t-4 text-right transition ${expandedRakanCard === 'revenue' ? 'ring-2 ring-emerald-300/40' : ''}`}
-                  style={{ borderColor: '#22c55e' }}
-                  onClick={() => setExpandedRakanCard((prev) => (prev === 'revenue' ? '' : 'revenue'))}
-                  data-testid="parts-control-rakan-card-revenue"
-                >
-                  <p className="text-xs text-slate-300">إيراد قطع راكان</p>
-                  <p className="text-xl font-bold text-white" data-testid="parts-control-rakan-revenue">{formatCurrency(rakanAnalytics?.revenue)}</p>
-                  <p className="text-[11px] text-slate-400 mt-1">عمليات البيع المرتبطة بحسابات راكان</p>
-                </button>
-                <button
-                  type="button"
-                  className={`glass-card p-4 border-t-4 text-right transition ${expandedRakanCard === 'expense' ? 'ring-2 ring-amber-300/40' : ''}`}
-                  style={{ borderColor: '#f59e0b' }}
-                  onClick={() => setExpandedRakanCard((prev) => (prev === 'expense' ? '' : 'expense'))}
-                  data-testid="parts-control-rakan-card-expense"
-                >
-                  <p className="text-xs text-slate-300">إجمالي المصروفات</p>
-                  <p className="text-xl font-bold text-white" data-testid="parts-control-rakan-expense">{formatCurrency(rakanAnalytics?.expense)}</p>
-                  <p className="text-[11px] text-slate-400 mt-1">مشتريات قطع + مصروفات تشغيل/شخصية</p>
-                </button>
-                <button
-                  type="button"
-                  className={`glass-card p-4 border-t-4 text-right transition ${expandedRakanCard === 'profitability' ? 'ring-2 ring-sky-300/40' : ''}`}
-                  style={{ borderColor: '#38bdf8' }}
-                  onClick={() => setExpandedRakanCard((prev) => (prev === 'profitability' ? '' : 'profitability'))}
-                  data-testid="parts-control-rakan-card-profit"
-                >
-                  <p className="text-xs text-slate-300">الربح / الخسارة</p>
-                  <p className="text-xl font-bold text-white" data-testid="parts-control-rakan-profit">{formatCurrency(rakanAnalytics?.profit)}</p>
-                  <p className="text-[11px] text-slate-400 mt-1">الإيراد - (المشتريات + المصروفات)</p>
-                </button>
-                <button
-                  type="button"
-                  className={`glass-card p-4 border-t-4 text-right transition ${expandedRakanCard === 'velocity' ? 'ring-2 ring-purple-300/40' : ''}`}
-                  style={{ borderColor: '#a78bfa' }}
-                  onClick={() => setExpandedRakanCard((prev) => (prev === 'velocity' ? '' : 'velocity'))}
-                  data-testid="parts-control-rakan-card-velocity"
-                >
-                  <p className="text-xs text-slate-300">معدل البيع اليومي</p>
-                  <p className="text-xl font-bold text-white" data-testid="parts-control-rakan-sell-rate">{Number(rakanAnalytics?.sell_rate_per_day || 0).toFixed(2)} قطعة/يوم</p>
-                  <p className="text-[11px] text-slate-400 mt-1">إجمالي المبيعات: {Number(rakanAnalytics?.sold_qty || 0).toLocaleString('ar-SA')} قطعة</p>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3" data-testid="parts-control-rakan-period-comparison">
-                {[
-                  { key: 'revenue', label: 'تغير الإيراد', value: rakanAnalytics?.period_comparison?.revenue },
-                  { key: 'expense', label: 'تغير المصروفات', value: rakanAnalytics?.period_comparison?.expense },
-                  { key: 'profit', label: 'تغير الربحية', value: rakanAnalytics?.period_comparison?.profit },
-                  { key: 'sold-qty', label: 'تغير الكميات المباعة', value: rakanAnalytics?.period_comparison?.sold_qty, suffix: 'قطعة' },
-                ].map((item) => (
-                  <div key={item.key} className="glass-card p-4" data-testid={`parts-control-rakan-comparison-${item.key}`}>
-                    <p className="text-xs text-slate-400">{item.label}</p>
-                    <p className="text-lg font-bold text-white mt-2">
-                      {item.suffix ? `${Number(item.value?.delta || 0).toLocaleString('ar-SA')} ${item.suffix}` : formatCurrency(item.value?.delta)}
-                    </p>
-                    <p className={`text-xs mt-2 ${(item.value?.delta || 0) >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                      {(item.value?.delta || 0) >= 0 ? '▲' : '▼'} {Number(item.value?.pct || 0).toLocaleString('ar-SA')}% مقارنة بالفترة السابقة
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {expandedRakanCard === 'revenue' && (
-                <div className="glass-card p-4" data-testid="parts-control-rakan-expanded-revenue">
-                  <h3 className="text-white font-semibold mb-3">تفاصيل الإيرادات</h3>
-                  <div className="overflow-auto">
-                    <table className="w-full text-sm text-right">
-                      <thead className="text-slate-400 border-b border-white/10">
-                        <tr>
-                          <th className="py-2">التاريخ</th>
-                          <th className="py-2">الحساب</th>
-                          <th className="py-2">الشريك</th>
-                          <th className="py-2">المبلغ</th>
-                          <th className="py-2">السبب</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(rakanAnalytics?.ledger || []).filter((row) => row.direction === 'in').slice(0, 12).map((row) => (
-                          <tr key={`rakan-ledger-in-${row.id}`} className="border-b border-white/5 text-slate-200">
-                            <td className="py-2">{new Date(row.date).toLocaleDateString('ar-SA')}</td>
-                            <td className="py-2">{row.account_name}</td>
-                            <td className="py-2">{row.partner_name || '-'}</td>
-                            <td className="py-2">{formatCurrency(row.amount)}</td>
-                            <td className="py-2">{row.reason || '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {expandedRakanCard === 'expense' && (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="parts-control-rakan-expanded-expense">
-                  <div className="glass-card p-4">
-                    <h3 className="text-white font-semibold mb-3">تفصيل المصروفات حسب الحساب</h3>
-                    <div className="space-y-2">
-                      {(rakanAnalytics?.expense_breakdown || []).map((row) => (
-                        <div key={`expense-breakdown-${row.account_name}`} className="flex items-center justify-between text-sm">
-                          <span className="text-slate-200">{row.account_name}</span>
-                          <span className="text-amber-300">{formatCurrency(row.amount)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="glass-card p-4">
-                    <h3 className="text-white font-semibold mb-3">مصروفات آخر العمليات</h3>
-                    <div className="space-y-2 max-h-[280px] overflow-auto">
-                      {(rakanAnalytics?.ledger || []).filter((row) => row.direction === 'out').slice(0, 12).map((row) => (
-                        <div key={`expense-ledger-${row.id}`} className="rounded-lg bg-white/5 p-3">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm text-white">{row.account_name}</p>
-                            <p className="text-sm text-amber-300">{formatCurrency(row.amount)}</p>
-                          </div>
-                          <p className="text-xs text-slate-300 mt-1">{row.reason || 'بدون سبب'}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {expandedRakanCard === 'profitability' && (
-                <div className="glass-card p-4" data-testid="parts-control-rakan-expanded-profitability">
-                  <h3 className="text-white font-semibold mb-3">تحليل الربحية</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-slate-400 text-xs">الإيراد</p>
-                      <p className="text-white font-semibold">{formatCurrency(rakanAnalytics?.revenue)}</p>
-                    </div>
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-slate-400 text-xs">المشتريات</p>
-                      <p className="text-white font-semibold">{formatCurrency(rakanAnalytics?.purchase_expense)}</p>
-                    </div>
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-slate-400 text-xs">مصروفات أخرى</p>
-                      <p className="text-white font-semibold">{formatCurrency(rakanAnalytics?.other_expense)}</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm" data-testid="parts-control-rakan-profit-delta">
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-slate-400 text-xs">معدل فرق الربح/الخسارة</p>
-                      <p className={`text-white font-semibold ${deltaTone(periodDelta.profit)}`}>
-                        {formatCurrency(periodDelta.profit)}
-                      </p>
-                    </div>
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-slate-400 text-xs">معدل فرق هامش الربح</p>
-                      <p className={`text-white font-semibold ${deltaTone(periodDelta.profit_margin)}`}>
-                        {Number(periodDelta.profit_margin || 0).toLocaleString('ar-SA')}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {expandedRakanCard === 'velocity' && (
-                <div className="glass-card p-4" data-testid="parts-control-rakan-expanded-velocity">
-                  <h3 className="text-white font-semibold mb-3">مؤشرات سرعة البيع</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-slate-400 text-xs">عدد عمليات راكان</p>
-                      <p className="text-white font-semibold">{Number(rakanAnalytics?.operations_count || 0).toLocaleString('ar-SA')}</p>
-                    </div>
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-slate-400 text-xs">عمليات البيع</p>
-                      <p className="text-white font-semibold">{Number(rakanAnalytics?.sales_count || 0).toLocaleString('ar-SA')}</p>
-                    </div>
-                    <div className="rounded-lg bg-white/5 p-3">
-                      <p className="text-slate-400 text-xs">عمليات الشراء/المصروف</p>
-                      <p className="text-white font-semibold">{Number(rakanAnalytics?.expense_ops_count || 0).toLocaleString('ar-SA')}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="glass-card p-4" data-testid="parts-control-rakan-insights">
-                <h2 className="text-white font-semibold mb-3">تحليل ذكي</h2>
-                <div className="space-y-2">
-                  {(rakanAnalytics?.insights || []).map((insight, idx) => (
-                    <p key={`rakan-insight-${idx}`} className="text-sm text-slate-200">• {insight}</p>
-                  ))}
-                </div>
-              </div>
-
-              <div className="glass-card p-4" data-testid="parts-control-rakan-expense-reasons">
-                <h2 className="text-white font-semibold mb-3">أكثر أسباب الصرف تكرارًا</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                  {(rakanAnalytics?.expense_reasons || []).map((row, index) => (
-                    <div key={`${row.reason}-${index}`} className="rounded-xl bg-white/5 p-3" data-testid={`parts-control-rakan-expense-reason-${index}`}>
-                      <p className="text-sm text-white">{row.reason}</p>
-                      <p className="text-xs text-amber-300 mt-2">{formatCurrency(row.amount)}</p>
-                    </div>
-                  ))}
-                  {!(rakanAnalytics?.expense_reasons || []).length && (
-                    <p className="text-sm text-slate-400" data-testid="parts-control-rakan-expense-reasons-empty">
-                      لا توجد أسباب صرف موثقة بما يكفي في الفترة الحالية.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <RakanExpenseTrackingPanel
-                analytics={rakanAnalytics}
-                selectedCategory={selectedExpenseCategory}
-                onSelectCategory={setSelectedExpenseCategory}
-              />
-
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="parts-control-rakan-price-expense-summary">
-                <div className="glass-card p-4" data-testid="parts-control-rakan-price-highlights">
-                  <h2 className="text-white font-semibold mb-3">أكبر تحركات الأسعار</h2>
-                  <div className="space-y-2">
-                    {priceTrendHighlights.slice(0, 6).map((row) => {
-                      const volatilityValue = Number(row.volatility_pct || 0);
-                      const isHighVolatility = volatilityValue >= HIGH_VOLATILITY_THRESHOLD;
-                      return (
-                        <div
-                          key={row.part_id}
-                          className="rounded-xl bg-white/5 p-3 flex flex-col gap-2"
-                          data-testid={`parts-control-rakan-price-highlight-${row.part_id}`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm text-white">{row.part_name}</p>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-cyan-200">تذبذب {volatilityValue.toLocaleString('ar-SA')}%</span>
-                              {isHighVolatility && (
-                                <span
-                                  className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] text-rose-200"
-                                  data-testid={`parts-control-rakan-volatility-alert-${row.part_id}`}
-                                >
-                                  تنبيه تذبذب عالي
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-3 text-xs">
-                            <span className={pctClass(row.sale_change_pct)}>
-                              بيع: {formatCurrency(row.sale_change)} ({Number(row.sale_change_pct || 0).toLocaleString('ar-SA')}%)
-                            </span>
-                            <span className={pctClass(row.purchase_change_pct)}>
-                              شراء: {formatCurrency(row.purchase_change)} ({Number(row.purchase_change_pct || 0).toLocaleString('ar-SA')}%)
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {!priceTrendHighlights.length && (
-                      <p className="text-sm text-slate-400" data-testid="parts-control-rakan-price-highlights-empty">
-                        لا توجد تغيّرات سعرية كافية في الفترة الحالية.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="glass-card p-4" data-testid="parts-control-rakan-expense-breakdown">
-                  <h2 className="text-white font-semibold mb-3">مصروفات حسب الحساب</h2>
-                  <div className="space-y-2">
-                    {expenseBreakdown.map((row, index) => (
-                      <div
-                        key={`${row.account}-${index}`}
-                        className="rounded-xl bg-white/5 p-3 flex items-center justify-between"
-                        data-testid={`parts-control-rakan-expense-breakdown-${index}`}
-                      >
-                        <p className="text-sm text-white">{row.account_name}</p>
-                        <p className="text-sm text-amber-300">{formatCurrency(row.amount)}</p>
-                      </div>
-                    ))}
-                    {!expenseBreakdown.length && (
-                      <p className="text-sm text-slate-400" data-testid="parts-control-rakan-expense-breakdown-empty">
-                        لا توجد مصروفات مصنفة حسب الحساب في الفترة الحالية.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="glass-card p-4" data-testid="parts-control-rakan-learned-pricing">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <h2 className="text-white font-semibold">التسعير الذكي (يتعلم ذاتياً)</h2>
-                  <span className="text-xs text-slate-400">يعتمد على جميع العمليات ويُفعّل بعد 5 عمليات</span>
-                </div>
-                <div className="space-y-2">
-                  {learnedPricing.map((row, index) => (
-                    <div
-                      key={`${row.part_id}-${index}`}
-                      className="rounded-xl bg-white/5 p-3 grid grid-cols-1 lg:grid-cols-4 gap-3 text-xs"
-                      data-testid={`parts-control-rakan-learned-row-${index}`}
-                    >
-                      <div>
-                        <p className="text-white text-sm">{row.part_name}</p>
-                        {row.gap_pct !== null && row.gap_pct !== undefined && (
-                          <p className={`mt-1 ${deltaTone(row.gap_pct)}`}>فارق ربح {Number(row.gap_pct).toLocaleString('ar-SA')}%</p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-slate-400">سعر بيع متعلم</p>
-                        <p className={`text-white ${row.sale_ready ? 'font-semibold' : 'text-slate-300'}`}>
-                          {formatLearningStatus(row.learned_sale_price, row.sale_ready, row.sale_samples)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-400">سعر شراء متعلم</p>
-                        <p className={`text-white ${row.purchase_ready ? 'font-semibold' : 'text-slate-300'}`}>
-                          {formatLearningStatus(row.learned_purchase_price, row.purchase_ready, row.purchase_samples)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-400">فرق الربح/الخسارة</p>
-                        <p className={`text-white ${deltaTone(row.gap_value || 0)}`}>
-                          {row.gap_value !== null && row.gap_value !== undefined ? formatCurrency(row.gap_value) : '—'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  {!learnedPricing.length && (
-                    <p className="text-sm text-slate-400" data-testid="parts-control-rakan-learned-pricing-empty">
-                      لا توجد بيانات كافية لتوليد تسعير ذكي حالياً.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div data-testid="parts-control-rakan-price-trend">
-                <RakanPriceTimelinePanel analytics={rakanAnalytics} />
-              </div>
-            </>
-          )}
-        </>
-      )}
 
       {activeTab === 'planner' && (
         <InventoryPlannerTab

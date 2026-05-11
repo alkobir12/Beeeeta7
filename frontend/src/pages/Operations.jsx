@@ -25,19 +25,18 @@ const API_URL = `${resolveBackendBase()}/api`;
 const OPERATIONS_PAGE_SIZE = 15;
 const OPERATION_KIND_WORKSHOP = 'WORKSHOP_OPERATION';
 const OPERATION_KIND_VEHICLE = 'VEHICLE_OPERATION';
+// 🔥 OPERATION_KIND_RAKAN constant kept for backwards-compat only; not exposed in UI.
 const OPERATION_KIND_RAKAN = 'RAKAN_PARTS_OPERATION';
 const RAKAN_ACCOUNT_CODE_PREFIX = '5000';
 
 const OPERATION_KIND_LABELS = {
   [OPERATION_KIND_WORKSHOP]: 'عملية ورشة',
   [OPERATION_KIND_VEHICLE]: 'عملية مركبة',
-  [OPERATION_KIND_RAKAN]: 'عملية قطع راكان',
 };
 
 const OPERATION_KIND_META = {
   [OPERATION_KIND_WORKSHOP]: { icon: '🏭', label: 'عملية ورشة' },
   [OPERATION_KIND_VEHICLE]: { icon: '⚙️', label: 'عملية مركبة' },
-  [OPERATION_KIND_RAKAN]: { icon: '🔧', label: 'عملية قطع راكان' },
 };
 
 const OPERATION_TYPE_OPTIONS = [
@@ -3263,30 +3262,9 @@ const Operations = () => {
             </div>
           )}
 
-          <div className="glass-card p-2" data-testid="operations-tabs-container">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2" data-testid="operations-tabs-list">
-              <button
-                type="button"
-                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${isRakanTabActive ? 'bg-cyan-500/25 text-cyan-100 border border-cyan-300/40' : 'bg-white/5 text-slate-300 border border-white/10'}`}
-                onClick={() => setActiveOperationsTab('rakan')}
-                data-testid="operations-tab-rakan"
-              >
-                عمليات قطع راكان (مستقلة) • {rakanOps.length}
-              </button>
-              <button
-                type="button"
-                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${!isRakanTabActive ? 'bg-amber-500/25 text-amber-100 border border-amber-300/40' : 'bg-white/5 text-slate-300 border border-white/10'}`}
-                onClick={() => setActiveOperationsTab('workshop')}
-                data-testid="operations-tab-workshop"
-              >
-                عمليات الورشة • {workshopOps.length}
-              </button>
-            </div>
-          </div>
-
           <div className="flex items-center justify-between" data-testid="operations-active-tab-summary">
             <h3 className="text-lg font-bold text-slate-100" data-testid="operations-active-tab-title">
-              {isRakanTabActive ? 'عمليات قطع راكان (مستقلة)' : 'عمليات الورشة'}
+              عمليات الورشة
             </h3>
             <span className="text-xs px-2 py-1 rounded bg-white/10 text-slate-200" data-testid="operations-active-tab-count">
               {activeOpsTotalCount} عملية

@@ -198,80 +198,8 @@ const WorkshopSupplierPartPicker = ({ item, onChange, partsCatalog = [], rowId, 
 };
 
 const RakanLinkedPartPicker = ({ item, onChange, partsCatalog = [], rowId, visitId, variant = 'row' }) => {
-  if (!isRakanSupplierName(item.name)) return null;
-
-  // Limit dropdown to parts whose supplier is Rakan-tagged (fall back to entire
-  // catalog if none are tagged so the user is never blocked).
-  const rakanOnly = partsCatalog.filter((p) => {
-    const sup = String(p?.supplier || p?.supplierName || p?.supplier_name || '').trim();
-    return isRakanSupplierName(sup);
-  });
-  const options = rakanOnly.length > 0 ? rakanOnly : partsCatalog;
-
-  const linkedValue = String(item.linkedPart || '').trim();
-  const matched = options.find((p) => (p.name || '').trim() === linkedValue);
-  const showManual = Boolean(item.linkedPartManualEntry || (linkedValue && !matched));
-  const baseTestId = `visit-item-rakan-part-${variant}-${visitId}-${rowId}`;
-
-  return (
-    <div
-      className="space-y-2 mt-2 p-2 rounded-lg"
-      style={{
-        background: 'rgba(34,197,94,0.06)',
-        border: '1px solid rgba(34,197,94,0.22)',
-      }}
-      data-testid={`${baseTestId}-wrapper`}
-    >
-      <select
-        value={showManual ? '__manual__' : linkedValue}
-        onChange={(e) => {
-          const val = e.target.value;
-          if (val === '__manual__') {
-            onChange('linkedPartManualEntry', true);
-            onChange('linkedPart', '');
-            return;
-          }
-          onChange('linkedPartManualEntry', false);
-          onChange('linkedPart', val);
-        }}
-        className="w-full text-xs sm:text-sm rounded-lg p-2"
-        style={{
-          background: 'rgba(255,255,255,0.06)',
-          border: '1px solid rgba(34,197,94,0.30)',
-          color: 'rgba(248,250,252,0.92)',
-        }}
-        data-testid={`${baseTestId}-select`}
-      >
-        <option value="">اختر قطعة من مخزون راكان</option>
-        {options.map((p) => (
-          <option key={p.id || p.name} value={p.name}>
-            {p.name}
-          </option>
-        ))}
-        <option value="__manual__">إدخال يدوي</option>
-      </select>
-
-      {showManual && (
-        <input
-          type="text"
-          value={item.linkedPart || ''}
-          onChange={(e) => {
-            onChange('linkedPartManualEntry', true);
-            onChange('linkedPart', e.target.value);
-          }}
-          className="w-full text-xs sm:text-sm rounded-lg p-2"
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(34,197,94,0.30)',
-            color: 'rgba(248,250,252,0.92)',
-          }}
-          placeholder="اكتب اسم قطعة راكان يدوياً"
-          data-testid={`${baseTestId}-manual`}
-        />
-      )}
-
-    </div>
-  );
+  // 🔥 Rakan-specific component disabled (Feb 2026). Returns null — never renders.
+  return null;
 };
 
 const VisitItemRow = ({

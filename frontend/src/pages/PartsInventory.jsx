@@ -540,37 +540,15 @@ const PartsInventory = () => {
     try {
       const res = await fetch(`${apiBase}/biz-accounts`);
       const data = await res.json().catch(() => ([]));
-      let list = Array.isArray(data) ? data : [];
-      let rakanBranch = list.find((acc) => isRakanBusinessAccount(acc));
-
-      if (!rakanBranch) {
-        const createRes = await fetch(`${apiBase}/biz-accounts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: 'قطع راكان',
-            code: 'RAKAN_PARTS',
-            currency: 'SAR',
-          }),
-        });
-        const created = await createRes.json().catch(() => null);
-        if (createRes.ok && created?.id) {
-          list = [created, ...list];
-          rakanBranch = created;
-          toast({
-            title: 'تهيئة الحسابات',
-            description: 'تم إنشاء حساب أعمال مستقل لقطع راكان تلقائياً',
-          });
-        }
-      }
-
+      const list = Array.isArray(data) ? data : [];
+      // 🔥 Rakan auto-creation removed (Feb 2026).
       setBusinessAccounts(list);
-      setRakanBusinessAccountId(rakanBranch?.id || '');
-      if (!rakanBranch) setMissingRakanAccounts(true);
+      setRakanBusinessAccountId('');
+      setMissingRakanAccounts(false);
     } catch (error) {
       setBusinessAccounts([]);
       setRakanBusinessAccountId('');
-      setMissingRakanAccounts(true);
+      setMissingRakanAccounts(false);
     }
   };
 

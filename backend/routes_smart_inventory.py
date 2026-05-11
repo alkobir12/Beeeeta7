@@ -43,12 +43,6 @@ async def get_inventory_architecture(days: int = Query(default=30, ge=7, le=365)
     return await service.get_inventory_architecture(days=days)
 
 
-@router.get("/rakan-analytics")
-async def get_rakan_inventory_analytics(days: int = Query(default=30, ge=7, le=365)):
-    service = SmartInventoryService(db)
-    return await service.get_rakan_analytics(days=days)
-
-
 @router.post("/reset-totals")
 async def reset_inventory_totals_to_archive():
     service = SmartInventoryService(db)

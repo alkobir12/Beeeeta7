@@ -213,7 +213,8 @@ def _normalize_account_code(value: Any) -> str:
 
 
 def _is_rakan_account_code(value: Any) -> bool:
-    return _normalize_account_code(value).startswith(RAKAN_ACCOUNT_CODE_PREFIX)
+    # 🔥 Rakan logic permanently removed (Feb 2026) — always returns False.
+    return False
 
 
 def _line_account_code(line: Dict[str, Any], id_to_code: Dict[str, str]) -> str:
@@ -226,19 +227,7 @@ def _line_account_code(line: Dict[str, Any], id_to_code: Dict[str, str]) -> str:
 
 
 def _is_rakan_journal_entry(entry: Dict[str, Any], id_to_code: Dict[str, str]) -> bool:
-    source = str(entry.get("source") or "").strip().lower()
-    if "rakan_parts" in source:
-        return True
-
-    description = str(entry.get("description") or "").strip().lower()
-    if "[rakan_parts]" in description or "account_code:5000" in description:
-        return True
-
-    for line in entry.get("lines", []) or []:
-        if not isinstance(line, dict):
-            continue
-        if _is_rakan_account_code(_line_account_code(line, id_to_code)):
-            return True
+    # 🔥 Rakan logic permanently removed (Feb 2026) — always returns False.
     return False
 
 
@@ -1119,26 +1108,8 @@ def _fetch_operations_for_reconciliation(
 
 
 def _is_rakan_operation_row(row: Dict[str, Any]) -> bool:
-    scope = str(row.get("scope") or "").strip().lower()
-    source = str(row.get("source") or "").strip().lower()
-    business_unit = str(row.get("business_unit") or "").strip().lower()
-    notes = str(row.get("notes") or "").strip().lower()
-    account_code = str(
-        row.get("accounting_account_code")
-        or row.get("accountCode")
-        or row.get("account_number")
-        or row.get("accountNumber")
-        or ""
-    ).strip()
-    notes_has_5000 = bool(re.search(r"account_code\s*:\s*5000", notes, re.IGNORECASE))
-    return (
-        scope == "rakan_parts"
-        or "rakan_parts" in source
-        or business_unit == "rakan_parts"
-        or "[rakan_parts]" in notes
-        or account_code.startswith("5000")
-        or notes_has_5000
-    )
+    # 🔥 Rakan logic permanently removed (Feb 2026) — always returns False.
+    return False
 
 
 def _normalize_operation_type_for_reconciliation(op_type: Optional[str]) -> Optional[str]:

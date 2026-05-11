@@ -1,0 +1,54 @@
+{
+  "summary": "Iteration 193 — RADICAL Rakan removal + Services/Parts router refactor regression. Backend: 20/20 pytest PASS at /app/backend/tests/test_rakan_removal_iter193.py. Verified (1) chart-of-accounts purged of every Rakan code (043/044/053/054/055/056/057/058/21010001) and name (راكان/rakan); 042 (revenue) and the NEW 0421 (expense mirror) both exist. (2) /api/inventory/rakan-analytics → 404. (3) Part-sale operation POST /api/operations correctly books COGS to account '0421' (debit 500 vs credit 1105 مخزون قطع غيار) — verified directly in /api/finance/journal-entries — NO routing to legacy 030 for new operations. (4) Services router GET/POST/DELETE all 200 on original /api/services path. (5) Parts router GET (+search+low_stock), POST, DELETE all green on /api/parts. (6) Firewall summary.balance_health_percent=100, unbalanced_entries_in_db=0. (7) All 10 legacy GETs (operations/pending, vehicles, customers, technicians, biz-accounts, approvals, invoice-templates, templates, settings, profile) → 200. Frontend: /parts-dashboard renders the 3 expected workshop account cards (revenue/cost/engine-repair), no parts-control-tab-rakan, no 'راكان' text. /operations no longer renders operations-tab-rakan or operations-tab-workshop buttons. /parts-inventory no longer auto-creates a Rakan business account. /accounting/firewall and /accounting/journal-entries both render without crash and with 0 page errors. HOWEVER — two non-blocking frontend leftovers were found (see frontend_issues).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Operations.jsx credit-reminder card",
+        "issue": "Rakan credit-reminder line (قطع راكان: <count> عملية آجل) is still rendered alongside ورشة line. The block uses data-testid='operations-credit-reminder-rakan-count' and renders the literal Arabic word 'راكان' in the DOM. Source file still contains rakanCreditSummary + missingCustomerOrVehicleForRakan + OPERATION_KIND_RAKAN constant (line ~29, 247, 1651, 2401, 2636, 3215, 3258, 3299).",
+        "selector": "[data-testid='operations-credit-reminder-rakan-count']",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "Operations.jsx active-tab-title",
+        "issue": "The element <h3 data-testid='operations-active-tab-title'> renders the literal string 'API-TOOLS-1776416536' at runtime even though the JSX source at line 3266 contains the literal 'عمليات الورشة'. Reproducible on preview URL after fresh login. This suggests a build/cache desync or an unintended runtime override. The h3 is the only element with that testid in the DOM and the parent wrapper data-testid='operations-active-tab-summary' is correct.",
+        "selector": "[data-testid='operations-active-tab-title']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_rakan_removal_iter193.py",
+    "/app/test_reports/pytest/iter193_rakan.xml"
+  ],
+  "action_items": [
+    "Frontend: complete Rakan UI purge in /app/frontend/src/pages/Operations.jsx — remove the 'قطع راكان' line inside the credit-reminder card (lines ~3257-3259), drop rakanCreditSummary computation, drop OPERATION_KIND_RAKAN constant + downstream branches (lines 28-30, 247, 1651, 2401, 2636, 3215, 3299). Also drop the leftover 'missingCustomerOrVehicleForRakan' flag and the unused isRakanSupplierName + RAKAN_ACCOUNT_KEYWORDS in PartsInventory.jsx (per request these are noted as harmless but should be removed for cleanliness).",
+    "Frontend bug: investigate why <h3 data-testid='operations-active-tab-title'> renders 'API-TOOLS-1776416536' at runtime. Source shows literal 'عمليات الورشة' — likely a stale build / overridden i18n / inadvertent JSX expression. Try a clean yarn build (or hard-refresh + service-worker bust) and verify."
+  ],
+  "critical_code_review_comments": [
+    "Backend refactor is clean — /api/services and /api/parts URL paths preserved with zero behavior changes; POST /api/parts validation correctly requires 'category' (test had to add it; this is a docs/contract note, not a bug).",
+    "COGS routing change from 030 → 0421 verified end-to-end via real operation POST + journal-entries GET. Account 0421 'تكلفة قطع الورشة' debited, 1105 'مخزون قطع غيار' credited — perfectly balanced.",
+    "Operations.jsx still carries ~6 lingering Rakan references (constants, summary, validation messages). These should be deleted for true 'radical removal'. The user-facing 'قطع راكان' line in the credit-reminder is the most visible offender.",
+    "Mystery rendered string 'API-TOOLS-1776416536' inside operations-active-tab-title cannot be explained from source alone. Strongly suggests a CRA/HMR build cache issue or service-worker cached older bundle on the preview host.",
+    "No new lint issues, no MongoDB _id leakage, firewall integrity 100%, 64 balanced journal entries."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_rakan_removal_iter193.py (created — 20 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 pytest)",
+    "frontend": "85% (5/6 UI verifications PASS; 'operations-active-tab-title' text mismatch + leftover 'قطع راكان' reminder line are the 2 issues)"
+  },
+  "test_credentials": "Username: مدير (text input + 'دخول' button, no password). Workshop: finmodule-sync.",
+  "seed_data_creation": "Created during test run: 1 service 'TEST_خدمة فحص iter193' (deleted), 1 part 'TEST_REFACTOR_PART_iter193' (deleted), 1 sale operation 15287c81-750e-44d5-ac0c-dd5f6bee903f with COGS journal entry on account 0421 (NOT deleted — kept as proof of correct COGS routing). Cleanup of the sale operation can be done via DELETE /api/operations/{id} if desired.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression suite is at /app/backend/tests/test_rakan_removal_iter193.py — re-run after Operations.jsx Rakan cleanup. Key facts: (1) /api/parts POST REQUIRES 'category' (snake/camel both fine for partNumber via Pydantic alias). (2) Operations POST infers type from items+account; for a part-sale you must set type='sale' + vehicleId (or customer) or it returns 400. (3) /api/finance/journal-entries returns body.data (list), each entry has 'lines' array, each line uses 'account' (not 'accountCode'). (4) Firewall summary fields under body.summary.balance_health_percent + .unbalanced_entries_in_db. (5) The 'API-TOOLS-1776416536' string showing inside operations-active-tab-title is reproducible — investigate before next major frontend work.",
+  "rca of the issue": "Two frontend findings: (a) 'قطع راكان' still in Operations.jsx credit-reminder block (lines 3253-3260) plus 5 other branches — incomplete Rakan UI purge, easy 10-line delete. (b) The h3 data-testid='operations-active-tab-title' renders 'API-TOOLS-1776416536' but JSX source shows 'عمليات الورشة' — root cause unknown from source inspection alone; most probable: stale built bundle on preview CDN / service-worker holding older JS, or a hidden runtime mutation. Mitigation: rebuild frontend (yarn build) and bust service worker; if reproducible, search for any setAttribute / textContent / dangerouslySetInnerHTML touching that node. Backend RCA — none, all 20 tests pass."
+}

@@ -1,11 +1,12 @@
 # ROADMAP
 
 ## P0
-- لا يوجد عنصر حرج مفتوح مرتبط بطلب Smart POS الحالي.
+- لا يوجد عنصر حرج مفتوح مرتبط بطلبات المركبات/الدفعات/Smart POS الحالية.
 
 ## P1
 - استخراج Customers / Vehicles / Suppliers من `server.py` إلى routers مستقلة.
 - استخراج Visits / Operations / Vehicles من `routes_extended.py` إلى ملفات أصغر.
+- توحيد تمثيل ردود `GET journal entry` و`GET journal entries` بالكامل في كل المستهلكين.
 - تقليل ضوضاء fetch أثناء الأتمتة/التنقل إذا استمر ظهورها في بيئات الاختبار فقط.
 
 ## P2

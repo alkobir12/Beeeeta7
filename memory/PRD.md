@@ -29,6 +29,65 @@
 
 ## What's Been Implemented
 
+### 🧾 Vehicle Files + Smart POS Accounts + Visit Receipt Vouchers + Test Data Cleanup (12 May 2026)
+
+**1. إصلاح حفظ رقم ملف المركبة / العميل**
+- تم توسيع `VehicleUpdate` ليقبل حقول المركبة الأساسية + `customerFileNumber`.
+- تم تحديث `PUT /api/vehicles/{vehicle_id}` ليحفظ:
+  - `fileNumber`
+  - `customerFileNumber`
+- في Supabase/Mongo/Memory يعود الرد الآن بالبيانات المحدثة مع إلحاق `customerFileNumber` بشكل صحيح.
+- واجهة `VehicleDetails.jsx` أصبحت تدعم تعديل:
+  - رقم ملف المركبة
+  - رقم ملف العميل المرتبط
+
+**2. تصحيح ربط الحسابات في Smart POS**
+- تم إصلاح mapping الحسابات في `SmartPOSJournal.jsx` بحيث:
+  - **الرواتب** → `036 رواتب إدارية`
+  - **البيع** → حساب إيراد خدمات صحيح (`025/026/027` حسب المتاح)
+  - **وسائل الدفع** → `003 نقد` / `004 بنك` / `006 نقاط بيع`
+- تمت إزالة الاعتماد الخاطئ على الأكواد التي كانت تشير في هذه البيئة إلى حسابات غير مناسبة مثل `037 إيجار المركز`.
+
+**3. الحساب الافتراضي حسب نوع العملية في صفحة Operations**
+- `Operations.jsx` يختار الآن الحساب الافتراضي المناسب بحسب نوع العملية:
+  - sale → revenue
+  - payment/settlement customer → `005 العملاء`
+  - payment supplier → `2101 الموردون`
+  - purchase/expense → حساب مصروف مناسب
+
+**4. سندات القبض لدفعات الزيارة (دفعة مقدمة / تحت الحساب)**
+- عند حفظ دفعات الزيارة في `VehicleDetails.jsx` يتم الآن:
+  - احتسابها ضمن `payments`
+  - إنشاء قيد محاسبي فعلي في `journal_entries`
+  - المصدر: `visit_receipt_voucher`
+  - الربط عبر `reference_id = visit_id`
+  - وصف القيد يتضمن tokens:
+    - `[PARTY:...]`
+    - `[PARTY_TYPE:customer]`
+    - `[VEHICLE_REF:...]`
+    - `[VISIT:...]`
+- ربط الحسابات في سند القبض:
+  - مدين: وسيلة التحصيل (`003/004/006`)
+  - دائن: `005 العملاء`
+
+**5. تحسين Endpoint القيد المفرد**
+- `GET /api/finance/journal-entries/{entry_id}` أصبح يعيد الحقول الأساسية أيضاً على المستوى الأعلى، مع الإبقاء على `data` للتوافق العكسي.
+
+**6. تنظيف البيانات الاختبارية**
+- تم حذف بيانات الاختبار التي أنشأتها جولات الاختبار الأخيرة، بما يشمل:
+  - مركبات تجريبية `TEST-* / UPD-* / CUST-*`
+  - قيود يومية بوصف `TEST_*`
+  - إزالة دفعة اختبارية إضافية وقيدها المرتبط
+- تم إرجاع أرقام الملفات التجريبية على المركبة الحقيقية المستخدمة للفحص السريع.
+
+**التحقق والاختبار:**
+- `testing_agent`: `/app/test_reports/iteration_200.json`
+  - Backend: **13/14 PASS**
+  - Frontend: **100% PASS**
+  - الملاحظة المنخفضة الوحيدة (شكل رد endpoint القيد المفرد) تم إصلاحها.
+- `auto_frontend_testing_agent`: **PASS**
+- `deep_testing_backend_v2`: **PASS**
+
 ### 💳 Smart POS Journal — User-requested completion (11 May 2026)
 
 **ملخص التنفيذ النهائي لطلب المستخدم الأخير:**

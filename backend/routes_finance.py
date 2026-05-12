@@ -3176,17 +3176,19 @@ async def get_journal_entry(entry_id: str, workshop_id: str = Query(...)):
             }
 
         entry = response.data[0]
+        normalized_entry = {
+            "id": entry.get("id"),
+            "date": entry.get("date", ""),
+            "description": entry.get("description", "قيد يدوي"),
+            "lines": entry.get("lines", []),
+            "total": entry.get("total", 0),
+            "source": entry.get("source", "manual"),
+            "reference_id": entry.get("reference_id"),
+        }
         return {
             "success": True,
-            "data": {
-                "id": entry.get("id"),
-                "date": entry.get("date", ""),
-                "description": entry.get("description", "قيد يدوي"),
-                "lines": entry.get("lines", []),
-                "total": entry.get("total", 0),
-                "source": entry.get("source", "manual"),
-                "reference_id": entry.get("reference_id"),
-            },
+            "data": normalized_entry,
+            **normalized_entry,
         }
 
     except Exception as e:

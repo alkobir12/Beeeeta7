@@ -185,6 +185,8 @@ const pickAccount = (accounts = [], candidates = [], fallback = { code: '', name
     const hit = safeAccounts.find((account) => {
       const code = String(account?.code || '').trim();
       const name = normalizeText(account?.name_ar || account?.name);
+      const type = normalizeText(account?.type || '');
+      if (candidate.type && type !== normalizeText(candidate.type)) return false;
       if (candidate.codes?.length && candidate.codes.includes(code)) return true;
       if (candidate.includesAll?.length && candidate.includesAll.every((part) => name.includes(normalizeText(part)))) return true;
       if (candidate.includesAny?.length && candidate.includesAny.some((part) => name.includes(normalizeText(part)))) return true;
@@ -246,35 +248,37 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
     ], bank);
 
     const customersAccount = pickAccount(accounts, [
-      { codes: ['005'] },
-      { includesAll: ['العملاء'] },
+      { codes: ['005'], type: 'asset' },
+      { includesAll: ['العملاء'], type: 'asset' },
     ], { code: '005', name: 'العملاء (ذمم مدينة)' });
 
     const suppliersAccount = pickAccount(accounts, [
-      { codes: ['2101'] },
-      { includesAny: ['المورد', 'supplier'] },
+      { codes: ['2101'], type: 'liability' },
+      { includesAny: ['المورد', 'supplier'], type: 'liability' },
     ], { code: '2101', name: 'الموردون (ذمم دائنة)' });
 
     const salesRevenue = pickAccount(accounts, [
-      { codes: ['042'] },
-      { includesAll: ['إيراد', 'قطع'] },
-      { includesAll: ['ايراد', 'قطع'] },
-      { codes: ['026', '025'] },
-    ], { code: '042', name: 'إيراد قطع الورشة' });
+      { includesAll: ['إيرادات', 'الخدمات'], type: 'revenue' },
+      { includesAll: ['إيرادات', 'خدمات'], type: 'revenue' },
+      { includesAll: ['إيراد', 'خدمات'], type: 'revenue' },
+      { includesAll: ['ايراد', 'خدمات'], type: 'revenue' },
+      { codes: ['025', '026', '027'], type: 'revenue' },
+    ], { code: '025', name: 'إيرادات الخدمات' });
 
     const operatingExpense = pickAccount(accounts, [
-      { codes: ['035'] },
-      { includesAll: ['المصروفات', 'التشغيلية'] },
-      { includesAny: ['مصروفات تشغيلية'] },
-      { codes: ['036'] },
+      { codes: ['035'], type: 'expense' },
+      { includesAll: ['مصروفات', 'إدارية'], type: 'expense' },
+      { includesAll: ['مصروفات', 'عامة'], type: 'expense' },
+      { includesAll: ['المصروفات', 'التشغيلية'], type: 'expense' },
+      { includesAny: ['مصروفات تشغيلية'], type: 'expense' },
+      { codes: ['036'], type: 'expense' },
     ], { code: '035', name: 'المصروفات التشغيلية' });
 
     const salaryExpense = pickAccount(accounts, [
-      { codes: ['037'] },
-      { includesAll: ['رواتب'] },
-      { includesAny: ['أجور'] },
-      { codes: ['036', '035'] },
-    ], { code: '037', name: 'رواتب إدارية' });
+      { includesAll: ['رواتب'], type: 'expense' },
+      { includesAny: ['أجور'], type: 'expense' },
+      { codes: ['036', '035'], type: 'expense' },
+    ], { code: '036', name: 'رواتب إدارية' });
 
     return {
       cash,

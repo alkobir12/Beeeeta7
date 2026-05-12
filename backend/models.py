@@ -44,10 +44,19 @@ class Vehicle(VehicleBase):
 
 
 class VehicleUpdate(BaseModel):
+    plateNumber: Optional[str] = None
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = None
+    color: Optional[str] = None
+    vin: Optional[str] = None
     status: Optional[str] = None
     technicianId: Optional[str] = None
     notes: Optional[str] = None
     fileNumber: Optional[str] = None
+    customerName: Optional[str] = None
+    customerPhone: Optional[str] = None
+    customerEmail: Optional[str] = None
     estimatedCompletion: Optional[datetime] = None
     completionDate: Optional[datetime] = None
     images: Optional[List[str]] = None

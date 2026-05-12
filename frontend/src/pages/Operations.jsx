@@ -130,6 +130,52 @@ const normalizeAccountCode = (value) => {
   return raw;
 };
 
+const accountMatchesPreference = (account, preference = {}) => {
+  const code = normalizeAccountCode(account?.code || account?.id || '');
+  const name = normalizeText(account?.name_ar || account?.name || '');
+  const accountType = normalizeText(account?.type || '');
+
+  if (preference.codes?.length && preference.codes.includes(code)) return true;
+  if (preference.type && accountType !== normalizeText(preference.type)) return false;
+  if (preference.includesAll?.length && preference.includesAll.every((part) => name.includes(normalizeText(part)))) return true;
+  if (preference.includesAny?.length && preference.includesAny.some((part) => name.includes(normalizeText(part)))) return true;
+  return false;
+};
+
+const pickPreferredOperationAccount = (accounts = [], opType = '', partnerType = 'customer') => {
+  const preferences = SALE_LIKE_TYPES.has(opType)
+    ? [
+        { codes: ['025', '026', '027'], type: 'revenue' },
+        { includesAll: ['إيرادات', 'الخدمات'], type: 'revenue' },
+        { includesAll: ['إيرادات', 'خدمات'], type: 'revenue' },
+      ]
+    : PAYMENT_ORDER_LIKE_TYPES.has(opType)
+      ? (partnerType === 'supplier'
+          ? [
+              { codes: ['2101'], type: 'liability' },
+              { includesAny: ['الموردون', 'مورد'], type: 'liability' },
+            ]
+          : [
+              { codes: ['005'], type: 'asset' },
+              { includesAny: ['العملاء'], type: 'asset' },
+            ])
+      : (PURCHASE_LIKE_TYPES.has(opType) || opType === 'expense')
+        ? [
+            { codes: ['035'], type: 'expense' },
+            { includesAll: ['مصروفات', 'إدارية'], type: 'expense' },
+            { includesAll: ['مصروفات', 'عامة'], type: 'expense' },
+            { codes: ['036'], type: 'expense' },
+          ]
+        : [];
+
+  for (const preference of preferences) {
+    const match = accounts.find((account) => accountMatchesPreference(account, preference));
+    if (match) return match;
+  }
+
+  return accounts[0] || null;
+};
+
 const isRakanCode = (value) => normalizeAccountCode(value).startsWith(RAKAN_ACCOUNT_CODE_PREFIX);
 
 const isRakanBusinessAccount = (account) => {
@@ -984,15 +1030,17 @@ const Operations = () => {
       });
       return;
     }
+    const preferred = pickPreferredOperationAccount(filteredAccounts, form.type, form.partnerType);
+    const preferredId = String(preferred?.id || preferred?.code || '');
     const exists = filteredAccounts.some((acc) => String(acc.id || acc.code) === String(form.accountingAccountId || ''));
-    if (!exists) {
+    const nextId = preferredId || String(filteredAccounts[0].id || filteredAccounts[0].code || '');
+    if (!exists || (nextId && String(form.accountingAccountId || '') !== nextId)) {
       setForm((prev) => {
-        const nextId = String(filteredAccounts[0].id || filteredAccounts[0].code || '');
         if (String(prev.accountingAccountId || '') === nextId) return prev;
         return { ...prev, accountingAccountId: nextId };
       });
     }
-  }, [filteredAccounts, form.accountingAccountId, accountsLoading]);
+  }, [filteredAccounts, form.accountingAccountId, form.type, form.partnerType, accountsLoading]);
 
   useEffect(() => {
     if (!form.accountingAccountId) return;

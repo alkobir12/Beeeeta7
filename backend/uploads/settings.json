@@ -3,6 +3,8 @@
   "inventory_totals_reset_at": "2026-04-04T22:40:24.971631+00:00",
   "updatedAt": "2026-04-04T22:40:24.971631+00:00",
   "customerFileNumbers": {
-    "129b338b-8169-4ef4-8d84-eb15eef2f83d": "1026"
+    "129b338b-8169-4ef4-8d84-eb15eef2f83d": "1026",
+    "8cf32822-fa55-49a1-a667-81da0e45bd44": "CF-UI-78",
+    "3ee0ddf0-fce1-40e2-8e1f-54529598eec8": "CUST-FILE-44b06862"
   }
 }

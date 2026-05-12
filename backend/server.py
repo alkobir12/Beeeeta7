@@ -830,15 +830,30 @@ async def settle_vehicle_credit_operations(vehicle_id: str):
 
 @api_router.put("/vehicles/{vehicle_id}", response_model=Vehicle)
 async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
-    upd = {k: v for k, v in update_data.dict().items() if v is not None}
+    raw_update = update_data.dict(exclude_unset=True)
+    customer_file_present = "customerFileNumber" in raw_update
+    customer_file_value = raw_update.pop("customerFileNumber", None) if customer_file_present else None
+    upd = {k: v for k, v in raw_update.items() if v is not None}
 
     if DB_PROVIDER == "supabase":
-        v = supabase_service.vehicles_update(vehicle_id, upd)
+        existing_vehicle = supabase_service.vehicles_get(vehicle_id)
+        if not existing_vehicle:
+            raise HTTPException(status_code=404, detail="Vehicle not found")
+
+        v = supabase_service.vehicles_update(vehicle_id, upd) if upd else existing_vehicle
         if not v:
             raise HTTPException(status_code=404, detail="Vehicle not found")
+
+        customer_id = str(v.get("customerId") or existing_vehicle.get("customerId") or "").strip()
+        if customer_file_present and customer_id:
+            await _set_customer_file_number(customer_id, customer_file_value)
+
         if upd.get("status") == "delivered":
             await settle_vehicle_credit_operations(vehicle_id)
-        return Vehicle(**v)
+
+        patched_rows = await _attach_customer_file_numbers_to_vehicles([v])
+        patched = patched_rows[0] if patched_rows else v
+        return Vehicle(**patched)
 
     if DB_PROVIDER == "memory":
         rows = _mem_read("vehicles")
@@ -855,13 +870,33 @@ async def update_vehicle(vehicle_id: str, update_data: VehicleUpdate):
                     upd["completionDate"] = upd["completionDate"].isoformat()
 
                 rows[i] = {**r, **upd}
+                customer_id = str(rows[i].get("customerId") or "").strip()
+                if customer_file_present and customer_id:
+                    await _set_customer_file_number(customer_id, customer_file_value)
+                rows = await _attach_customer_file_numbers_to_vehicles(rows)
                 _mem_write("vehicles", rows)
                 return Vehicle(**rows[i])
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
-    await db.vehicles.update_one({"id": vehicle_id}, {"$set": upd})
+    vehicle_before = await db.vehicles.find_one({"id": vehicle_id}, {"_id": 0})
+    if not vehicle_before:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+
+    if upd:
+        await db.vehicles.update_one({"id": vehicle_id}, {"$set": upd})
+
     vehicle = await db.vehicles.find_one({"id": vehicle_id})
-    return Vehicle(**vehicle)
+    if not vehicle:
+        raise HTTPException(status_code=404, detail="Vehicle not found")
+
+    customer_id = str(vehicle.get("customerId") or vehicle_before.get("customerId") or "").strip()
+    if customer_file_present and customer_id:
+        await _set_customer_file_number(customer_id, customer_file_value)
+
+    vehicle.pop("_id", None)
+    patched_rows = await _attach_customer_file_numbers_to_vehicles([vehicle])
+    patched = patched_rows[0] if patched_rows else vehicle
+    return Vehicle(**patched)
 
 
 
@@ -2618,7 +2653,8 @@ async def sell_part(part_id: str, quantity: int = 1):
     new_qty = current_qty - quantity
     await db.parts.update_one({"id": part_id}, {"$set": {"quantity": new_qty, "updatedAt": datetime.utcnow().isoformat()}})
     part["quantity"] = new_qty
-    return {"success": True, "part": serialize_document(part)}
+    part.pop("_id", None)
+    return {"success": True, "part": part}
 
 
 @api_router.post("/parts/{part_id}/restock")
@@ -2659,7 +2695,8 @@ async def restock_part(part_id: str, quantity: int = 1):
     new_qty = current_qty + quantity
     await db.parts.update_one({"id": part_id}, {"$set": {"quantity": new_qty, "updatedAt": datetime.utcnow().isoformat()}})
     part["quantity"] = new_qty
-    return {"success": True, "part": serialize_document(part)}
+    part.pop("_id", None)
+    return {"success": True, "part": part}
 
 
 @api_router.delete("/parts/{part_id}")
@@ -3174,9 +3211,6 @@ async def financial_analysis(request: FinancialAnalysisRequest):
 
 def generate_mock_financial_analysis(query: str, data: Dict[str, Any]) -> str:
     """Generate mock financial analysis when API is unavailable"""
-    revenue = data.get("revenue", 528000)
-    data.get("expenses", 465000)
-    net_income = data.get("net_income", 63000)
     gross_margin = data.get("gross_margin", 75.4)
     net_margin = data.get("net_margin", 11.9)
     current_ratio = data.get("current_ratio", 3.28)

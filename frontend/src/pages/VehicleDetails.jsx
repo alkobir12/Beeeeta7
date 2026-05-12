@@ -787,7 +787,8 @@ const VisitCard = ({
   const [isExpanded, setIsExpanded] = useState((visit.status || 'in_progress') === 'in_progress');
   const [items, setItems] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [paymentDraft, setPaymentDraft] = useState({ kind: 'advance', amount: '' });
+  const [originalPayments, setOriginalPayments] = useState([]);
+  const [paymentDraft, setPaymentDraft] = useState({ kind: 'advance', amount: '', method: 'cash' });
   const [status, setStatus] = useState(visit.status);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -802,6 +803,96 @@ const VisitCard = ({
   const whatsappNotificationRef = useRef(null);
 
   const { toast } = useToast();
+  const activeWorkshopId = process.env.REACT_APP_WORKSHOP_ID || vehicle?.workshopId || vehicle?.workshop_id || 'finmodule-sync';
+  const paymentMethodLabelMap = {
+    bank: 'بنك/تحويل',
+    cash: 'نقد',
+    pos: 'نقاط بيع',
+    supplier_balance: 'رصيد مورد',
+  };
+
+  const deleteJournalEntries = async (entryIds = []) => {
+    const ids = (entryIds || []).filter(Boolean);
+    for (const entryId of ids) {
+      await axios.delete(`${API_URL}/finance/journal-entries/${entryId}`, {
+        params: { workshop_id: activeWorkshopId },
+      });
+    }
+  };
+
+  const syncPaymentJournalEntries = async (paymentRows = []) => {
+    const paymentAccounts = {
+      cash: { code: '003', name: 'النقد' },
+      bank: { code: '004', name: 'البنك' },
+      pos: { code: '006', name: 'نقاط بيع' },
+    };
+    const createdIds = [];
+    const syncedPayments = [];
+
+    for (const row of paymentRows) {
+      const method = String(row?.paymentMethod || row?.method || 'cash').trim().toLowerCase();
+      const amount = Number(row?.amount || 0);
+      const normalizedRow = {
+        ...row,
+        method,
+        paymentMethod: method,
+      };
+
+      if (!(amount > 0) || method === 'supplier_balance' || row?.journalEntryId) {
+        syncedPayments.push(normalizedRow);
+        continue;
+      }
+
+      const paymentAccount = paymentAccounts[method] || paymentAccounts.cash;
+      const isAdvance = String(row?.kind || '').trim().toLowerCase() === 'advance';
+      const paymentDate = String(row?.date || new Date().toISOString()).slice(0, 10);
+      const customerName = String(vehicle?.customerName || 'عميل').trim() || 'عميل';
+      const vehicleRef = String(vehicle?.plateNumber || vehicle?.plate_number || '').trim();
+      const description = [
+        isAdvance ? 'سند قبض — دفعة مقدمة' : 'سند قبض — تحت الحساب',
+        customerName,
+        vehicleRef,
+      ].filter(Boolean).join(' — ');
+
+      const response = await axios.post(`${API_URL}/finance/journal-entries`, {
+        date: paymentDate,
+        description: `${description} [PARTY:${customerName}] [PARTY_TYPE:customer]${vehicleRef ? ` [VEHICLE_REF:${vehicleRef}]` : ''} [VISIT:${visit.id}]`,
+        transaction_type: 'payment',
+        source: 'visit_receipt_voucher',
+        reference_id: visit.id,
+        total: amount,
+        lines: [
+          {
+            account: paymentAccount.code,
+            account_name: paymentAccount.name,
+            debit: amount,
+            credit: 0,
+          },
+          {
+            account: '005',
+            account_name: 'العملاء',
+            debit: 0,
+            credit: amount,
+          },
+        ],
+      }, {
+        params: { workshop_id: activeWorkshopId },
+      });
+
+      const journalEntryId = response?.data?.id || response?.data?.data?.[0]?.id || '';
+      if (journalEntryId) {
+        createdIds.push(journalEntryId);
+      }
+
+      syncedPayments.push({
+        ...normalizedRow,
+        receiptLabel: description,
+        journalEntryId,
+      });
+    }
+
+    return { syncedPayments, createdIds };
+  };
 
   useEffect(() => {
     let parsedItems = [];
@@ -813,6 +904,8 @@ const VisitCard = ({
         if (obj.payments) {
           parsedPayments = obj.payments.map((p, idx) => ({
             id: p.id || `pay-${idx}-${p.date || Date.now()}`,
+            method: p.method || p.paymentMethod || 'cash',
+            paymentMethod: p.paymentMethod || p.method || 'cash',
             ...p,
           }));
         }
@@ -867,6 +960,7 @@ const VisitCard = ({
 
     setItems(normalizedItems);
     setPayments(parsedPayments);
+    setOriginalPayments(parsedPayments);
     setStatus(visit.status || 'in_progress');
     setTechId(visit.technicianId || visit.technician_id || '');
     setMileage(visit.mileage || '');
@@ -965,8 +1059,14 @@ const VisitCard = ({
   const handleSave = async () => {
     if (isSaving) return;
     setIsSaving(true);
+    let createdJournalIds = [];
     try {
       await persistCatalogEntries();
+      const removedPayments = originalPayments.filter(
+        (payment) => payment?.journalEntryId && !payments.some((current) => current.id === payment.id)
+      );
+      const { syncedPayments, createdIds } = await syncPaymentJournalEntries(payments);
+      createdJournalIds = createdIds;
       const itemsForSave = items.map((item) => ({
         ...item,
         billingType:
@@ -978,11 +1078,14 @@ const VisitCard = ({
         status,
         technicianId: techId || null,
         mileage: Number(mileage),
-        notes: JSON.stringify({ text: notes, items: itemsForSave, payments }),
+        notes: JSON.stringify({ text: notes, items: itemsForSave, payments: syncedPayments }),
       };
 
       await axios.put(`${API_URL}/visits/${visit.id}`, payload);
+      await deleteJournalEntries(removedPayments.map((payment) => payment.journalEntryId));
 
+      setPayments(syncedPayments);
+      setOriginalPayments(syncedPayments);
       setIsEditing(archiveMode);
       onUpdate?.();
       onAuditEvent?.({
@@ -995,6 +1098,13 @@ const VisitCard = ({
       });
       toast({ title: 'تم الحفظ', description: `تم حفظ ${items.length} بند بنجاح` });
     } catch (e) {
+      if (createdJournalIds.length > 0) {
+        try {
+          await deleteJournalEntries(createdJournalIds);
+        } catch {
+          // ignore compensation cleanup failure
+        }
+      }
       console.error('Save visit error:', e);
       const errMsg = e?.response?.data?.detail || e?.message || '';
       toast({ title: 'خطأ في الحفظ', description: errMsg || 'فشل الحفظ. تأكد من الاتصال وحاول مرة أخرى.', variant: 'destructive' });
@@ -1058,14 +1168,8 @@ const VisitCard = ({
     }
 
     setConfirmPayLoading(true);
+    let createdJournalIds = [];
     try {
-      const methodLabel = {
-        bank: 'بنك/تحويل',
-        cash: 'نقد',
-        pos: 'نقاط بيع',
-        supplier_balance: 'رصيد مورد',
-      };
-
       const supplierBalanceAmount = resolvedLines
         .filter((line) => line.method === 'supplier_balance')
         .reduce((sum, line) => sum + Number(line.amount || 0), 0);
@@ -1095,12 +1199,15 @@ const VisitCard = ({
         kind: 'payment',
         amount: l.amount,
         date: date || new Date().toISOString().split('T')[0],
+        method: l.method,
         paymentMethod: l.method,
-        label: `تسديد (${methodLabel[l.method] || l.method})`,
+        label: `تسديد (${paymentMethodLabelMap[l.method] || l.method})`,
       }));
 
-      const nextPayments = [...payments, ...newPaymentEntries];
-      setPayments(nextPayments);
+      const { syncedPayments: syncedNewPayments, createdIds } = await syncPaymentJournalEntries(newPaymentEntries);
+      createdJournalIds = createdIds;
+
+      const nextPayments = [...payments, ...syncedNewPayments];
 
       const totalConfirmed = resolvedLines.reduce((s, l) => s + l.amount, 0);
 
@@ -1116,8 +1223,11 @@ const VisitCard = ({
         notes: JSON.stringify({ text: notes, items: itemsForSave, payments: nextPayments }),
       });
 
+      setPayments(nextPayments);
+      setOriginalPayments(nextPayments);
+
       setConfirmPayOpen(false);
-      const summaryParts = resolvedLines.map(l => `${(methodLabel[l.method] || l.method)}: ${l.amount.toLocaleString('ar-SA')} ر.س`);
+      const summaryParts = resolvedLines.map(l => `${(paymentMethodLabelMap[l.method] || l.method)}: ${l.amount.toLocaleString('ar-SA')} ر.س`);
       toast({
         title: 'تم السداد',
         description: summaryParts.join(' • '),
@@ -1135,6 +1245,13 @@ const VisitCard = ({
 
       onUpdate?.();
     } catch (e) {
+      if (createdJournalIds.length > 0) {
+        try {
+          await deleteJournalEntries(createdJournalIds);
+        } catch {
+          // ignore compensation cleanup failure
+        }
+      }
       const errMsg = e?.response?.data?.detail || e?.message || '';
       toast({ title: 'خطأ', description: errMsg || 'فشل تسجيل السداد', variant: 'destructive' });
     } finally {
@@ -1264,9 +1381,11 @@ const VisitCard = ({
       kind: paymentDraft.kind || 'advance',
       amount,
       date: new Date().toISOString(),
+      method: paymentDraft.method || 'cash',
+      paymentMethod: paymentDraft.method || 'cash',
     };
     setPayments([...payments, entry]);
-    setPaymentDraft({ kind: paymentDraft.kind || 'advance', amount: '' });
+    setPaymentDraft({ kind: paymentDraft.kind || 'advance', amount: '', method: paymentDraft.method || 'cash' });
   };
 
   const removePayment = (paymentId, index) => {
@@ -1715,6 +1834,7 @@ const VisitCard = ({
               <div className="space-y-2">
                 {payments.map((payment, idx) => {
                   const kindLabel = (payment.kind || '').toLowerCase() === 'advance' ? 'دفعة مقدمة' : 'تحت الحساب';
+                  const methodLabel = paymentMethodLabelMap[payment.paymentMethod || payment.method || 'cash'] || (payment.paymentMethod || payment.method || 'cash');
                   return (
                     <div
                       key={payment.id || idx}
@@ -1727,6 +1847,9 @@ const VisitCard = ({
                     >
                       <div className="text-xs font-semibold" style={{ color: 'rgba(226,232,240,0.85)' }} data-testid={`visit-payment-kind-${visit.id}-${idx}`}>
                         {kindLabel}
+                        <div className="text-[10px] mt-1" style={{ color: 'rgba(148,163,184,0.90)' }} data-testid={`visit-payment-method-${visit.id}-${idx}`}>
+                          {methodLabel}
+                        </div>
                       </div>
                       <div className="text-xs font-extrabold tabular-nums" style={{ color: 'rgba(167,243,208,0.95)' }} data-testid={`visit-payment-amount-${visit.id}-${idx}`}>
                         {formatCurrency(payment.amount || 0)}
@@ -1753,7 +1876,7 @@ const VisitCard = ({
             )}
 
             {isEditing && (
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2">
                 <select
                   value={paymentDraft.kind}
                   onChange={(e) => setPaymentDraft({ ...paymentDraft, kind: e.target.value })}
@@ -1767,6 +1890,21 @@ const VisitCard = ({
                 >
                   <option value="advance">دفعة مقدمة</option>
                   <option value="payment">تحت الحساب</option>
+                </select>
+                <select
+                  value={paymentDraft.method || 'cash'}
+                  onChange={(e) => setPaymentDraft({ ...paymentDraft, method: e.target.value })}
+                  className="w-full text-xs rounded-lg p-2"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(148,163,184,0.18)',
+                    color: 'rgba(248,250,252,0.92)',
+                  }}
+                  data-testid={`visit-payment-method-select-${visit.id}`}
+                >
+                  <option value="cash">نقد</option>
+                  <option value="bank">بنك/تحويل</option>
+                  <option value="pos">نقاط بيع</option>
                 </select>
                 <input
                   type="number"
@@ -2460,7 +2598,8 @@ const VehicleDetails = () => {
       setCustomerForm({
         name: vehicleRes.data.customerName,
         phone: vehicleRes.data.customerPhone,
-        email: vehicleRes.data.customerEmail
+        email: vehicleRes.data.customerEmail,
+        fileNumber: vehicleRes.data.customerFileNumber || ''
       });
       
       setTechnicians(normalizeListPayload(techniciansRes, ['technicians']));
@@ -2597,14 +2736,16 @@ const VehicleDetails = () => {
       await vehicleAPI.update(id, {
         customerName: customerForm.name,
         customerPhone: customerForm.phone,
-        customerEmail: customerForm.email
+        customerEmail: customerForm.email,
+        customerFileNumber: customerForm.fileNumber || ''
       });
       
       if (vehicle.customerId) {
         await customerAPI.update(vehicle.customerId, {
           name: customerForm.name,
           phone: customerForm.phone,
-          email: customerForm.email
+          email: customerForm.email,
+          fileNumber: customerForm.fileNumber || ''
         });
       }
       
@@ -2612,7 +2753,8 @@ const VehicleDetails = () => {
         ...prev, 
         customerName: customerForm.name, 
         customerPhone: customerForm.phone,
-        customerEmail: customerForm.email 
+        customerEmail: customerForm.email,
+        customerFileNumber: customerForm.fileNumber || ''
       }));
       if (isArchiveSource) {
         appendArchiveAudit({
@@ -2624,6 +2766,7 @@ const VehicleDetails = () => {
           details: {
             name: customerForm.name,
             phone: customerForm.phone,
+            customerFileNumber: customerForm.fileNumber || '-',
           },
         });
       }
@@ -3278,13 +3421,27 @@ const VehicleDetails = () => {
                   </div>
                   <div className="flex flex-col py-2">
                     <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>رقم ملف العميل المرتبط</span>
-                    <span
-                      className="text-sm font-semibold"
-                      style={{ color: 'rgba(167,243,208,0.95)' }}
-                      data-testid="customer-linked-file-number-value"
-                    >
-                      {vehicle.customerFileNumber || '-'}
-                    </span>
+                    {isEditingCustomer ? (
+                      <input
+                        className="w-full text-sm rounded-xl px-3 py-2"
+                        style={{
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(148,163,184,0.18)',
+                          color: 'rgba(248,250,252,0.92)',
+                        }}
+                        value={customerForm.fileNumber || ''}
+                        onChange={(e) => setCustomerForm({ ...customerForm, fileNumber: e.target.value })}
+                        data-testid="customer-file-number-input"
+                      />
+                    ) : (
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: 'rgba(167,243,208,0.95)' }}
+                        data-testid="customer-linked-file-number-value"
+                      >
+                        {vehicle.customerFileNumber || '-'}
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-col py-2">
                     <span className="text-[11px] mb-1" style={{ color: 'rgba(226,232,240,0.62)' }}>البريد الإلكتروني</span>

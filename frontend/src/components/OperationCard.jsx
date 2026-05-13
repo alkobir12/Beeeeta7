@@ -31,7 +31,10 @@ import {
 const formatDateTime = (dateLike, isRTL) => {
   try {
     const d = new Date(dateLike);
-    const dateStr = d.toLocaleDateString(isRTL ? 'ar-SA' : 'en-US');
+    const locale = isRTL ? 'ar-SA-u-ca-gregory' : 'en-US';
+    const raw = String(dateLike || '');
+    const dateStr = d.toLocaleDateString(locale, { year: 'numeric', month: '2-digit', day: '2-digit' });
+    if (/T00:00:00|^\d{4}-\d{2}-\d{2}$/.test(raw)) return dateStr;
     const timeStr = d.toLocaleTimeString(isRTL ? 'ar-SA' : 'en-US', {
       hour: '2-digit',
       minute: '2-digit',
@@ -46,12 +49,18 @@ const sanitizeAccountingText = cleanAccountingText;
 
 const normalizePaymentSourceAccount = (operation = {}, t) => {
   const method = String(operation.paymentMethod || '').toLowerCase();
-  if (method === 'cash') return 'حساب الصندوق';
-  if (method === 'transfer' || method === 'card') return 'حساب البنك';
+  if (method === 'cash') return 'الصندوق';
+  if (method === 'transfer' || method === 'bank') return 'البنك';
+  if (method === 'card' || method === 'pos') return 'نقاط البيع';
   if (method === 'credit') {
-    return operation.type === 'sale' ? 'حساب الذمم المدينة' : 'حساب الذمم الدائنة';
+    return ['sale', 'service', 'instant_sale'].includes(String(operation.type || '').toLowerCase()) ? 'الذمم المدينة' : 'الذمم الدائنة';
   }
-  return t('operations.paymentMethod') || 'حساب الدفع';
+  return t('operations.paymentMethod') || 'الدفع';
+};
+
+const accountPhrase = (value, fallback) => {
+  const text = sanitizeAccountingText(value || fallback || 'الحساب');
+  return String(text).trim().startsWith('حساب') ? text : `حساب ${text}`;
 };
 
 const resolveTargetAccountName = (operation, chartAccount, businessAccount, t) => {
@@ -98,6 +107,29 @@ const classifyAccountCode = (accountCode = '') => {
   if (code.startsWith('2')) return 'التزام';
   if (code.startsWith('3')) return 'حقوق ملكية';
   return 'غير مصنف';
+};
+
+const classifyAccountDisplay = (accountCode = '', accountName = '') => {
+  const byCode = classifyAccountCode(accountCode);
+  if (byCode !== 'غير مصنف') return byCode;
+  const name = String(accountName || '').toLowerCase();
+  if (name.includes('إيراد') || name.includes('ايراد') || name.includes('خدمات')) return 'إيراد';
+  if (name.includes('تكلفة') || name.includes('مصروف') || name.includes('رواتب')) return 'مصروف';
+  if (name.includes('مورد') || name.includes('ذمم دائنة')) return 'التزام';
+  if (name.includes('عميل') || name.includes('صندوق') || name.includes('بنك') || name.includes('ذمم مدينة')) return 'أصل';
+  return byCode;
+};
+
+const classifyOperationAccount = (operation = {}, accountCode = '', accountName = '') => {
+  const direct = classifyAccountDisplay(accountCode, accountName);
+  if (direct !== 'غير مصنف') return direct;
+  const opType = String(operation.type || '').toLowerCase();
+  const partnerType = String(operation.partnerType || '').toLowerCase();
+  if (['sale', 'service', 'instant_sale', 'collect_customer'].includes(opType)) return 'إيراد';
+  if (['purchase', 'expense', 'cash_expense', 'salary', 'purchase_return'].includes(opType)) return 'مصروف';
+  if (opType === 'payment_order' && partnerType === 'supplier') return 'التزام';
+  if (opType === 'payment_order' && partnerType === 'customer') return 'أصل';
+  return 'تلقائي حسب العملية';
 };
 
 export default function OperationCard({
@@ -209,7 +241,7 @@ export default function OperationCard({
   const journalEntryText = useMemo(() => {
     const fromAccount = sanitizeAccountingText(normalizePaymentSourceAccount(operation, t));
     const toAccount = sanitizeAccountingText(targetAccountName);
-    return `قيد محاسبي: من حساب ${fromAccount || t('operations.account') || 'الحساب'} إلى حساب ${toAccount || t('operations.account') || 'الحساب'}`;
+    return `قيد محاسبي: من ${accountPhrase(fromAccount, t('operations.account'))} إلى ${accountPhrase(toAccount, t('operations.account'))}`;
   }, [operation, targetAccountName, t]);
 
   const paymentReceiptUrl = useMemo(() => {
@@ -227,7 +259,10 @@ export default function OperationCard({
     [targetAccountMeta.code, operation, chartAccount, businessAccount]
   );
 
-  const accountClassLabel = useMemo(() => classifyAccountCode(accountCode), [accountCode]);
+  const accountClassLabel = useMemo(
+    () => classifyOperationAccount(operation, accountCode, targetAccountName),
+    [operation, accountCode, targetAccountName]
+  );
 
   const isPurchaseOperation = useMemo(() => {
     const opType = String(operation.type || '').toLowerCase();
@@ -340,6 +375,11 @@ export default function OperationCard({
   const paymentStatusLabel = labelFromMap(paymentStatus, PAYMENT_STATUS_LABELS, '-');
   const paymentMethodLabel = labelFromMap(paymentMethod, PAYMENT_METHOD_LABELS, '-');
   const visitDisplay = resolveVisitDisplay(operation, 'زيارة مرتبطة');
+  const operationNotesDisplay = useMemo(() => {
+    const cleaned = sanitizeAccountingText(operation.notes);
+    if (!cleaned) return '-';
+    return cleaned.replace(/عملية من الزيارة\s+[0-9a-f]{6,}/ig, `عملية من الزيارة ${formatVisitNumber(visitDisplay, visitDisplay)}`);
+  }, [operation.notes, visitDisplay]);
   const paymentBorder = hasPaymentStatus
     ? (isCredit ? 'rgba(244,63,94,0.55)' : 'rgba(16,185,129,0.55)')
     : cardBorder;
@@ -761,7 +801,7 @@ export default function OperationCard({
           {operation.notes ? (
             <div className="mb-3 bg-slate-950/50 rounded-xl px-3 py-2.5 border border-slate-800/70">
               <div className="text-[10px] text-slate-300/80 mb-1">{t('common.notes') || 'ملاحظات'}</div>
-              <div className="text-xs text-slate-50/90 whitespace-pre-wrap leading-relaxed">{sanitizeAccountingText(operation.notes) || '-'}</div>
+              <div className="text-xs text-slate-50/90 whitespace-pre-wrap leading-relaxed">{operationNotesDisplay}</div>
               {paymentReceiptUrl ? (
                 <a
                   href={paymentReceiptUrl}

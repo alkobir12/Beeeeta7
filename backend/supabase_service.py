@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 import json
+import re
 
 # Load environment variables at module level
 _env_file = Path(__file__).parent / ".env"
@@ -161,6 +162,47 @@ def _summarize_visit_notes(notes: Any) -> Dict[str, Any]:
         'last_payment_method': last_method or ('cash' if total_paid > 0 else 'credit'),
         'visitNumber': parsed.get('visitNumber') or parsed.get('visit_number') or parsed.get('visitNumberDisplay'),
     }
+
+
+def _operation_payment_snapshot(row: Dict[str, Any], visit_summary: Dict[str, Any], operation_total: Any) -> Dict[str, Any]:
+    """Return operation-level payment fields without letting an advance-only visit mark a full invoice as paid."""
+    total = round(_safe_float(operation_total or row.get('total') or row.get('subtotal') or 0), 2)
+    paid = round(_safe_float(visit_summary.get('total_paid') or row.get('total_paid') or row.get('paymentAmount') or 0), 2)
+    explicit_balance = row.get('balance') if row.get('balance') is not None else row.get('remaining_balance')
+    if explicit_balance is not None:
+        balance = round(max(_safe_float(explicit_balance), 0.0), 2)
+    else:
+        balance = round(max(total - paid, 0.0), 2)
+
+    if paid <= 0:
+        status = row.get('payment_status') or row.get('paymentStatus') or 'unpaid'
+    elif balance > 0.01:
+        status = 'partial'
+    else:
+        status = 'paid_full'
+
+    method = (
+        visit_summary.get('last_payment_method')
+        or row.get('payment_method')
+        or row.get('paymentMethod')
+        or ('cash' if paid > 0 else 'credit')
+    )
+
+    return {
+        'payment_method': method,
+        'payment_status': status,
+        'total_paid': paid,
+        'balance': balance,
+    }
+
+
+def _operation_display_notes(notes: Any, visit_summary: Dict[str, Any]) -> Any:
+    if not isinstance(notes, str):
+        return notes
+    visit_number = visit_summary.get('visit_number') or visit_summary.get('visitNumber') or visit_summary.get('visitNumberDisplay')
+    if visit_number:
+        return re.sub(r"عملية من الزيارة\s+[0-9a-f]{6,}", f"عملية من الزيارة {visit_number}", notes, flags=re.IGNORECASE)
+    return notes
 
 
 def to_snake_user(api: Dict[str, Any]) -> Dict[str, Any]:
@@ -613,6 +655,7 @@ class SupabaseService:
             payment_status = visit_summary.get("payment_status") if has_visit_summary else None
             if not payment_status:
                 payment_status = r.get("payment_status") or r.get("paymentStatus") or visit_summary.get("payment_status")
+            payment_snapshot = _operation_payment_snapshot(r, visit_summary, workshop_total or r.get("total"))
             vehicle_row = vehicle_context.get(str(r.get("vehicle_id") or r.get("vehicleId") or "").strip(), {})
             partner_type = r.get("partner_type") or r.get("partnerType")
             live_partner_name = vehicle_row.get("customer_name") if str(partner_type or '').lower() == 'customer' else None
@@ -640,13 +683,13 @@ class SupabaseService:
                     "total": r.get("total"),
                     "workshopTotal": workshop_total,
                     "supplierArchiveTotal": supplier_archive_total or 0,
-                    "paymentMethod": payment_method,
-                    "paymentStatus": payment_status,
-                    "paymentAmount": visit_summary.get("total_paid", 0),
-                    "totalPaid": visit_summary.get("total_paid", 0),
+                    "paymentMethod": payment_snapshot.get("payment_method") or payment_method,
+                    "paymentStatus": payment_snapshot.get("payment_status") or payment_status,
+                    "paymentAmount": payment_snapshot.get("total_paid", 0),
+                    "totalPaid": payment_snapshot.get("total_paid", 0),
                     "advancePaid": visit_summary.get("advance_paid", 0),
-                    "balance": visit_summary.get("balance"),
-                    "notes": r.get("notes"),
+                    "balance": payment_snapshot.get("balance"),
+                    "notes": _operation_display_notes(r.get("notes"), visit_summary),
                     "date": r.get("op_date") or r.get("date"),
                     "createdAt": r.get("created_at") or r.get("createdAt"),
                     "updatedAt": r.get("updated_at") or r.get("updatedAt"),
@@ -735,6 +778,7 @@ class SupabaseService:
 
         partner_type = r.get("partner_type")
         live_partner_name = vehicle_row.get("customer_name") if str(partner_type or '').lower() == 'customer' else None
+        payment_snapshot = _operation_payment_snapshot(r, visit_summary, workshop_total or r.get("total"))
 
         return {
             "id": r.get("id"),
@@ -758,13 +802,13 @@ class SupabaseService:
             "total": r.get("total"),
             "workshopTotal": workshop_total,
             "supplierArchiveTotal": supplier_archive_total or 0,
-            "paymentMethod": visit_summary.get("last_payment_method") or r.get("payment_method"),
-            "paymentStatus": visit_summary.get("payment_status") or r.get("payment_status"),
-            "paymentAmount": visit_summary.get("total_paid", 0),
-            "totalPaid": visit_summary.get("total_paid", 0),
+            "paymentMethod": payment_snapshot.get("payment_method") or visit_summary.get("last_payment_method") or r.get("payment_method"),
+            "paymentStatus": payment_snapshot.get("payment_status") or visit_summary.get("payment_status") or r.get("payment_status"),
+            "paymentAmount": payment_snapshot.get("total_paid", 0),
+            "totalPaid": payment_snapshot.get("total_paid", 0),
             "advancePaid": visit_summary.get("advance_paid", 0),
-            "balance": visit_summary.get("balance"),
-            "notes": r.get("notes"),
+            "balance": payment_snapshot.get("balance"),
+            "notes": _operation_display_notes(r.get("notes"), visit_summary),
             "date": r.get("op_date"),
             "createdAt": r.get("created_at"),
             "invoiceNumber": r.get("invoice_number"),

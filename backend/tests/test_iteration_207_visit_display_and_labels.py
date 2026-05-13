@@ -91,6 +91,38 @@ class TestVisitNumberFormatting:
 
         assert tested, "Could not find a vehicle with visits to validate formatting"
 
+    def test_visit_operation_payment_uses_operation_total_not_empty_visit_items(self, api_base_url):
+        response = requests.get(f"{api_base_url}/api/operations", params={"limit": 200}, timeout=20)
+        assert response.status_code == 200
+        rows = response.json()
+        assert isinstance(rows, list)
+
+        partial_candidates = [
+            row for row in rows
+            if float(row.get("total") or row.get("workshopTotal") or 0) > float(row.get("totalPaid") or 0) > 0
+        ]
+        if not partial_candidates:
+            pytest.skip("No partially paid visit operations available")
+
+        violations = []
+        short_raw_visit_re = re.compile(r"عملية من الزيارة\s+[0-9a-f]{6,}", re.IGNORECASE)
+        for row in partial_candidates:
+            total = float(row.get("workshopTotal") or row.get("total") or 0)
+            paid = float(row.get("totalPaid") or 0)
+            expected_balance = round(max(total - paid, 0), 2)
+            actual_balance = round(float(row.get("balance") or 0), 2)
+            if row.get("paymentStatus") != "partial" or abs(actual_balance - expected_balance) > 0.01:
+                violations.append({
+                    "id": row.get("id"),
+                    "status": row.get("paymentStatus"),
+                    "balance": actual_balance,
+                    "expected_balance": expected_balance,
+                })
+            if short_raw_visit_re.search(str(row.get("notes") or "")):
+                violations.append({"id": row.get("id"), "raw_notes": row.get("notes")})
+
+        assert not violations, f"Partial visit operation payment display violations: {violations[:5]}"
+
 
 class TestMovementVisitLabelSanitation:
     def test_supplier_movements_do_not_expose_raw_visit_uuid(self, api_base_url):

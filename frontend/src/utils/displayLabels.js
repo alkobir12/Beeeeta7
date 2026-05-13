@@ -186,7 +186,7 @@ export const resolveAccountDisplay = (operation = {}, accounts = [], businessAcc
   });
 
   const directName = operation.accountName || operation.account_name || operation.accountLabel || operation.account_label;
-  const code = normalizeAccountCode(
+  let code = normalizeAccountCode(
     operation.accountCode ||
     operation.account_code ||
     matchedChart?.code ||
@@ -216,6 +216,16 @@ export const resolveAccountDisplay = (operation = {}, accounts = [], businessAcc
     else if (type === 'payment_order' && partnerType === 'supplier') name = 'الموردون';
     else if (type === 'payment_order') name = 'العملاء';
     else name = 'الحساب غير محدد';
+  }
+
+  if (!code && name) {
+    const compactName = String(name).replace(/\s+/g, ' ').trim();
+    const reverseMatch = Object.entries(ACCOUNT_NAME_MAP).find(([, label]) => String(label).replace(/\s+/g, ' ').trim() === compactName);
+    if (reverseMatch) code = reverseMatch[0];
+    else if (/إيراد|ايراد|خدمات/i.test(compactName)) code = '026';
+    else if (/مصروف|تكلفة|رواتب/i.test(compactName)) code = '036';
+    else if (/مورد/i.test(compactName)) code = '2101';
+    else if (/عميل|ذمم مدينة/i.test(compactName)) code = '005';
   }
 
   return {

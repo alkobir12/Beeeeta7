@@ -29,6 +29,32 @@
 
 ## What's Been Implemented
 
+### 🚚 Supplier Movements + Vehicle Linked Journal Entries (13 May 2026)
+
+**ما تم في هذه الجولة:**
+- تم توسيع ربط الموردين بحيث تلتقط الصفحة الآن الحركات المرتبطة من اليومية حتى لو جاءت من قيود POS/يدوية تحمل:
+  - `[PARTY:اسم المورد]`
+  - `[PARTY_TYPE:supplier]`
+- تم تحسين `_augment_supplier_movements_from_journal` في `server.py` لقراءة الـtokens وربط السطر المورد الصحيح بدلاً من الاعتماد فقط على اسم الحساب.
+
+- داخل `VehicleDetails.jsx` أضفت لوحة **«قيود دفتر اليومية المرتبطة»** تعرض القيود المرتبطة بالمركبة/العميل/الزيارة عبر:
+  - `reference_id` الخاص بالزيارة
+  - أو tokens مثل `[VEHICLE_REF:...]` و`[PARTY:...]`
+- هذا يجعل قيود POS الذكي و`visit_receipt_voucher` مرئية مباشرة داخل ملف المركبة.
+
+- تم أيضاً تحسين حالة التحميل في صفحة الموردين بإظهار رسالة أوضح أثناء احتساب الأرصدة والحركات.
+
+**إصلاح إضافي خرج من الاختبار:**
+- تم تثبيت regex parsing في `extractJournalTag` داخل `VehicleDetails.jsx` حتى تظهر القيود المرتبطة بشكل صحيح بدون كسر الصفحة.
+
+**التحقق:**
+- `testing_agent`: `/app/test_reports/iteration_202.json`
+  - Backend: **14/14 PASS**
+  - Frontend: **100% PASS**
+- `auto_frontend_testing_agent`: **PASS**
+- `deep_testing_backend_v2`: **PASS**
+- لا توجد بيانات اختبارية جديدة أُنشئت في هذه الجولة.
+
 ### 🔗 Payments ↔ Operations Sync (12 May 2026)
 
 **نطاق هذه الجولة (حسب اختيار المستخدم):** البدء أولاً بربط **الدفعات والعمليات**.

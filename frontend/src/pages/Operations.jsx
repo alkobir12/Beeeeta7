@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { resolveBackendBase } from '../utils/backendBase';
+import { resolveVisitDisplay } from '../utils/displayLabels';
 
 const API_URL = `${resolveBackendBase()}/api`;
 const OPERATIONS_PAGE_SIZE = 15;
@@ -1739,8 +1740,9 @@ const Operations = () => {
       }
 
       const selectedVehicle = (vehicleOptions || []).find((v) => v.id === activeVehicleId);
+      const selectedVisit = (visits || []).find((v) => String(v.id) === String(form.visitId));
       const vehicleDetailsNote = ((effectiveOperationKind === OPERATION_KIND_VEHICLE || effectiveOperationKind === OPERATION_KIND_RAKAN) && selectedVehicle)
-        ? `\n[VEHICLE] اللوحة: ${selectedVehicle.plateNumber || selectedVehicle.plate_number || '-'} | النوع: ${selectedVehicle.brand || '-'} ${selectedVehicle.model || ''} | العميل: ${selectedVehicle.customerName || selectedVehicle.ownerName || '-'} | رقم الزيارة: ${form.visitId || '-'}`
+        ? `\n[VEHICLE] اللوحة: ${selectedVehicle.plateNumber || selectedVehicle.plate_number || '-'} | النوع: ${selectedVehicle.brand || '-'} ${selectedVehicle.model || ''} | العميل: ${selectedVehicle.customerName || selectedVehicle.ownerName || '-'} | رقم الزيارة: ${selectedVisit ? resolveVisitDisplay(selectedVisit, '-') : '-'}`
         : '';
 
       const normalizedScope = effectiveOperationKind === OPERATION_KIND_WORKSHOP
@@ -2569,7 +2571,7 @@ const Operations = () => {
                           <option value="">---</option>
                           {visits.map(v => (
                             <option key={v.id} value={v.id}>
-                              {new Date(v.entryDate || v.entry_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
+                              زيارة {resolveVisitDisplay(v, '---')} • {new Date(v.entryDate || v.entry_date).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}
                               {v.status === 'in_progress' ? ` (${t('status.in_progress')})` : ''}
                             </option>
                           ))}

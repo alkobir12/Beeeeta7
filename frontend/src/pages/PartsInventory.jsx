@@ -15,6 +15,14 @@ import { InventoryStatsCards } from '../components/inventory/InventoryStatsCards
 import { InventoryFiltersPanel } from '../components/inventory/InventoryFiltersPanel';
 import { PartInventoryGrid } from '../components/inventory/PartInventoryGrid';
 import { PartsTransactionModal } from '../components/inventory/PartsTransactionModal';
+import {
+  OPERATION_TYPE_LABELS,
+  PARTNER_TYPE_LABELS,
+  SOURCE_LABELS,
+  labelFromMap,
+  resolveAccountDisplay,
+  resolveVehicleDisplay,
+} from '../utils/displayLabels';
 
 const RAKAN_ACCOUNT_KEYWORDS = ['راكان', 'rakan'];
 const RAKAN_ACCOUNT_CODE_PREFIX = '5000';
@@ -1207,24 +1215,25 @@ const PartsInventory = () => {
             <div className="space-y-3" data-testid="inventory-pos-operations-list">
               {posOperations.map((op) => {
                 const opDate = op?.date || op?.createdAt || op?.created_at;
-                const linkType = op?.vehicleId ? 'مركبة' : (op?.partnerType === 'supplier' ? 'مورد' : 'عميل');
-                const linkValue = op?.vehicleId || op?.partnerName || op?.partnerId || 'غير مرتبط';
+                const linkType = op?.vehicleId ? 'مركبة' : labelFromMap(op?.partnerType, PARTNER_TYPE_LABELS, 'عميل');
+                const linkValue = op?.vehicleId ? resolveVehicleDisplay(op, vehicles) : (op?.partnerName || 'غير مرتبط');
+                const accountDisplay = resolveAccountDisplay(op, accounts, businessAccounts);
                 return (
                   <div key={op.id} className="rounded-xl border border-white/10 bg-white/5 p-3" data-testid={`inventory-pos-operation-row-${op.id}`}>
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                       <div className="space-y-1">
                         <p className="text-white text-sm" data-testid={`inventory-pos-operation-type-${op.id}`}>
-                          {op?.type || 'عملية'} • {formatCurrency(op?.total || op?.amount || 0)}
+                          {labelFromMap(op?.type, OPERATION_TYPE_LABELS, 'عملية')} • {formatCurrency(op?.total || op?.amount || 0)}
                         </p>
                         <p className="text-xs text-slate-300" data-testid={`inventory-pos-operation-link-${op.id}`}>
                           الربط: {linkType} — {linkValue}
                         </p>
                         <p className="text-xs text-slate-400" data-testid={`inventory-pos-operation-account-${op.id}`}>
-                          الحساب المحاسبي: {op?.accountingAccountId || 'غير محدد'}
+                          الحساب المحاسبي: {accountDisplay.name}{accountDisplay.code ? ` (${accountDisplay.code})` : ''}
                         </p>
                       </div>
                       <div className="text-xs text-slate-400 text-right" data-testid={`inventory-pos-operation-meta-${op.id}`}>
-                        <p>المصدر: {op?.source || '-'}</p>
+                        <p>المصدر: {labelFromMap(op?.source, SOURCE_LABELS, '-')}</p>
                         <p>{opDate ? new Date(opDate).toLocaleString('ar-SA') : 'بدون تاريخ'}</p>
                       </div>
                     </div>

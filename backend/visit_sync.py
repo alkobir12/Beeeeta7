@@ -12,6 +12,7 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
         notes_raw = visit_data.get("notes")
         items = []
         payments = []
+        visit_number = None
         if notes_raw:
             try:
                 if isinstance(notes_raw, str) and notes_raw.strip().startswith("{"):
@@ -19,9 +20,11 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
                     parsed = json.loads(notes_raw)
                     items = parsed.get("items", [])
                     payments = parsed.get("payments", []) or []
+                    visit_number = parsed.get("visitNumberDisplay") or parsed.get("visitNumber") or parsed.get("visit_number")
                 elif isinstance(notes_raw, dict):
                     items = notes_raw.get("items", [])
                     payments = notes_raw.get("payments", []) or []
+                    visit_number = notes_raw.get("visitNumberDisplay") or notes_raw.get("visitNumber") or notes_raw.get("visit_number")
             except Exception:
                 pass
         
@@ -92,7 +95,7 @@ async def _sync_visit_to_operation(visit_id: str, visit_data: dict, supa_service
             "scope": "vehicle",
             "source": "vehicle_visit_sync",
             "business_unit": "workshop",
-            "notes": f"عملية من الزيارة {visit_id[:8]}",
+            "notes": f"عملية من الزيارة {str(visit_number or '').zfill(3) if visit_number else visit_id[:8]}",
             "op_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat(),

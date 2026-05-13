@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
 import { financeAPI } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
+import { OPERATION_TYPE_LABELS, labelFromMap } from '../utils/displayLabels';
 
 const ARReceivablesTab = () => {
   const workshopId = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
@@ -240,7 +241,7 @@ const ARReceivablesTab = () => {
                         (statementQuery.data?.rows || []).map((r, idx) => (
                           <tr key={idx} className="border-t" style={{ borderColor: 'var(--border-color)' }}>
                             <td className="px-3 py-2" style={{ color: 'var(--text-primary)' }}>{String(r.date || '').slice(0, 10)}</td>
-                            <td className="px-3 py-2" style={{ color: 'var(--text-primary)' }}>{r.type}</td>
+                            <td className="px-3 py-2" style={{ color: 'var(--text-primary)' }}>{labelFromMap(r.type, OPERATION_TYPE_LABELS, r.type || '-')}</td>
                             <td className="px-3 py-2 font-mono" style={{ color: 'var(--text-primary)' }}>{formatCurrency(r.debit || 0)}</td>
                             <td className="px-3 py-2 font-mono" style={{ color: 'var(--text-primary)' }}>{formatCurrency(r.credit || 0)}</td>
                             <td className="px-3 py-2 font-mono" style={{ color: 'var(--text-primary)' }}>{formatCurrency(r.running_balance || 0)}</td>

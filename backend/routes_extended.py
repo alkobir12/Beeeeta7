@@ -2294,7 +2294,7 @@ async def delete_all_operations(request: Request):
                         supa.client.table("operations").delete().eq(
                             "id", op["id"]
                         ).execute()
-                    except:
+                    except Exception:
                         pass
                 audit_event = record_bulk_delete_event(
                     action="delete_all_operations",
@@ -3485,6 +3485,91 @@ def _parse_notes_json(notes: Any) -> Dict[str, Any]:
     return {}
 
 
+def _format_visit_number(value: Any) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    try:
+        return f"{int(float(raw)):03d}"
+    except Exception:
+        digits = re.sub(r"\D+", "", raw)
+        return f"{int(digits):03d}" if digits else raw
+
+
+def _extract_visit_number(row: Dict[str, Any], fallback_index: Optional[int] = None) -> Dict[str, Any]:
+    parsed = _parse_notes_json((row or {}).get("notes"))
+    raw = (
+        (row or {}).get("visit_number")
+        or (row or {}).get("visitNumber")
+        or parsed.get("visitNumber")
+        or parsed.get("visit_number")
+        or parsed.get("visitNumberDisplay")
+    )
+    if not raw and fallback_index is not None:
+        raw = fallback_index
+    display = _format_visit_number(raw)
+    try:
+        sequence = int(float(raw or fallback_index or 0))
+    except Exception:
+        sequence = int(fallback_index or 0)
+    return {"visitNumber": display, "visitNumberDisplay": display, "visitSequence": sequence}
+
+
+def _with_visit_number_in_notes(notes: Any, visit_number: str) -> str:
+    parsed = _parse_notes_json(notes)
+    if not parsed:
+        text = str(notes or "").strip()
+        parsed = {"text": text} if text else {}
+    parsed["visitNumber"] = visit_number
+    parsed["visitNumberDisplay"] = visit_number
+    try:
+        parsed["visitSequence"] = int(visit_number)
+    except Exception:
+        pass
+    return json.dumps(parsed, ensure_ascii=False)
+
+
+async def _next_visit_number(provider: str, vehicle_id: str) -> str:
+    rows: List[Dict[str, Any]] = []
+    if provider == "supabase":
+        try:
+            supa = SupabaseService()
+            rows = (
+                supa.client.table("vehicle_visits")
+                .select("id,notes,entry_date,created_at")
+                .eq("vehicle_id", vehicle_id)
+                .execute()
+                .data
+                or []
+            )
+        except Exception:
+            rows = []
+    elif provider == "memory" or db is None:
+        rows = [row for row in _mem_read("vehicle_visits") if str(row.get("vehicleId") or row.get("vehicle_id") or "") == str(vehicle_id)]
+    else:
+        rows = await db.vehicle_visits.find({"vehicleId": vehicle_id}, {"_id": 0, "notes": 1, "visitNumber": 1, "createdAt": 1, "entryDate": 1}).to_list(10000)
+
+    max_number = 0
+    for idx, row in enumerate(sorted(rows, key=lambda r: str(r.get("entry_date") or r.get("entryDate") or r.get("created_at") or r.get("createdAt") or "")), start=1):
+        info = _extract_visit_number(row, idx)
+        max_number = max(max_number, int(info.get("visitSequence") or idx))
+    return _format_visit_number(max_number + 1)
+
+
+def _apply_visit_numbers(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    numbered: Dict[str, Dict[str, Any]] = {}
+    sorted_rows = sorted(
+        rows or [],
+        key=lambda r: str(r.get("entry_date") or r.get("entryDate") or r.get("created_at") or r.get("createdAt") or ""),
+    )
+    for idx, row in enumerate(sorted_rows, start=1):
+        row_id = str((row or {}).get("id") or "").strip()
+        if not row_id:
+            continue
+        numbered[row_id] = _extract_visit_number(row, idx)
+    return numbered
+
+
 def _calc_visit_financial(parsed_notes: Dict[str, Any]) -> Dict[str, Any]:
     items = parsed_notes.get('items') or []
     payments = parsed_notes.get('payments') or []
@@ -4220,10 +4305,12 @@ async def get_vehicle_visits(vehicle_id: str):
                 .execute()
             )
             rows = res.data or []
+            visit_numbers = _apply_visit_numbers(rows)
             enriched = []
             for r in rows:
                 parsed = _parse_notes_json(r.get('notes'))
                 fin = _calc_visit_financial(parsed)
+                number_info = visit_numbers.get(str(r.get("id") or ""), {})
 
                 out = {
                     "id": r.get("id"),
@@ -4235,6 +4322,7 @@ async def get_vehicle_visits(vehicle_id: str):
                     "notes": r.get("notes"),
                     "technicianId": r.get("technician_id"),
                     "createdAt": r.get("created_at"),
+                    **number_info,
                     **fin,
                 }
                 enriched.append(out)
@@ -4246,6 +4334,7 @@ async def get_vehicle_visits(vehicle_id: str):
             .sort("entryDate", -1)
             .to_list(length=1000)
         )
+        visit_numbers = _apply_visit_numbers(docs)
         enriched = []
         for d in docs:
             for k in ("entryDate", "exitDate", "createdAt"):
@@ -4254,6 +4343,7 @@ async def get_vehicle_visits(vehicle_id: str):
             parsed = _parse_notes_json(d.get('notes'))
             fin = _calc_visit_financial(parsed)
             d.update(fin)
+            d.update(visit_numbers.get(str(d.get("id") or ""), {}))
 
             # previous unpaid (older open visit with positive balance)
             try:
@@ -4291,6 +4381,8 @@ async def create_visit(vehicle_id: str, payload: Dict[str, Any] = Body(...)):
     try:
         provider = os.environ.get("DB_PROVIDER", "mongo").lower()
         visit_id = str(uuid.uuid4())
+        visit_number = await _next_visit_number(provider, vehicle_id)
+        notes_with_number = _with_visit_number_in_notes(payload.get("notes", ""), visit_number)
 
         if provider == "supabase":
             from supabase_service import SupabaseService
@@ -4305,7 +4397,7 @@ async def create_visit(vehicle_id: str, payload: Dict[str, Any] = Body(...)):
                 "exit_date": payload.get("exitDate"),
                 "status": payload.get("status", "in_progress"),
                 "mileage": payload.get("mileage"),
-                "notes": payload.get("notes", ""),
+                "notes": notes_with_number,
                 "technician_id": payload.get("technicianId"),
             }
 
@@ -4327,17 +4419,21 @@ async def create_visit(vehicle_id: str, payload: Dict[str, Any] = Body(...)):
                 "notes": r.get("notes"),
                 "technicianId": r.get("technician_id"),
                 "createdAt": r.get("created_at"),
+                "visitNumber": visit_number,
+                "visitNumberDisplay": visit_number,
             }
 
         # MongoDB fallback
         doc = {
             "id": visit_id,
             "vehicleId": vehicle_id,
+            "visitNumber": int(visit_number),
+            "visitNumberDisplay": visit_number,
             "entryDate": payload.get("entryDate") or datetime.now(timezone.utc),
             "exitDate": payload.get("exitDate"),
             "status": payload.get("status", "in_progress"),
             "mileage": payload.get("mileage"),
-            "notes": payload.get("notes", ""),
+            "notes": notes_with_number,
             "technicianId": payload.get("technicianId"),
             "createdAt": datetime.now(timezone.utc),
         }
@@ -4354,6 +4450,7 @@ async def create_visit(vehicle_id: str, payload: Dict[str, Any] = Body(...)):
         for k in ("entryDate", "exitDate", "createdAt"):
             if doc.get(k) and hasattr(doc[k], "isoformat"):
                 doc[k] = doc[k].isoformat()
+        doc["visitNumber"] = visit_number
         return doc
     except Exception as e:
         import traceback
@@ -4506,7 +4603,7 @@ async def update_visit(visit_id: str, payload: Dict[str, Any] = Body(...)):
                         )
                         if total_str:
                             msg += f"المبلغ المستحق: {total_str} ر.س\n"
-                        msg += f"\nشاكرين ثقتكم بنا."
+                        msg += "\nشاكرين ثقتكم بنا."
                         if phone:
                             import urllib.parse
                             norm = "".join([c for c in phone if c.isdigit()])
@@ -4622,12 +4719,7 @@ async def init_database():
             # Step 1: Add images column to approval_requests
             try:
                 # Check if column exists
-                existing = (
-                    supa.client.table("approval_requests")
-                    .select("images")
-                    .limit(1)
-                    .execute()
-                )
+                supa.client.table("approval_requests").select("images").limit(1).execute()
                 results["images_column"] = True
                 results["messages"] = ["images column already exists"]
             except Exception as e:

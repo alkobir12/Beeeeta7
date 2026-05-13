@@ -1,0 +1,62 @@
+{
+  "summary": "نفذت اختبار Backend + Frontend لطلبات تنسيق أرقام الزيارات وإخفاء الحقول الخام. اختبارات API الأساسية نجحت، وواجهة العمليات بدت سليمة، لكن صفحة المخزون ما زالت تعرض مفاتيح خام (parts_pos/rakan_parts_pos) نصًا ظاهرًا للمستخدم.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "PartsInventory POS Operations subtitle",
+        "issue": "يعرض مفاتيح خام للمصدر (parts_pos و rakan_parts_pos) بدل صياغة عربية موجهة للمستخدم",
+        "selector": "[data-testid='inventory-pos-operations-subtitle']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Customers/Suppliers page loading in browser automation",
+        "issue": "تعذر إثبات تحميل القوائم بشكل ثابت عبر Playwright في هذه الجولة (selectors expected لم تظهر ضمن المهلة، مع ظهور net::ERR_ABORTED في console أثناء التنقل السريع)",
+        "affected_selectors": [
+          "[data-testid='customers-page']",
+          "[data-testid^='supplier-card-']"
+        ]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Parts Inventory > عمليات نقطة البيع",
+        "issues": [
+          "وجود مصطلحات تقنية داخل نص واجهة المستخدم بدل ترجمة عربية واضحة"
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_207_visit_display_and_labels.py",
+    "/app/test_reports/pytest/pytest_results_iter207.xml"
+  ],
+  "action_items": [
+    "استبدال النص الخام في inventory-pos-operations-subtitle بنص عربي عام لا يذكر مفاتيح source الداخلية",
+    "إعادة اختبار customers/suppliers UI يدويًا أو Playwright بعد تثبيت تدفق التنقل/التحميل",
+    "إجراء فحص UI نهائي لعدم ظهور أي raw keys/UUIDs في النصوص الظاهرة عبر كل الصفحات المطلوبة"
+  ],
+  "critical_code_review_comments": [
+    "PartsInventory.jsx يحتوي نص واجهة ثابت بمفاتيح داخلية (parts_pos/rakan_parts_pos) وهو سبب مباشر للشكوى",
+    "VehicleDetails.jsx (~4500 سطر) وCustomers.jsx/Suppliers.jsx ملفات كبيرة جدًا وتتجاوز guideline التقسيم (>700 سطر)، مما يصعب ضبط جودة العرض ويزيد فرص تسرب الحقول الخام"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_207_visit_display_and_labels.py",
+    "/app/test_reports/iteration_207.json"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "65%"
+  },
+  "seed_data_creation": "لم يتم إنشاء seed data جديد",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "API endpoints المطلوبة للتنسيق (operations + vehicle visits + supplier/customer movements) نجحت في pytest. التحقق UI المؤكد: Operations بدون raw UUID/keys ظاهرة، وPartsInventory subtitle ما زال خام. يلزم إعادة فحص VehicleDetails/Customers/Suppliers UI باستقرار أعلى للتأكيد البصري الكامل.",
+  "rca of the issue": "Root cause المؤكد: نص ثابت في /app/frontend/src/pages/PartsInventory.jsx line ~1198 يطبع مفاتيح source الداخلية مباشرة (parts_pos/rakan_parts_pos).\nRepro: افتح /parts > تبويب عمليات نقطة البيع > اقرأ subtitle (data-testid=inventory-pos-operations-subtitle).\nMitigation: استبدال النص الخام بنص عربي وصفي، والاعتماد على label maps فقط عند عرض أي source/type/account للمستخدم النهائي.",
+  "mocked_api": "NO MOCKED APIs"
+}

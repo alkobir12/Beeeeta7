@@ -13,6 +13,20 @@ import {
   Landmark,
   Link2,
 } from 'lucide-react';
+import {
+  ACCOUNT_NAME_MAP,
+  OPERATION_TYPE_LABELS,
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_STATUS_LABELS,
+  cleanAccountingText,
+  extractAccountMetaFromNotes,
+  formatVisitNumber,
+  labelFromMap,
+  normalizeAccountCode,
+  resolveAccountDisplay,
+  resolveVehicleDisplay,
+  resolveVisitDisplay,
+} from '../utils/displayLabels';
 
 const formatDateTime = (dateLike, isRTL) => {
   try {
@@ -28,17 +42,7 @@ const formatDateTime = (dateLike, isRTL) => {
   }
 };
 
-const sanitizeAccountingText = (value = '') => {
-  if (!value) return '';
-  return String(value)
-    .replace(/ACCOUNT_CODE:\s*\S+/gi, '')
-    .replace(/ACCOUNTING_TARGET:\s*\S+/gi, '')
-    .replace(/ACCOUNTING_SOURCE:\s*\S+/gi, '')
-    .replace(/ACCOUNT_NAME:\s*[^|\n]+/gi, '')
-    .replace(/ACCOUNT_CLASS:\s*\S+/gi, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-};
+const sanitizeAccountingText = cleanAccountingText;
 
 const normalizePaymentSourceAccount = (operation = {}, t) => {
   const method = String(operation.paymentMethod || '').toLowerCase();
@@ -58,10 +62,8 @@ const resolveTargetAccountName = (operation, chartAccount, businessAccount, t) =
     const parsed = notes.slice(markerIndex + marker.length).split('|')[0].trim();
     if (parsed) return sanitizeAccountingText(parsed) || parsed;
   }
-  if (chartAccount) return sanitizeAccountingText(chartAccount.name_ar || chartAccount.name || chartAccount.code) || chartAccount.code;
-  if (businessAccount) return sanitizeAccountingText(businessAccount.name || businessAccount.code) || businessAccount.code;
-  if (operation.accountingAccountId) return sanitizeAccountingText(operation.accountingAccountId) || operation.accountingAccountId;
-  if (operation.accountId) return sanitizeAccountingText(operation.accountId) || operation.accountId;
+  const resolved = resolveAccountDisplay(operation, chartAccount ? [chartAccount] : [], businessAccount ? [businessAccount] : []);
+  if (resolved?.name && resolved.name !== 'الحساب غير محدد') return resolved.name;
 
   const opType = String(operation?.type || '').toLowerCase();
   const partnerType = String(operation?.partnerType || '').toLowerCase();
@@ -79,12 +81,17 @@ const resolveAccountCode = (operation, chartAccount, businessAccount) => {
   if (chartAccount?.code) return String(chartAccount.code);
   if (businessAccount?.code) return String(businessAccount.code);
   const fallback = operation?.accountCode || operation?.account_number || operation?.accountNumber;
-  return fallback ? String(fallback) : '';
+  const normalized = normalizeAccountCode(fallback || operation?.accountingAccountId || '');
+  return ACCOUNT_NAME_MAP[normalized] ? normalized : (fallback ? String(fallback) : '');
 };
 
 const classifyAccountCode = (accountCode = '') => {
   const code = String(accountCode || '').trim();
   if (!code) return 'غير مصنف';
+  if (/^0?0[3-9]$/.test(code) || ['010', '1101', '1102', '1103', '1104', '1105'].includes(code)) return 'أصل';
+  if (code === '2101' || code.startsWith('2')) return 'التزام';
+  if (['025', '026', '027', '028', '029', '042'].includes(code) || code.startsWith('4')) return 'إيراد';
+  if (['030', '031', '035', '036', '037', '0421'].includes(code) || code.startsWith('5') || code.startsWith('6')) return 'مصروف';
   if (code.startsWith('4')) return 'إيراد';
   if (code.startsWith('5') || code.startsWith('6')) return 'مصروف';
   if (code.startsWith('1')) return 'أصل';
@@ -154,8 +161,14 @@ export default function OperationCard({
 
   const chartAccount = useMemo(() => {
     const all = accounts || [];
-    const accId = operation.accountingAccountId || operation.accountId;
-    return all.find((a) => (a.id || a.code) === accId);
+    const noteCode = extractAccountMetaFromNotes(operation.notes).code;
+    const refs = [operation.accountingAccountId, operation.accountId, operation.accountCode, noteCode]
+      .filter(Boolean)
+      .map((v) => String(v));
+    return all.find((a) => {
+      const accRefs = [a.id, a.code, normalizeAccountCode(a.id), normalizeAccountCode(a.code)].filter(Boolean).map(String);
+      return refs.some((ref) => accRefs.includes(ref) || accRefs.includes(normalizeAccountCode(ref)));
+    });
   }, [accounts, operation.accountId, operation.accountingAccountId]);
 
   const businessAccount = useMemo(
@@ -178,17 +191,19 @@ export default function OperationCard({
     [operation?.partnerType, operation?.partnerName, operation?.customerName, vehicle]
   );
 
-  const vehicleDisplay = useMemo(() => {
-    if (vehicle) {
-      return `${vehicle.plateNumber || vehicle.plate_number || '-'} ${vehicle.brand || ''} ${vehicle.model || ''}`.trim();
-    }
-    if (operation.vehicleId) return operation.vehicleId;
-    return 'غير محدد';
-  }, [vehicle, operation.vehicleId]);
+  const vehicleDisplay = useMemo(
+    () => resolveVehicleDisplay(operation, vehicle ? [vehicle] : []),
+    [vehicle, operation]
+  );
+
+  const targetAccountMeta = useMemo(
+    () => resolveAccountDisplay(operation, accounts, businessAccounts),
+    [operation, accounts, businessAccounts]
+  );
 
   const targetAccountName = useMemo(
-    () => resolveTargetAccountName(operation, chartAccount, businessAccount, t),
-    [operation, chartAccount, businessAccount, t]
+    () => targetAccountMeta.name || resolveTargetAccountName(operation, chartAccount, businessAccount, t),
+    [targetAccountMeta.name, operation, chartAccount, businessAccount, t]
   );
 
   const journalEntryText = useMemo(() => {
@@ -208,8 +223,8 @@ export default function OperationCard({
   }, [operation?.notes]);
 
   const accountCode = useMemo(
-    () => resolveAccountCode(operation, chartAccount, businessAccount),
-    [operation, chartAccount, businessAccount]
+    () => targetAccountMeta.code || resolveAccountCode(operation, chartAccount, businessAccount),
+    [targetAccountMeta.code, operation, chartAccount, businessAccount]
   );
 
   const accountClassLabel = useMemo(() => classifyAccountCode(accountCode), [accountCode]);
@@ -299,13 +314,9 @@ export default function OperationCard({
       ? workshopRevenueTotal
       : Number(editing ? totalDraft : (operation.total || 0));
 
-  const typeLabel = operation.type === 'sale'
-    ? t('operations.sale')
-    : operation.type === 'purchase'
-      ? t('operations.purchase')
-      : (operation.type || '-');
+  const typeLabel = labelFromMap(operation.type, OPERATION_TYPE_LABELS, '-');
 
-  const isIncome = operation.type === 'sale';
+  const isIncome = ['sale', 'service', 'instant_sale', 'collect_customer'].includes(String(operation.type || '').toLowerCase());
   const typePill = isIncome
     ? 'bg-emerald-500/12 text-emerald-200 border border-emerald-500/25'
     : 'bg-rose-500/12 text-rose-200 border border-rose-500/25';
@@ -326,15 +337,9 @@ export default function OperationCard({
     || ['credit', 'deferred'].includes(paymentMethod);
   const totalPaid = Number(operation.totalPaid ?? operation.paymentAmount ?? 0);
   const remainingBalance = Number(operation.balance ?? Math.max(Number(operation.total || 0) - totalPaid, 0));
-  const paymentStatusLabel = paymentStatus === 'partial'
-    ? 'مدفوع جزئياً'
-    : paymentStatus === 'paid_full'
-      ? 'مسدد بالكامل'
-      : paymentStatus === 'unpaid'
-        ? 'غير مسدد'
-        : paymentStatus === 'credit'
-          ? 'آجل'
-          : paymentStatus || '-';
+  const paymentStatusLabel = labelFromMap(paymentStatus, PAYMENT_STATUS_LABELS, '-');
+  const paymentMethodLabel = labelFromMap(paymentMethod, PAYMENT_METHOD_LABELS, '-');
+  const visitDisplay = resolveVisitDisplay(operation, 'زيارة مرتبطة');
   const paymentBorder = hasPaymentStatus
     ? (isCredit ? 'rgba(244,63,94,0.55)' : 'rgba(16,185,129,0.55)')
     : cardBorder;
@@ -425,7 +430,7 @@ export default function OperationCard({
 
               <div className="flex flex-wrap items-center gap-1.5 text-slate-200/80 text-[11px] sm:text-xs" data-testid={`operation-card-meta-${operation.id}`}>
                 <CreditCard size={12} />
-                <span className="break-words">{operation.paymentMethod || '-'}</span>
+                <span className="break-words">{paymentMethodLabel}</span>
                 <span className="mx-1 opacity-40">•</span>
                 <span className="break-words">{formatDateTime(operation.date || operation.op_date || operation.createdAt, isRTL)}</span>
               </div>
@@ -511,6 +516,7 @@ export default function OperationCard({
                   if (ok) setEditing(false);
                 }}
                 disabled={isSaving}
+                data-testid={`operation-card-save-edit-${operation.id}`}
               >
                 <span className="inline-flex items-center gap-1.5">
                   <Save size={12} />
@@ -531,6 +537,7 @@ export default function OperationCard({
                   });
                 }}
                 disabled={isSaving}
+                data-testid={`operation-card-cancel-edit-${operation.id}`}
               >
                 <span className="inline-flex items-center gap-1.5">
                   <X size={12} />
@@ -574,6 +581,7 @@ export default function OperationCard({
               className="apple-button-secondary h-8 px-2.5 text-[11px]"
               onClick={() => onConfirmCreditPayment(operation)}
               disabled={isSaving || isDeleting}
+              data-testid={`operation-card-confirm-credit-payment-${operation.id}`}
             >
               {t('operations.confirm_credit_payment') || 'تأكيد السداد'}
             </button>
@@ -632,7 +640,7 @@ export default function OperationCard({
             ) : null}
             <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
               <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.paymentMethod') || 'طريقة الدفع'}</div>
-              <div className="text-xs font-semibold text-slate-50 break-words">{operation.paymentMethod || '-'}</div>
+              <div className="text-xs font-semibold text-slate-50 break-words">{paymentMethodLabel}</div>
             </div>
             {hasPaymentStatus ? (
               <>
@@ -744,8 +752,8 @@ export default function OperationCard({
               <div className="text-[10px] text-sky-200/90 mb-1">تفاصيل المركبة المرتبطة</div>
               <div className="text-xs text-slate-100 leading-relaxed whitespace-pre-wrap">
                 {vehicle
-                  ? `اللوحة: ${vehicle.plateNumber || vehicle.plate_number || '-'} • ${vehicle.brand || '-'} ${vehicle.model || ''} • العميل: ${vehicle.customerName || vehicle.ownerName || '-'} • رقم الزيارة: ${operation.visitId || '-'}`
-                  : `معرّف المركبة: ${operation.vehicleId} • رقم الزيارة: ${operation.visitId || '-'}`}
+                  ? `اللوحة: ${vehicle.plateNumber || vehicle.plate_number || operation.vehiclePlate || '-'} • ${vehicle.brand || operation.vehicleBrand || '-'} ${vehicle.model || operation.vehicleModel || ''} • العميل: ${vehicle.customerName || vehicle.ownerName || operation.customerName || '-'} • رقم الزيارة: ${formatVisitNumber(visitDisplay, visitDisplay)}`
+                  : `${vehicleDisplay} • رقم الزيارة: ${formatVisitNumber(visitDisplay, visitDisplay)}`}
               </div>
             </div>
           ) : null}
@@ -753,7 +761,7 @@ export default function OperationCard({
           {operation.notes ? (
             <div className="mb-3 bg-slate-950/50 rounded-xl px-3 py-2.5 border border-slate-800/70">
               <div className="text-[10px] text-slate-300/80 mb-1">{t('common.notes') || 'ملاحظات'}</div>
-              <div className="text-xs text-slate-50/90 whitespace-pre-wrap leading-relaxed">{sanitizeAccountingText(operation.notes) || operation.notes}</div>
+              <div className="text-xs text-slate-50/90 whitespace-pre-wrap leading-relaxed">{sanitizeAccountingText(operation.notes) || '-'}</div>
               {paymentReceiptUrl ? (
                 <a
                   href={paymentReceiptUrl}

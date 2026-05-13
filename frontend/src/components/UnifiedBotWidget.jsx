@@ -11,6 +11,7 @@ import {
   Users, Package, TrendingUp, AlertCircle, CheckCircle, ChevronDown
 } from 'lucide-react';
 import axios from 'axios';
+import { PAYMENT_METHOD_LABELS, labelFromMap } from '../utils/displayLabels';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 const WID = process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync';
@@ -174,7 +175,7 @@ const ADMIN_PATTERNS = [
       const ops = Array.isArray(r.data) ? r.data : r.data?.data || r.data?.operations || [];
       if (!ops.length) return 'لا توجد عمليات مسجلة.';
       return `📑 **آخر 5 عمليات:**\n\n` +
-        ops.map(o => `• ${o.partnerName || '—'} | ${Number(o.total||0).toLocaleString('ar-SA')} ر.س | ${o.paymentMethod || '—'} | ${String(o.date||'').slice(0,10)}`).join('\n');
+        ops.map(o => `• ${o.partnerName || '—'} | ${Number(o.total||0).toLocaleString('ar-SA')} ر.س | ${labelFromMap(o.paymentMethod, PAYMENT_METHOD_LABELS, '—')} | ${String(o.date||'').slice(0,10)}`).join('\n');
     },
   },
   {

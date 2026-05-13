@@ -13,6 +13,7 @@ import QuickPrintDialog from '../components/QuickPrintDialog';
 import { statusSteps, getStatusLabel, getStatusColor } from '../mock/data';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatters';
+import { OPERATION_TYPE_LABELS, SOURCE_LABELS, labelFromMap, resolveVisitDisplay } from '../utils/displayLabels';
 
 // Updated icons imports
 
@@ -808,6 +809,7 @@ const VisitCard = ({
   const [isSaving, setIsSaving] = useState(false);
   const [whatsappNotification, setWhatsappNotification] = useState(null);
   const [techId, setTechId] = useState(visit.technicianId || visit.technician_id || '');
+  const visitNumberLabel = resolveVisitDisplay(visit, '---');
   const [notes, setNotes] = useState(visit.notes || '');
   const [mileage, setMileage] = useState(visit.mileage || '');
   const [confirmPayOpen, setConfirmPayOpen] = useState(false);
@@ -1552,6 +1554,13 @@ const VisitCard = ({
 
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className="px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums"
+                style={{ background: 'rgba(56,189,248,0.12)', border: '1px solid rgba(56,189,248,0.24)', color: 'rgba(186,230,253,0.95)' }}
+                data-testid={`visit-number-${visit.id}`}
+              >
+                زيارة {visitNumberLabel}
+              </span>
               <div
                 className="text-sm font-extrabold tabular-nums"
                 style={{ color: 'rgba(248,250,252,0.95)' }}
@@ -3692,7 +3701,7 @@ const VehicleDetails = () => {
                             {stripJournalTags(entry?.description || 'قيد مرتبط')}
                           </div>
                           <div className="text-[11px] mt-1" style={{ color: 'rgba(226,232,240,0.62)' }}>
-                            {String(entry?.date || '').slice(0, 10) || '-'} • {entry?.source || 'journal'}
+                            {String(entry?.date || '').slice(0, 10) || '-'} • {labelFromMap(entry?.source, SOURCE_LABELS, 'قيد يومية')}
                           </div>
                         </div>
                         <div className="text-sm font-extrabold tabular-nums" style={{ color: 'rgba(167,243,208,0.95)' }}>
@@ -4333,8 +4342,8 @@ const VehicleDetails = () => {
                       {financialSourceRows.map((row, idx) => (
                         <tr key={`${row.visitId}-${idx}`} className="border-b" style={{ borderColor: 'rgba(148,163,184,0.10)', color: 'rgba(248,250,252,0.9)' }} data-testid={`vehicle-financial-source-row-${idx}`}>
                           <td className="py-2 px-2">{row.date && row.date !== '-' ? new Date(row.date).toLocaleDateString('ar-SA') : '-'}</td>
-                          <td className="py-2 px-2">{row.visitId || '-'}</td>
-                          <td className="py-2 px-2">{row.type || '-'}</td>
+                          <td className="py-2 px-2">{resolveVisitDisplay(row, '-')}</td>
+                          <td className="py-2 px-2">{labelFromMap(row.type, OPERATION_TYPE_LABELS, '-')}</td>
                           <td className="py-2 px-2">{row.label || '-'}</td>
                           <td className="py-2 px-2">{formatCurrency(Number(row.amount || 0))} ر.س</td>
                           <td className="py-2 px-2">{row.note || '-'}</td>

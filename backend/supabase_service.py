@@ -159,6 +159,7 @@ def _summarize_visit_notes(notes: Any) -> Dict[str, Any]:
         'balance': balance,
         'payment_status': payment_status,
         'last_payment_method': last_method or ('cash' if total_paid > 0 else 'credit'),
+        'visitNumber': parsed.get('visitNumber') or parsed.get('visit_number') or parsed.get('visitNumberDisplay'),
     }
 
 
@@ -517,7 +518,7 @@ class SupabaseService:
             try:
                 visit_rows = (
                     self.client.table("vehicle_visits")
-                    .select("id,notes")
+                    .select("id,vehicle_id,notes,entry_date,created_at")
                     .in_("id", visit_ids)
                     .execute()
                     .data
@@ -528,6 +529,25 @@ class SupabaseService:
                     for row in visit_rows
                     if str(row.get("id") or "").strip()
                 }
+                grouped_visits = {}
+                for row in visit_rows:
+                    grouped_visits.setdefault(str(row.get("vehicle_id") or "open"), []).append(row)
+                for grouped_rows in grouped_visits.values():
+                    sorted_visit_rows = sorted(
+                        grouped_rows,
+                        key=lambda row: str(row.get("entry_date") or row.get("created_at") or ""),
+                    )
+                    for idx, row in enumerate(sorted_visit_rows, start=1):
+                        row_id = str(row.get("id") or "").strip()
+                        if not row_id:
+                            continue
+                        notes_payload = _summarize_visit_notes(row.get("notes"))
+                        visit_number = notes_payload.get("visitNumber") or notes_payload.get("visit_number") or idx
+                        try:
+                            visit_display = f"{int(float(visit_number)):03d}"
+                        except Exception:
+                            visit_display = str(visit_number or idx).zfill(3)
+                        visit_summaries.setdefault(row_id, {})["visit_number"] = visit_display
             except Exception as visit_error:
                 print(f"Supabase operations list visit-summary warning: {visit_error}")
 
@@ -605,6 +625,8 @@ class SupabaseService:
                     "accountingAccountId": r.get("accounting_account_id") or r.get("accountingAccountId"),
                     "vehicleId": r.get("vehicle_id") or r.get("vehicleId"),
                     "visitId": r.get("visit_id") or r.get("visitId"),
+                    "visitNumber": visit_summary.get("visit_number") or visit_summary.get("visitNumber"),
+                    "visitNumberDisplay": visit_summary.get("visit_number") or visit_summary.get("visitNumber"),
                     "partnerType": partner_type,
                     "partnerId": r.get("partner_id") or r.get("partnerId"),
                     "partnerName": live_partner_name or r.get("partner_name") or r.get("partnerName"),
@@ -676,7 +698,7 @@ class SupabaseService:
             try:
                 visit_rows = (
                     self.client.table("vehicle_visits")
-                    .select("id,notes")
+                    .select("id,vehicle_id,notes,entry_date,created_at")
                     .eq("id", visit_id)
                     .limit(1)
                     .execute()
@@ -685,6 +707,11 @@ class SupabaseService:
                 )
                 if visit_rows:
                     visit_summary = _summarize_visit_notes(visit_rows[0].get("notes"))
+                    visit_number = visit_summary.get("visitNumber") or visit_summary.get("visit_number") or 1
+                    try:
+                        visit_summary["visit_number"] = f"{int(float(visit_number)):03d}"
+                    except Exception:
+                        visit_summary["visit_number"] = str(visit_number or "001").zfill(3)
             except Exception as visit_error:
                 print(f"Supabase operations get visit-summary warning: {visit_error}")
 
@@ -716,6 +743,8 @@ class SupabaseService:
             "accountingAccountId": r.get("accounting_account_id"),
             "vehicleId": r.get("vehicle_id"),
             "visitId": r.get("visit_id"),
+            "visitNumber": visit_summary.get("visit_number") or visit_summary.get("visitNumber"),
+            "visitNumberDisplay": visit_summary.get("visit_number") or visit_summary.get("visitNumber"),
             "partnerType": partner_type,
             "partnerId": r.get("partner_id"),
             "partnerName": live_partner_name or r.get("partner_name"),

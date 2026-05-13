@@ -8,6 +8,7 @@ import SupplierSettlementDialog from '../components/SupplierSettlementDialog';
 import SupplierImportDialog from '../components/SupplierImportDialog';
 import { buildDebtWhatsAppDraft } from '../utils/debtWhatsapp';
 import { getWhatsAppLink } from '../utils/constants';
+import { resolveVisitDisplay } from '../utils/displayLabels';
 
 const Suppliers = () => {
   const { themeName } = useTheme();
@@ -451,7 +452,7 @@ const Suppliers = () => {
                                   {mv.flowLabel || (mv.flow === 'out' ? 'خارج' : 'داخل')}
                                 </span>
                                 <span className="text-[10px] text-slate-500" data-testid={`supplier-movement-visit-${supplier.id}-${mv.id}`}>
-                                  زيارة: {mv.visitId || '-'}
+                                  زيارة: {resolveVisitDisplay(mv, '-')}
                                 </span>
                               </p>
                             </div>

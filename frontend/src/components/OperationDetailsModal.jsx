@@ -6,6 +6,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from './ui/dialog';
+import {
+  OPERATION_TYPE_LABELS,
+  PAYMENT_METHOD_LABELS,
+  cleanAccountingText,
+  labelFromMap,
+  resolveAccountDisplay,
+} from '../utils/displayLabels';
 
 const OperationDetailsModal = ({
   open,
@@ -20,9 +27,11 @@ const OperationDetailsModal = ({
 }) => {
   if (!operation) return null;
 
-  const account = accounts.find((a) => (a.id || a.code) === operation.accountId);
-  const fromText = account ? (account.name_ar || account.name || account.code) : t('operations.account');
+  const accountMeta = resolveAccountDisplay(operation, accounts || []);
+  const fromText = accountMeta.name || t('operations.account');
   const toText = operation.partnerName || '-';
+  const operationTypeLabel = labelFromMap(operation.type, OPERATION_TYPE_LABELS, '-');
+  const paymentMethodLabel = labelFromMap(operation.paymentMethod || operation.payment_method, PAYMENT_METHOD_LABELS, '-');
 
   const opDate = new Date(operation.date || operation.op_date || operation.createdAt);
   const dateStr = opDate.toLocaleDateString(isRTL ? 'ar-SA' : 'en-US');
@@ -46,7 +55,7 @@ const OperationDetailsModal = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>
               <div className="text-xs text-slate-500 mb-1">{t('operations.operationType')}</div>
-              <div className="font-semibold">{operation.type || '-'}</div>
+              <div className="font-semibold" data-testid="operation-details-type-label">{operationTypeLabel}</div>
             </div>
             <div>
               <div className="text-xs text-slate-500 mb-1">{t('operations.total')}</div>
@@ -54,18 +63,18 @@ const OperationDetailsModal = ({
             </div>
             <div>
               <div className="text-xs text-slate-500 mb-1">{t('operations.from_to')}</div>
-              <div className="font-semibold">{fromText} → {toText}</div>
+              <div className="font-semibold" data-testid="operation-details-from-to">{fromText} → {toText}</div>
             </div>
             <div>
               <div className="text-xs text-slate-500 mb-1">{t('operations.paymentMethod')}</div>
-              <div className="font-semibold">{operation.paymentMethod || '-'}</div>
+              <div className="font-semibold" data-testid="operation-details-payment-method">{paymentMethodLabel}</div>
             </div>
           </div>
 
           {operation.notes && (
             <div className="text-sm">
               <div className="text-xs text-slate-500 mb-1">{t('operations.notes')}</div>
-              <div className="bg-slate-50 border border-slate-200 rounded p-3">{operation.notes}</div>
+              <div className="bg-slate-50 border border-slate-200 rounded p-3" data-testid="operation-details-notes">{cleanAccountingText(operation.notes) || '-'}</div>
             </div>
           )}
 
@@ -93,20 +102,20 @@ const OperationDetailsModal = ({
 
         <DialogFooter className="gap-2 sm:justify-between">
           <div className="flex gap-2">
-            <button className="apple-button-secondary" onClick={onPrint}>
+            <button className="apple-button-secondary" onClick={onPrint} data-testid="operation-details-print-button">
               {t('print.print')}
             </button>
             {operation.vehicleId && (
-              <button className="apple-button-secondary" onClick={onViewVehicle}>
+              <button className="apple-button-secondary" onClick={onViewVehicle} data-testid="operation-details-view-vehicle-button">
                 {t('buttons.view')}
               </button>
             )}
           </div>
           <div className="flex gap-2">
-            <button className="apple-button-secondary" onClick={() => onOpenChange(false)}>
+            <button className="apple-button-secondary" onClick={() => onOpenChange(false)} data-testid="operation-details-close-button">
               {t('buttons.close')}
             </button>
-            <button className="apple-button-secondary text-red-600" onClick={onDelete}>
+            <button className="apple-button-secondary text-red-600" onClick={onDelete} data-testid="operation-details-delete-button">
               {t('buttons.delete')}
             </button>
           </div>

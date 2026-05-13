@@ -6,6 +6,7 @@ import { useToast } from '../hooks/use-toast';
 import DebtWhatsAppComposerDialog from '../components/DebtWhatsAppComposerDialog';
 import { buildDebtWhatsAppDraft } from '../utils/debtWhatsapp';
 import { getWhatsAppLink } from '../utils/constants';
+import { resolveVisitDisplay } from '../utils/displayLabels';
 
 const Customers = () => {
   const { themeName } = useTheme();
@@ -748,7 +749,7 @@ const Customers = () => {
                                   {mv.flowLabel || (mv.flow === 'out' ? 'خارج' : 'داخل')}
                                 </span>
                                 <span className="text-[10px] text-slate-500" data-testid={`customer-movement-visit-${customer.id}-${mv.id}`}>
-                                  زيارة: {mv.visitId || '-'}
+                                  زيارة: {resolveVisitDisplay(mv, '-')}
                                 </span>
                               </p>
                             </div>

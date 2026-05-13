@@ -324,6 +324,17 @@ export default function OperationCard({
   const hasPaymentStatus = Boolean(paymentStatus || paymentMethod);
   const isCredit = ['unpaid', 'credit', 'deferred', 'partial'].includes(paymentStatus)
     || ['credit', 'deferred'].includes(paymentMethod);
+  const totalPaid = Number(operation.totalPaid ?? operation.paymentAmount ?? 0);
+  const remainingBalance = Number(operation.balance ?? Math.max(Number(operation.total || 0) - totalPaid, 0));
+  const paymentStatusLabel = paymentStatus === 'partial'
+    ? 'مدفوع جزئياً'
+    : paymentStatus === 'paid_full'
+      ? 'مسدد بالكامل'
+      : paymentStatus === 'unpaid'
+        ? 'غير مسدد'
+        : paymentStatus === 'credit'
+          ? 'آجل'
+          : paymentStatus || '-';
   const paymentBorder = hasPaymentStatus
     ? (isCredit ? 'rgba(244,63,94,0.55)' : 'rgba(16,185,129,0.55)')
     : cardBorder;
@@ -389,6 +400,14 @@ export default function OperationCard({
                   {hasIntegrityWarning ? `⚠️ ${integrityWarnings.length} ملاحظة` : '✅ مترابطة'}
                 </span>
               ) : null}
+              {hasPaymentStatus ? (
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${isCredit ? 'bg-amber-500/15 text-amber-100 border-amber-400/35' : 'bg-emerald-500/15 text-emerald-100 border-emerald-400/35'}`}
+                  data-testid={`operation-card-payment-status-pill-${operation.id}`}
+                >
+                  {paymentStatusLabel}
+                </span>
+              ) : null}
             </div>
 
             <div className="mt-2.5 flex flex-col gap-1.5">
@@ -410,6 +429,14 @@ export default function OperationCard({
                 <span className="mx-1 opacity-40">•</span>
                 <span className="break-words">{formatDateTime(operation.date || operation.op_date || operation.createdAt, isRTL)}</span>
               </div>
+
+              {hasPaymentStatus ? (
+                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-100/90" data-testid={`operation-card-payment-summary-${operation.id}`}>
+                  <span>الحالة: <span className="font-semibold">{paymentStatusLabel}</span></span>
+                  <span>المدفوع: <span className="font-semibold tabular-nums">{totalPaid.toFixed(2)}</span></span>
+                  <span>المتبقي: <span className="font-semibold tabular-nums">{remainingBalance.toFixed(2)}</span></span>
+                </div>
+              ) : null}
 
               <div className="text-[11px] text-slate-200/80 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-journal-entry-${operation.id}`}>
                 {journalEntryText}
@@ -607,6 +634,22 @@ export default function OperationCard({
               <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.paymentMethod') || 'طريقة الدفع'}</div>
               <div className="text-xs font-semibold text-slate-50 break-words">{operation.paymentMethod || '-'}</div>
             </div>
+            {hasPaymentStatus ? (
+              <>
+                <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-payment-status-expanded-${operation.id}`}>
+                  <div className="text-[10px] text-slate-300/70 mb-1">حالة السداد</div>
+                  <div className="text-xs font-semibold text-slate-50 break-words">{paymentStatusLabel}</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-total-paid-expanded-${operation.id}`}>
+                  <div className="text-[10px] text-slate-300/70 mb-1">المدفوع</div>
+                  <div className="text-xs font-semibold text-slate-50 break-words tabular-nums">{totalPaid.toFixed(2)}</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-balance-expanded-${operation.id}`}>
+                  <div className="text-[10px] text-slate-300/70 mb-1">المتبقي</div>
+                  <div className="text-xs font-semibold text-slate-50 break-words tabular-nums">{remainingBalance.toFixed(2)}</div>
+                </div>
+              </>
+            ) : null}
             <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
               <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.account') || 'الحساب'}</div>
               <div className="text-xs font-semibold text-slate-50 break-words">

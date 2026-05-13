@@ -1215,6 +1215,12 @@
 ### RakanLinkedPartPicker Cleanup (25 Apr 2026)
 - إزالة العنوان والتحذير من المكوّن + إزالة سجل الموردين من ملف المركبة
 
+### Raw Field Arabic Display + Visit Number Format (13 May 2026)
+- أُضيفت خرائط عرض عربية مشتركة للعمليات، طرق الدفع، حالات السداد، مصادر القيود، وأنواع الحسابات في `frontend/src/utils/displayLabels.js`.
+- أُزيل ظهور UUIDs والمفاتيح الإنجليزية من بطاقة العملية، نافذة تفاصيل العملية، صفحة المخزون، ملف المركبة، العملاء، الموردين، والبوت الموحد.
+- أرقام الزيارات تُعرض الآن بصيغة 3 خانات (`001`, `002`, `003`) من `/api/operations` و`/api/vehicles/{id}/visits`، مع تخزين آمن للرقم داخل ملاحظات الزيارة في Supabase عند إنشاء زيارات جديدة.
+- الاختبار: Pytest regression `/app/backend/tests/test_iteration_207_visit_display_and_labels.py` نجح 4/4، وفحص API اليدوي أكد `visitNumberDisplay=001`، ووكيل الاختبار أكد صفحة العمليات بدون raw ظاهر؛ تم إصلاح ملاحظة المخزون `parts_pos/rakan_parts_pos` بعد تقرير الاختبار.
+
 ---
 
 ## Legacy → New Code Mapping (المرجع)
@@ -1236,6 +1242,7 @@
 ## Prioritized Backlog
 
 ### P1 (Next)
+- إعادة فحص بصري هادئ لصفحات العملاء/الموردين بعد ثبات التنقل في Playwright للتأكد النهائي من عدم ظهور raw visit ids في كل حالات البيانات.
 - Auto-map لعبارة «من قطع راكان» إلى الحساب `042` داخل بطاقات إنشاء Unified Bot.
 
 ### Refactoring (in progress)

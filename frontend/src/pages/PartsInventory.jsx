@@ -1195,7 +1195,7 @@ const PartsInventory = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-white" data-testid="inventory-pos-operations-title">العمليات المنشأة من نقطة البيع</h2>
-              <p className="text-sm text-slate-300" data-testid="inventory-pos-operations-subtitle">تظهر هنا عمليات المصدر: parts_pos و rakan_parts_pos مع معلومات الربط (مركبة/عميل/مورد)</p>
+              <p className="text-sm text-slate-300" data-testid="inventory-pos-operations-subtitle">تظهر هنا عمليات نقطة البيع مع معلومات الربط بالمركبات والعملاء والموردين.</p>
             </div>
             <Button
               type="button"

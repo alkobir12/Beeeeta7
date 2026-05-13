@@ -3708,6 +3708,8 @@ const VehicleDetails = () => {
                           </div>
                           <div className="text-[11px] mt-1" style={{ color: 'rgba(226,232,240,0.62)' }}>
                             {String(entry?.date || '').slice(0, 10) || '-'} • {labelFromMap(entry?.source, SOURCE_LABELS, 'قيد يومية')}
+                            {entry?.vehicle_label ? ` • مركبة: ${entry.vehicle_label}` : ''}
+                            {entry?.party_label ? ` • عميل: ${entry.party_label}` : ''}
                           </div>
                         </div>
                         <div className="text-sm font-extrabold tabular-nums" style={{ color: 'rgba(167,243,208,0.95)' }}>

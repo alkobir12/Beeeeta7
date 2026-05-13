@@ -104,6 +104,11 @@ export const SOURCE_LABELS = {
   smart_pos_operation: 'POS الذكي',
   visit_receipt_voucher: 'سند قبض زيارة',
   operation_payment: 'سداد عملية',
+  operation_payment_income: 'تحصيل عملية',
+  supplier_balance_payment: 'سداد رصيد مورد',
+  operation_rakan_parts: 'عملية قطع',
+  workshop_operation: 'عملية ورشة',
+  vehicle_operation: 'عملية مركبة',
   manual: 'يدوي',
 };
 

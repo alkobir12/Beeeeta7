@@ -64,6 +64,33 @@ const getEntryTypeConfig = (type) => {
   return configs[type] || configs.manual;
 };
 
+const getPaymentMethodTone = (method) => {
+  const normalized = String(method || '').toLowerCase();
+  if (normalized === 'cash') return 'bg-emerald-500/15 text-emerald-200';
+  if (normalized === 'bank') return 'bg-sky-500/15 text-sky-200';
+  if (normalized === 'pos') return 'bg-violet-500/15 text-violet-200';
+  if (normalized === 'credit') return 'bg-amber-500/15 text-amber-200';
+  return 'bg-white/10 text-slate-200';
+};
+
+const getPaymentStatusTone = (status) => {
+  const normalized = String(status || '').toLowerCase();
+  if (normalized === 'paid_full' || normalized === 'paid') return 'bg-emerald-500/15 text-emerald-200';
+  if (normalized === 'partial') return 'bg-amber-500/15 text-amber-200';
+  if (normalized === 'unpaid' || normalized === 'credit' || normalized === 'pending') return 'bg-rose-500/15 text-rose-200';
+  return 'bg-white/10 text-slate-200';
+};
+
+const getSourceLabel = (source = '') => {
+  const normalized = String(source || '').toLowerCase();
+  if (normalized === 'operation') return 'عملية';
+  if (normalized === 'visit_receipt_voucher') return 'سند قبض';
+  if (normalized === 'pos_template' || normalized === 'pos_instant_sale') return 'POS';
+  if (normalized === 'period_close') return 'إقفال';
+  if (normalized === 'manual') return 'يدوي';
+  return normalized ? normalized : 'غير محدد';
+};
+
 const getAuditHeaders = () => {
   try {
     const session = JSON.parse(localStorage.getItem('session') || '{}');
@@ -238,6 +265,10 @@ export default function JournalEntries() {
           party_label: entry?.party_label || 'مفتوح',
           party_type: entry?.party_type || 'open',
           operation_type_label: entry?.operation_type_label || 'غير محدد',
+          payment_method: entry?.payment_method || '',
+          payment_method_label_ar: entry?.payment_method_label_ar || '',
+          payment_status: entry?.payment_status || '',
+          payment_status_label_ar: entry?.payment_status_label_ar || '',
           transaction_type: entry?.transaction_type || '',
           source: entry?.source || 'manual'
         };
@@ -937,6 +968,20 @@ export default function JournalEntries() {
                       <span data-testid={`entry-card-customer-${entry.id}`}>طرف العملية: {entry.party_label || 'مفتوح'}</span>
                     </div>
 
+                    <div className="mt-2 flex flex-wrap gap-2" data-testid={`entry-card-payment-row-${entry.id}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] ${getPaymentMethodTone(entry.payment_method)}`} data-testid={`entry-card-payment-method-${entry.id}`}>
+                        {entry.payment_method_label_ar ? `الطريقة: ${entry.payment_method_label_ar}` : `المصدر: ${getSourceLabel(entry.source)}`}
+                      </span>
+                      {entry.payment_status_label_ar && entry.payment_status_label_ar !== '-' ? (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] ${getPaymentStatusTone(entry.payment_status)}`} data-testid={`entry-card-payment-status-${entry.id}`}>
+                          {entry.payment_status_label_ar}
+                        </span>
+                      ) : null}
+                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-slate-200" data-testid={`entry-card-source-detail-${entry.id}`}>
+                        {getSourceLabel(entry.source)}
+                      </span>
+                    </div>
+
                     <div className="mt-1">
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ${linkage.linked ? 'bg-emerald-500/15 text-emerald-200' : 'bg-amber-500/15 text-amber-200'}`}
@@ -1084,6 +1129,16 @@ export default function JournalEntries() {
                         <p className="text-xs" style={{ color: styles.textMuted }} data-testid={`entry-row-vehicle-${entry.id}`}>
                           المركبة: {entry.vehicle_plate || 'غير محدد'}
                         </p>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ${getPaymentMethodTone(entry.payment_method)}`} data-testid={`entry-row-payment-method-${entry.id}`}>
+                            {entry.payment_method_label_ar ? `الطريقة: ${entry.payment_method_label_ar}` : `المصدر: ${getSourceLabel(entry.source)}`}
+                          </span>
+                          {entry.payment_status_label_ar && entry.payment_status_label_ar !== '-' ? (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ${getPaymentStatusTone(entry.payment_status)}`} data-testid={`entry-row-payment-status-${entry.id}`}>
+                              {entry.payment_status_label_ar}
+                            </span>
+                          ) : null}
+                        </div>
                         <p className={`text-[10px] mt-1 ${linkage.linked ? 'text-emerald-300' : 'text-amber-300'}`} data-testid={`entry-row-linkage-${entry.id}`}>
                           حالة الربط: {linkage.label}
                         </p>
@@ -1101,7 +1156,7 @@ export default function JournalEntries() {
                             ? 'bg-white/10 text-slate-200' 
                             : 'bg-blue-500/15 text-blue-200'
                         }`}>
-                          {isManual ? 'يدوي' : 'آلي'}
+                          {isManual ? 'يدوي' : getSourceLabel(entry.source)}
                         </span>
                       </div>
 

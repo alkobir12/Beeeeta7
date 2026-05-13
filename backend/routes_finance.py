@@ -1233,6 +1233,42 @@ def _transaction_type_label_ar(tx_type: Optional[str]) -> str:
     return labels.get(normalized, normalized or "غير محدد")
 
 
+def _payment_method_label_ar(method: Optional[str]) -> str:
+    normalized = _normalize_payment_method(method)
+    labels = {
+        "cash": "نقدي",
+        "bank": "بنك",
+        "pos": "نقاط بيع",
+        "credit": "آجل",
+    }
+    return labels.get(normalized, normalized or "غير محدد")
+
+
+def _payment_status_label_ar(status: Optional[str]) -> str:
+    normalized = str(status or "").strip().lower()
+    labels = {
+        "paid": "مسدد",
+        "paid_full": "مسدد بالكامل",
+        "partial": "مدفوع جزئياً",
+        "unpaid": "غير مسدد",
+        "credit": "آجل",
+        "pending": "بانتظار السداد",
+    }
+    return labels.get(normalized, normalized or "-")
+
+
+def _infer_payment_method_from_lines(lines: List[Dict[str, Any]]) -> str:
+    for line in lines or []:
+        account_code = str(line.get("account") or line.get("account_code") or "").strip()
+        if account_code == "006":
+            return "pos"
+        if account_code == "004":
+            return "bank"
+        if account_code == "003":
+            return "cash"
+    return ""
+
+
 def _build_repair_journal_entry_from_operation(
     operation: Dict[str, Any],
     workshop_id: str,
@@ -2525,6 +2561,7 @@ async def get_journal_entries(
             tx_type = str(entry.get("transaction_type") or "").strip().lower()
             reference_id = str(entry.get("reference_id") or "").strip()
             description = entry.get("description", "قيد")
+            lines = entry.get("lines", [])
 
             op = operation_map.get(reference_id, {}) if reference_id else {}
             visit_id = str(op.get("visit_id") or op.get("visitId") or "").strip()
@@ -2564,21 +2601,32 @@ async def get_journal_entries(
                 party_type = str(manual_party_type_match.group(1)).strip().lower() if manual_party_type_match else "manual"
 
             operation_type_label = type_labels.get(tx_type, tx_type or "غير محدد")
+            payment_method = _normalize_payment_method(op.get("payment_method") or op.get("paymentMethod") or "")
+            if not payment_method:
+                payment_method = _infer_payment_method_from_lines(lines)
+            payment_status = str(op.get("payment_status") or op.get("paymentStatus") or "").strip().lower()
+            if not payment_status and payment_method == "credit":
+                payment_status = "unpaid"
 
             formatted.append(
                 {
                     "id": entry.get("id"),
                     "date": entry.get("date", ""),
                     "description": description,
-                    "lines": entry.get("lines", []),
+                    "lines": lines,
                     "total": entry.get("total", 0),
                     "source": source,
                     "transaction_type": tx_type,
+                    "transaction_type_label_ar": _transaction_type_label_ar(tx_type),
                     "reference_id": reference_id,
                     "party_type": party_type or "open",
                     "party_label": party_label or "مفتوح",
                     "vehicle_label": vehicle_label,
                     "operation_type_label": operation_type_label,
+                    "payment_method": payment_method,
+                    "payment_method_label_ar": _payment_method_label_ar(payment_method),
+                    "payment_status": payment_status,
+                    "payment_status_label_ar": _payment_status_label_ar(payment_status),
                 }
             )
 

@@ -561,12 +561,104 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
     setItemDraft({ name: '', price: '', qty: 1, itemType: 'service' });
   };
 
+  const buildPosOperationPayload = () => {
+    const cleanPartyName = String(partyName || '').trim();
+    const cleanVehicleRef = String(vehicleRef || '').trim();
+    const total = roundAmount(effectiveAmount);
+    const itemSummary = items.map((item) => `${item.name}×${item.qty}`).join('، ');
+    const descriptionParts = [
+      activeTemplate?.title || 'عملية POS',
+      itemSummary,
+      note,
+    ].filter(Boolean);
+    const notes = [
+      descriptionParts.join(' — '),
+      cleanPartyName ? `[PARTY:${cleanPartyName}] [PARTY_TYPE:${activeTemplate?.partyRole || 'open'}]` : '',
+      cleanVehicleRef ? `[VEHICLE_REF:${cleanVehicleRef}]` : '',
+      '[SOURCE:SMART_POS]',
+    ].filter(Boolean).join(' ').trim();
+
+    const defaultItemName = note || activeTemplate?.title || 'بند POS';
+    const operationItems = (activeTemplate?.supportsItems && items.length > 0)
+      ? items.map((item) => ({
+          name: item.name,
+          itemType: item.itemType || 'service',
+          quantity: Number(item.qty || 1),
+          price: roundAmount(item.price),
+          total: roundAmount((Number(item.qty || 1) * Number(item.price || 0))),
+        }))
+      : [{
+          name: defaultItemName,
+          itemType: activeTemplate?.transactionType === 'expense' ? 'service' : 'service',
+          quantity: 1,
+          price: total,
+          total,
+        }];
+
+    if (activeTemplate?.key === 'collect_customer' || activeTemplate?.key === 'pay_supplier') {
+      return {
+        type: 'payment_order',
+        originalType: 'settlement',
+        operationKind: vehicleId ? 'VEHICLE_OPERATION' : 'WORKSHOP_OPERATION',
+        scope: vehicleId ? 'vehicle' : 'workshop',
+        vehicleId: vehicleId || null,
+        partnerType: activeTemplate?.partyRole || 'customer',
+        partnerId: partyId || null,
+        partnerName: cleanPartyName || null,
+        paymentMethod,
+        paymentStatus: 'paid',
+        paymentAmount: total,
+        items: [{
+          name: activeTemplate?.key === 'pay_supplier' ? 'سداد لمورد عبر POS' : 'تحصيل من عميل عبر POS',
+          itemType: 'service',
+          quantity: 1,
+          price: total,
+          total,
+        }],
+        notes,
+        workshopId,
+        date: new Date().toISOString().slice(0, 10),
+        accountingAccountId: activeTemplate?.partyRole === 'supplier' ? accountRefs.suppliers.code : accountRefs.customers.code,
+      };
+    }
+
+    return {
+      type: activeTemplate?.transactionType === 'expense' ? 'expense' : 'sale',
+      operationKind: vehicleId ? 'VEHICLE_OPERATION' : 'WORKSHOP_OPERATION',
+      scope: vehicleId ? 'vehicle' : 'workshop',
+      vehicleId: vehicleId || null,
+      partnerType: activeTemplate?.partyRole || (activeTemplate?.transactionType === 'expense' ? 'supplier' : 'customer'),
+      partnerId: partyId || null,
+      partnerName: cleanPartyName || null,
+      paymentMethod,
+      paymentStatus: 'paid',
+      items: operationItems,
+      notes,
+      workshopId,
+      date: new Date().toISOString().slice(0, 10),
+      accountingAccountId: activeTemplate?.transactionType === 'expense'
+        ? effectiveEntry.debitAccount?.code
+        : effectiveEntry.creditAccount?.code,
+    };
+  };
+
   const handleSave = async () => {
     if (!isValid || saving) return;
     setSaving(true);
     setSavedToast(null);
 
     try {
+      if (activeTemplate?.key !== 'bank_deposit') {
+        const operationPayload = buildPosOperationPayload();
+        const operationResponse = await axios.post(`${apiBase}/operations`, operationPayload);
+        if (operationResponse?.data?.id) {
+          resetFormAfterSave();
+          setSavedToast({ ok: true, total: roundAmount(effectiveAmount) });
+          if (typeof onSaved === 'function') onSaved(operationResponse.data);
+          return;
+        }
+      }
+
       const cleanPartyName = String(partyName || '').trim();
       const cleanVehicleRef = String(vehicleRef || '').trim();
       const itemSummary = items.map((item) => `${item.name}×${item.qty}`).join('، ');

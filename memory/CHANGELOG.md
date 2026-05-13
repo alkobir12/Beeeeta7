@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 12 May 2026 — Payments ↔ Operations sync completed
+- Linked operation payment fields to live visit payment data in `supabase_service.py`.
+- `GET /api/operations` and `GET /api/operations/{id}` now surface `paymentMethod`, `paymentStatus`, `paymentAmount`, `totalPaid`, `advancePaid`, and `balance` from the linked visit when available.
+- Verified the visit-linked operation flow without creating new test data.
+
 ## 12 May 2026 — Vehicle files + receipt vouchers + account mapping audit
 - Fixed vehicle `fileNumber` and `customerFileNumber` save flow across backend and VehicleDetails UI.
 - Fixed Smart POS account mapping so salary uses `036 رواتب إدارية` and payment methods map correctly to `003/004/006`.
@@ -17,6 +22,7 @@
 - Hardened `JournalEntries.jsx` fetch lifecycle with `AbortController` during navigation.
 
 ## Verification
+- `/app/test_reports/iteration_201.json` → PASS
 - `/app/test_reports/iteration_200.json` → PASS (with low note fixed afterward)
 - `/app/test_reports/iteration_199.json` → PASS
 - `auto_frontend_testing_agent` → PASS

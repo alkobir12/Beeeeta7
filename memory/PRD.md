@@ -29,6 +29,34 @@
 
 ## What's Been Implemented
 
+### 🔗 Payments ↔ Operations Sync (12 May 2026)
+
+**نطاق هذه الجولة (حسب اختيار المستخدم):** البدء أولاً بربط **الدفعات والعمليات**.
+
+**ما تم تنفيذه:**
+- تم تحديث طبقة قراءة العمليات في `supabase_service.py` بحيث تستمد من الزيارة المرتبطة (`visit_id`) البيانات التالية مباشرة من `visit.notes`:
+  - `paymentMethod`
+  - `paymentStatus`
+  - `paymentAmount`
+  - `totalPaid`
+  - `advancePaid`
+  - `balance`
+- هذا يعني أن العملية المرتبطة بالمركبة تتحدث تلقائياً عند تغيير دفعات الزيارة من ملف المركبة، حتى لو كان جدول `operations` لا يملك كل الأعمدة المخزنة فعلياً في بعض البيئات.
+- `GET /api/operations` و `GET /api/operations/{id}` أصبحا يعكسان حالة السداد الحية للزيارة المرتبطة.
+
+**الأثر الوظيفي:**
+- إذا كان إجمالي العملية 100 وتم تسجيل دفعة 50 من ملف المركبة:
+  - تنعكس الدفعة في الزيارة
+  - يظهر سند قبض محاسبي في دفتر اليومية (`visit_receipt_voucher`)
+  - تتحدث العملية المرتبطة في صفحة العمليات بحالة السداد والرصيد
+
+**التحقق:**
+- `testing_agent`: `/app/test_reports/iteration_201.json`
+  - Backend: **12/12 PASS**
+  - Frontend: **100% PASS**
+- `auto_frontend_testing_agent`: **PASS** (بدون إنشاء بيانات جديدة)
+- `deep_testing_backend_v2`: **PASS** (read-only)
+
 ### 🧾 Vehicle Files + Smart POS Accounts + Visit Receipt Vouchers + Test Data Cleanup (12 May 2026)
 
 **1. إصلاح حفظ رقم ملف المركبة / العميل**

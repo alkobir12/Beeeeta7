@@ -6,6 +6,7 @@
 ## P1
 - استخراج Customers / Vehicles / Suppliers من `server.py` إلى routers مستقلة.
 - استخراج Visits / Operations / Vehicles من `routes_extended.py` إلى ملفات أصغر.
+- إكمال الربط المتبقي عبر الصفحات ذات الصلة: العمليات ↔ ملف المركبة ↔ الموردين ↔ POS الذكي.
 - توحيد تمثيل ردود `GET journal entry` و`GET journal entries` بالكامل في كل المستهلكين.
 - تقليل ضوضاء fetch أثناء الأتمتة/التنقل إذا استمر ظهورها في بيئات الاختبار فقط.
 

@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 13 May 2026 — OperationCard payment visibility fix
+- Operations page now refetches operation data on mount instead of relying on stale cached status.
+- Added explicit payment status pill, paid amount, and remaining balance display to `OperationCard.jsx`.
+- Improved journal entry text fallback so service operations show `إيرادات الخدمات` instead of incomplete `الحساب` text.
+- Verified on the real case: paid 300 / remaining 2000 is now clearly visible in the UI.
+
 ## 13 May 2026 — Live vehicle updates reflected in operations
 - `GET /api/operations` and `GET /api/operations/{id}` now enrich vehicle-linked operations with live vehicle/customer fields from the current vehicle record.
 - Operations responses now include `customerName`, `customerPhone`, `vehiclePlate`, `vehicleBrand`, and `vehicleModel` for linked vehicle operations.
@@ -33,6 +39,7 @@
 - Hardened `JournalEntries.jsx` fetch lifecycle with `AbortController` during navigation.
 
 ## Verification
+- `/app/test_reports/iteration_205.json` → PASS
 - `/app/test_reports/iteration_203.json` → PASS
 - `/app/test_reports/iteration_202.json` → PASS
 - `/app/test_reports/iteration_201.json` → PASS

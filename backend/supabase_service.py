@@ -617,6 +617,26 @@ class SupabaseService:
             except Exception as vehicle_error:
                 print(f"Supabase operations list vehicle-context warning: {vehicle_error}")
 
+        operation_payment_totals = {}
+        try:
+            operation_ids = [str(r.get("id") or "").strip() for r in rows if r.get("id")]
+            if operation_ids:
+                payment_rows = (
+                    self.client.table("journal_entries")
+                    .select("reference_id,total,source")
+                    .in_("reference_id", operation_ids)
+                    .in_("source", ["operation_payment", "operation_payment_income", "supplier_balance_payment"])
+                    .execute()
+                    .data
+                    or []
+                )
+                for payment_row in payment_rows:
+                    ref = str(payment_row.get("reference_id") or "").strip()
+                    if ref:
+                        operation_payment_totals[ref] = operation_payment_totals.get(ref, 0.0) + _safe_float(payment_row.get("total"))
+        except Exception as payment_error:
+            print(f"Supabase operations list payment-summary warning: {payment_error}")
+
         # map snake_case to camelCase if needed, or just return as is if frontend expects it
         # The frontend likely expects camelCase.
         out = []
@@ -648,6 +668,10 @@ class SupabaseService:
                     supplier_archive_total = supplier_calc
 
             visit_summary = visit_summaries.get(str(r.get("visit_id") or r.get("visitId") or "").strip(), {})
+            extra_operation_paid = operation_payment_totals.get(str(r.get("id") or "").strip(), 0.0)
+            if extra_operation_paid:
+                visit_summary = dict(visit_summary)
+                visit_summary["total_paid"] = _safe_float(visit_summary.get("total_paid")) + extra_operation_paid
             has_visit_summary = bool(visit_summary)
             payment_method = visit_summary.get("last_payment_method") if has_visit_summary else None
             if not payment_method:
@@ -757,6 +781,23 @@ class SupabaseService:
                         visit_summary["visit_number"] = str(visit_number or "001").zfill(3)
             except Exception as visit_error:
                 print(f"Supabase operations get visit-summary warning: {visit_error}")
+
+        try:
+            payment_rows = (
+                self.client.table("journal_entries")
+                .select("total,source")
+                .eq("reference_id", op_id)
+                .in_("source", ["operation_payment", "operation_payment_income", "supplier_balance_payment"])
+                .execute()
+                .data
+                or []
+            )
+            operation_payment_total = sum(_safe_float(row.get("total")) for row in payment_rows)
+            if operation_payment_total:
+                visit_summary = dict(visit_summary)
+                visit_summary["total_paid"] = _safe_float(visit_summary.get("total_paid")) + operation_payment_total
+        except Exception as payment_error:
+            print(f"Supabase operations get payment-summary warning: {payment_error}")
 
         vehicle_row = {}
         vehicle_id = str(r.get("vehicle_id") or r.get("vehicleId") or "").strip()

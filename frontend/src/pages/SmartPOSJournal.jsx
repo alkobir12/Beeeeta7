@@ -561,6 +561,25 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
     setItemDraft({ name: '', price: '', qty: 1, itemType: 'service' });
   };
 
+  const findOpenVehicleOperationForCollection = async () => {
+    if (!vehicleId) return null;
+    const response = await axios.get(`${apiBase}/operations`, {
+      params: { vehicle_id: vehicleId, limit: 50 },
+    });
+    const rows = normalizeArray(response?.data);
+    const candidates = rows
+      .filter((operation) => ['sale', 'service'].includes(String(operation?.type || '').toLowerCase()))
+      .map((operation) => {
+        const total = Number(operation?.workshopTotal ?? operation?.total ?? 0) || 0;
+        const paid = Number(operation?.totalPaid ?? operation?.paymentAmount ?? 0) || 0;
+        const balance = Number(operation?.balance ?? Math.max(total - paid, 0)) || 0;
+        return { ...operation, _balance: roundAmount(balance) };
+      })
+      .filter((operation) => operation._balance > 0.009)
+      .sort((a, b) => String(b.date || b.createdAt || '').localeCompare(String(a.date || a.createdAt || '')));
+    return candidates[0] || null;
+  };
+
   const buildPosOperationPayload = () => {
     const cleanPartyName = String(partyName || '').trim();
     const cleanVehicleRef = String(vehicleRef || '').trim();
@@ -648,6 +667,29 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
     setSavedToast(null);
 
     try {
+      if (activeTemplate?.key === 'collect_customer' && vehicleId) {
+        const targetOperation = await findOpenVehicleOperationForCollection();
+        if (!targetOperation?.id) {
+          setSavedToast({ ok: false, error: 'لا توجد عملية آجل مفتوحة لهذه المركبة. لن يتم إنشاء عملية تحصيل منفصلة حتى لا يتكرر السعر.' });
+          return;
+        }
+
+        const total = roundAmount(effectiveAmount);
+        const response = await axios.post(`${apiBase}/operations/${targetOperation.id}/confirm-payment`, {
+          amount: total,
+          paymentMethod,
+          payment_method: paymentMethod,
+          workshopId,
+          date: new Date().toISOString().slice(0, 10),
+          notes: note || 'تحصيل من POS مرتبط بالعملية الأصلية',
+        });
+
+        resetFormAfterSave();
+        setSavedToast({ ok: true, total, message: 'تم تسجيل التحصيل على العملية الأصلية بدون إنشاء عملية جديدة.' });
+        if (typeof onSaved === 'function') onSaved(response.data);
+        return;
+      }
+
       if (activeTemplate?.key !== 'bank_deposit') {
         const operationPayload = buildPosOperationPayload();
         const operationResponse = await axios.post(`${apiBase}/operations`, operationPayload);
@@ -1117,7 +1159,7 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
               data-testid="pos-save-toast"
               className={`rounded-2xl border px-4 py-3 text-sm ${savedToast.ok ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}`}
             >
-              {savedToast.ok ? `تم حفظ القيد المتوازن بنجاح بقيمة ${formatSAR(savedToast.total)}` : savedToast.error}
+              {savedToast.ok ? (savedToast.message || `تم حفظ القيد المتوازن بنجاح بقيمة ${formatSAR(savedToast.total)}`) : savedToast.error}
             </div>
           ) : null}
         </div>

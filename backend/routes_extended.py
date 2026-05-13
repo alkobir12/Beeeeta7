@@ -2595,6 +2595,24 @@ async def confirm_operation_payment(op_id: str, payload: Dict[str, Any] = Body(N
         except Exception as e:
             print(f"Payment lookup failed: {e}")
 
+        try:
+            visit_id_for_paid = str(op_row.get("visit_id") or op_row.get("visitId") or "").strip()
+            if visit_id_for_paid:
+                visit_rows = (
+                    supa.client.table("vehicle_visits")
+                    .select("notes")
+                    .eq("id", visit_id_for_paid)
+                    .limit(1)
+                    .execute()
+                    .data
+                    or []
+                )
+                if visit_rows:
+                    visit_fin = _calc_visit_financial(_parse_notes_json(visit_rows[0].get("notes")))
+                    already_paid += float(visit_fin.get("totalPaid") or visit_fin.get("total_paid") or 0)
+        except Exception as e:
+            print(f"Visit payment lookup failed: {e}")
+
         remaining = max(0.0, total - already_paid)
         if pay_amount > remaining + 0.0001:
             pay_amount = remaining

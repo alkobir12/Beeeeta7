@@ -8,6 +8,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
+import json
 
 # Load environment variables at module level
 _env_file = Path(__file__).parent / ".env"
@@ -82,6 +83,82 @@ def to_camel_vehicle(dbrow: Dict[str, Any]) -> Dict[str, Any]:
         "technicianId": dbrow.get("technician_id"),
         "technicianName": dbrow.get("technician_name"),
         "notes": dbrow.get("notes"),
+    }
+
+
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
+def _normalize_visit_payment_method(value: Any) -> str:
+    raw = str(value or '').strip().lower()
+    if raw in {'bank', 'transfer', 'bank_transfer', 'تحويل', 'بنك'}:
+        return 'transfer'
+    if raw in {'pos', 'card', 'mada', 'visa', 'mastercard', 'بطاقة', 'بطاقه', 'نقاط بيع', 'point_of_sale'}:
+        return 'card'
+    if raw in {'supplier_balance'}:
+        return 'supplier_balance'
+    if raw in {'cash', 'نقد', 'نقدي', 'كاش'}:
+        return 'cash'
+    return raw or 'cash'
+
+
+def _summarize_visit_notes(notes: Any) -> Dict[str, Any]:
+    parsed = {}
+    if isinstance(notes, dict):
+        parsed = notes
+    elif isinstance(notes, str) and notes.strip().startswith('{'):
+        try:
+            parsed = json.loads(notes)
+        except Exception:
+            parsed = {}
+
+    items = parsed.get('items') or []
+    payments = parsed.get('payments') or []
+
+    total_workshop = 0.0
+    total_suppliers = 0.0
+    for item in items:
+        qty = _safe_float(item.get('quantity') or item.get('qty') or 1, 1.0)
+        price = _safe_float(item.get('price') or 0)
+        line_total = _safe_float(item.get('total'), qty * price)
+        item_type = str(item.get('itemType') or item.get('type') or '').strip().lower()
+        if item_type == 'supplier':
+            total_suppliers += line_total
+        else:
+            total_workshop += line_total
+
+    total_paid = 0.0
+    advance_paid = 0.0
+    last_method = ''
+    for payment in payments:
+        amount = _safe_float(payment.get('amount') or 0)
+        total_paid += amount
+        if str(payment.get('kind') or '').strip().lower() == 'advance':
+            advance_paid += amount
+        method = payment.get('paymentMethod') or payment.get('method') or payment.get('payment_method')
+        if method:
+            last_method = _normalize_visit_payment_method(method)
+
+    balance = max(round(total_workshop - total_paid, 2), 0.0)
+    if total_paid <= 0:
+        payment_status = 'unpaid'
+    elif balance > 0.01:
+        payment_status = 'partial'
+    else:
+        payment_status = 'paid_full'
+
+    return {
+        'total_workshop': round(total_workshop, 2),
+        'total_suppliers': round(total_suppliers, 2),
+        'total_paid': round(total_paid, 2),
+        'advance_paid': round(advance_paid, 2),
+        'balance': balance,
+        'payment_status': payment_status,
+        'last_payment_method': last_method or ('cash' if total_paid > 0 else 'credit'),
     }
 
 
@@ -429,6 +506,31 @@ class SupabaseService:
         except Exception as e:
             print(f"Supabase operations list error: {e}")
             return []
+
+        visit_summaries = {}
+        visit_ids = [
+            str(r.get("visit_id") or r.get("visitId") or "").strip()
+            for r in rows
+            if str(r.get("visit_id") or r.get("visitId") or "").strip()
+        ]
+        if visit_ids:
+            try:
+                visit_rows = (
+                    self.client.table("vehicle_visits")
+                    .select("id,notes")
+                    .in_("id", visit_ids)
+                    .execute()
+                    .data
+                    or []
+                )
+                visit_summaries = {
+                    str(row.get("id") or "").strip(): _summarize_visit_notes(row.get("notes"))
+                    for row in visit_rows
+                    if str(row.get("id") or "").strip()
+                }
+            except Exception as visit_error:
+                print(f"Supabase operations list visit-summary warning: {visit_error}")
+
         # map snake_case to camelCase if needed, or just return as is if frontend expects it
         # The frontend likely expects camelCase.
         out = []
@@ -459,6 +561,15 @@ class SupabaseService:
                 if supplier_archive_total is None:
                     supplier_archive_total = supplier_calc
 
+            visit_summary = visit_summaries.get(str(r.get("visit_id") or r.get("visitId") or "").strip(), {})
+            has_visit_summary = bool(visit_summary)
+            payment_method = visit_summary.get("last_payment_method") if has_visit_summary else None
+            if not payment_method:
+                payment_method = r.get("payment_method") or r.get("paymentMethod") or visit_summary.get("last_payment_method")
+            payment_status = visit_summary.get("payment_status") if has_visit_summary else None
+            if not payment_status:
+                payment_status = r.get("payment_status") or r.get("paymentStatus") or visit_summary.get("payment_status")
+
             out.append(
                 {
                     "id": r.get("id"),
@@ -475,8 +586,12 @@ class SupabaseService:
                     "total": r.get("total"),
                     "workshopTotal": workshop_total,
                     "supplierArchiveTotal": supplier_archive_total or 0,
-                    "paymentMethod": r.get("payment_method") or r.get("paymentMethod"),
-                    "paymentStatus": r.get("payment_status") or r.get("paymentStatus"),
+                    "paymentMethod": payment_method,
+                    "paymentStatus": payment_status,
+                    "paymentAmount": visit_summary.get("total_paid", 0),
+                    "totalPaid": visit_summary.get("total_paid", 0),
+                    "advancePaid": visit_summary.get("advance_paid", 0),
+                    "balance": visit_summary.get("balance"),
                     "notes": r.get("notes"),
                     "date": r.get("op_date") or r.get("date"),
                     "createdAt": r.get("created_at") or r.get("createdAt"),
@@ -523,6 +638,24 @@ class SupabaseService:
             if supplier_archive_total is None:
                 supplier_archive_total = supplier_calc
 
+        visit_summary = {}
+        visit_id = str(r.get("visit_id") or r.get("visitId") or "").strip()
+        if visit_id:
+            try:
+                visit_rows = (
+                    self.client.table("vehicle_visits")
+                    .select("id,notes")
+                    .eq("id", visit_id)
+                    .limit(1)
+                    .execute()
+                    .data
+                    or []
+                )
+                if visit_rows:
+                    visit_summary = _summarize_visit_notes(visit_rows[0].get("notes"))
+            except Exception as visit_error:
+                print(f"Supabase operations get visit-summary warning: {visit_error}")
+
         return {
             "id": r.get("id"),
             "type": r.get("type"),
@@ -538,7 +671,12 @@ class SupabaseService:
             "total": r.get("total"),
             "workshopTotal": workshop_total,
             "supplierArchiveTotal": supplier_archive_total or 0,
-            "paymentMethod": r.get("payment_method"),
+            "paymentMethod": visit_summary.get("last_payment_method") or r.get("payment_method"),
+            "paymentStatus": visit_summary.get("payment_status") or r.get("payment_status"),
+            "paymentAmount": visit_summary.get("total_paid", 0),
+            "totalPaid": visit_summary.get("total_paid", 0),
+            "advancePaid": visit_summary.get("advance_paid", 0),
+            "balance": visit_summary.get("balance"),
             "notes": r.get("notes"),
             "date": r.get("op_date"),
             "createdAt": r.get("created_at"),

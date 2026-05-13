@@ -372,6 +372,9 @@ export default function OperationCard({
     || ['credit', 'deferred'].includes(paymentMethod);
   const totalPaid = Number(operation.totalPaid ?? operation.paymentAmount ?? 0);
   const remainingBalance = Number(operation.balance ?? Math.max(Number(operation.total || 0) - totalPaid, 0));
+  const canConfirmCreditPayment = isCredit
+    && remainingBalance > 0.009
+    && !['paid', 'paid_full', 'full', 'settled'].includes(paymentStatus);
   const paymentStatusLabel = labelFromMap(paymentStatus, PAYMENT_STATUS_LABELS, '-');
   const paymentMethodLabel = labelFromMap(paymentMethod, PAYMENT_METHOD_LABELS, '-');
   const visitDisplay = resolveVisitDisplay(operation, 'زيارة مرتبطة');
@@ -615,7 +618,7 @@ export default function OperationCard({
             </button>
           ) : null}
 
-          {operation.paymentMethod === 'credit' ? (
+          {canConfirmCreditPayment ? (
             <button
               type="button"
               className="apple-button-secondary h-8 px-2.5 text-[11px]"

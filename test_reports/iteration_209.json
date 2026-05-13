@@ -1,0 +1,55 @@
+{
+  "summary": "Executed backend + frontend verification for vehicle 5287aa8d... and operation 99970dc5... linkage. Backend assertions passed fully (financial summary, visits, operations payment fields, journal linkage, new account codes, and duplicate-signature check). Frontend showed one critical display issue in VehicleDetails linked journal source label rendering.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "VehicleDetails linked journal source label",
+        "issue": "Linked journal row shows raw internal source key 'operation_payment_income' instead of Arabic mapped label.",
+        "selector": "[data-testid^='vehicle-linked-journal-row-']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Operations page target card verification for operation 99970dc5...",
+        "issue": "Target operation card was not discoverable in visible Operations UI grid/pages during automation, so direct UI assertion for hidden confirm-credit button could not be completed in this run.",
+        "affected_selectors": [
+          "[data-testid^='operation-card-99970dc5']",
+          "[data-testid='operations-active-tab-grid']"
+        ]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_208_specific_operation_display.py",
+    "/app/backend/tests/test_iteration_209_vehicle_5287_linkage.py",
+    "/app/test_reports/pytest/pytest_results_iter209.xml"
+  ],
+  "action_items": [
+    "Add SOURCE_LABELS mapping for backend source key operation_payment_income (and any similar unmapped source keys) so VehicleDetails shows Arabic labels, not raw keys.",
+    "Ensure target operation 99970dc5... is reachable in Operations UI context used for acceptance verification (or provide direct deep-link/filter path for deterministic card-level checks)."
+  ],
+  "critical_code_review_comments": [
+    "VehicleDetails uses labelFromMap(entry.source, SOURCE_LABELS, ...) correctly, but SOURCE_LABELS in frontend/src/utils/displayLabels.js is missing operation_payment_income, causing raw key leakage to UI.",
+    "VehicleDetails.jsx remains very large (>700 lines), increasing regression risk for linkage display rules and source-label consistency."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_209_vehicle_5287_linkage.py",
+    "/app/test_reports/iteration_209.json"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "70%"
+  },
+  "seed_data_creation": "No seed data created.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend state for target vehicle/op is consistent: summary 2300/2300/0, visits paid_full, operation paid_full cash, linked journal has 1060 + 7782 and normalized codes. Frontend still leaks raw source key operation_payment_income in VehicleDetails linked journal list. Direct Operations-card verification for 99970dc5... could not be completed because card was not visible in current Operations grid context.",
+  "rca of the issue": "Root cause for UI leak: SOURCE_LABELS map lacks key 'operation_payment_income', so labelFromMap falls back to raw key display. Reproduction: login as مدير -> /vehicle/5287aa8d-2969-48ed-bc5e-2ca0f97a03a3 -> linked journal card row subtitle shows 'operation_payment_income'. Mitigation: add key to SOURCE_LABELS (and audit all source values from /api/finance/journal-entries against map coverage).",
+  "mocked_api": "NO MOCKED APIs"
+}

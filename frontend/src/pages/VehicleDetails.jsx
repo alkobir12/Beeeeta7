@@ -2690,6 +2690,8 @@ const VehicleDetails = () => {
       const journalRows = Array.isArray(journalEntriesRes?.data?.data)
         ? journalEntriesRes.data.data
         : (Array.isArray(journalEntriesRes?.data) ? journalEntriesRes.data : []);
+      const vehicleOps = normalizeListPayload(operationsRes, ['operations']);
+      const vehicleOpIds = new Set((vehicleOps || []).map((row) => String(row?.id || '')).filter(Boolean));
       const visitRows = normalizeListPayload(visitsRes, ['visits']);
       const visitIds = new Set((visitRows || []).map((row) => String(row?.id || row?.visitId || '')).filter(Boolean));
       const vehicleTokens = [
@@ -2702,18 +2704,22 @@ const VehicleDetails = () => {
         const vehicleRef = extractJournalTag(description, 'VEHICLE_REF').toLowerCase();
         const partyRef = extractJournalTag(description, 'PARTY').toLowerCase();
         const referenceId = String(entry?.reference_id || entry?.referenceId || '').trim();
+        const vehicleLabel = String(entry?.vehicle_label || entry?.vehicleLabel || '').toLowerCase();
+        const partyLabel = String(entry?.party_label || entry?.partyLabel || '').toLowerCase();
         return vehicleTokens.some((token) => vehicleRef === token.toLowerCase())
           || (customerToken && partyRef === customerToken)
-          || visitIds.has(referenceId);
+          || visitIds.has(referenceId)
+          || vehicleOpIds.has(referenceId)
+          || vehicleTokens.some((token) => vehicleLabel.includes(token.toLowerCase()))
+          || (customerToken && partyLabel.includes(customerToken));
       }).slice(0, 8);
       setLinkedJournalEntries(filteredJournalEntries);
 
-      const vehicleOps = normalizeListPayload(operationsRes, ['operations']);
-      const vehicleOpIds = (vehicleOps || []).map((row) => String(row?.id || '')).filter(Boolean);
-      if (vehicleOpIds.length > 0) {
+      const vehicleOpIdList = Array.from(vehicleOpIds);
+      if (vehicleOpIdList.length > 0) {
         try {
           const integrityRes = await axios.post(`${API_URL}/operations/integrity/check`, {
-            op_ids: vehicleOpIds,
+            op_ids: vehicleOpIdList,
             vehicle_id: id,
             workshop_id: workshopId || process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync',
           });
@@ -2722,7 +2728,7 @@ const VehicleDetails = () => {
           setVehicleLinkSummary(integritySummary);
           setVehicleLinkIssues(integrityItems.filter((row) => Array.isArray(row?.warnings) && row.warnings.length > 0).slice(0, 5));
         } catch {
-          setVehicleLinkSummary({ total: vehicleOpIds.length, ok: 0, warnings: 0, duplicates: 0 });
+          setVehicleLinkSummary({ total: vehicleOpIdList.length, ok: 0, warnings: 0, duplicates: 0 });
           setVehicleLinkIssues([]);
         }
       } else {
@@ -3789,7 +3795,7 @@ const VehicleDetails = () => {
               <div className="rounded-xl px-3 py-2 text-[11px] space-y-1" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.26)', color: 'rgba(254,226,226,0.95)' }} data-testid="vehicle-linkage-issues-list">
                 {vehicleLinkIssues.map((issue, idx) => (
                   <div key={`vehicle-link-issue-${idx}`} data-testid={`vehicle-linkage-issue-${idx}`}>
-                    • عملية {issue?.op_id} فيها: {(issue?.warnings || []).map((w) => integrityLabelMap[w] || w).join('، ')}
+                    • {issue?.invoice_number ? `فاتورة ${issue.invoice_number}` : `عملية مرتبطة ${String(issue?.op_id || '').slice(0, 8)}`} فيها: {(issue?.warnings || []).map((w) => integrityLabelMap[w] || w).join('، ')}
                   </div>
                 ))}
               </div>

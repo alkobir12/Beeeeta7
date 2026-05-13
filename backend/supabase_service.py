@@ -187,6 +187,9 @@ def _operation_payment_snapshot(row: Dict[str, Any], visit_summary: Dict[str, An
         or row.get('paymentMethod')
         or ('cash' if paid > 0 else 'credit')
     )
+    row_method = row.get('payment_method') or row.get('paymentMethod')
+    if paid > 0 and str(method or '').lower() in {'credit', 'deferred'} and row_method:
+        method = row_method
 
     return {
         'payment_method': method,

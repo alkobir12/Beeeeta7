@@ -2013,6 +2013,8 @@ async def operations_integrity_check(payload: Dict[str, Any] = Body(...)):
             items.append(
                 {
                     "op_id": op_id,
+                    "invoice_number": op.get("invoiceNumber") or op.get("invoice_number") or "",
+                    "display_label": op.get("invoiceNumber") or op.get("invoice_number") or (str(op_id or "")[:8] if op_id else ""),
                     "status": status,
                     "warnings": warnings,
                     "links": {
@@ -3099,6 +3101,67 @@ async def create_operation(payload: Dict[str, Any] = Body(...)):
                     pass
 
         _apply_operation_kind_defaults(payload, kind, vehicle_doc)
+
+        if (
+            provider == "supabase"
+            and str(payload.get("type") or "").lower() == "payment_order"
+            and str(payload.get("partnerType") or payload.get("partner_type") or "").lower() == "customer"
+            and str(payload.get("vehicleId") or payload.get("vehicle_id") or "").strip()
+            and original_type in {"collect_customer", "receipt_voucher", "settlement"}
+        ):
+            try:
+                vehicle_ref = str(payload.get("vehicleId") or payload.get("vehicle_id") or "").strip()
+                collection_amount = float(payload.get("total") or payload.get("amount") or 0)
+                open_ops = (
+                    supa_for_meta.client.table("operations")
+                    .select("id,type,total,created_at")
+                    .eq("vehicle_id", vehicle_ref)
+                    .in_("type", ["sale", "service"])
+                    .order("created_at", desc=False)
+                    .execute()
+                    .data
+                    or []
+                )
+                target_open_op = None
+                for existing_op in open_ops:
+                    existing_id = str(existing_op.get("id") or "").strip()
+                    if not existing_id:
+                        continue
+                    existing_total = float(existing_op.get("total") or 0)
+                    paid_rows = (
+                        supa_for_meta.client.table("journal_entries")
+                        .select("total,source")
+                        .eq("reference_id", existing_id)
+                        .in_("source", ["operation_payment", "operation_payment_income", "supplier_balance_payment"])
+                        .execute()
+                        .data
+                        or []
+                    )
+                    existing_paid = sum(float(row.get("total") or 0) for row in paid_rows)
+                    if existing_total - existing_paid > 0.01:
+                        target_open_op = existing_op
+                        break
+                if target_open_op and collection_amount > 0:
+                    settlement_result = await confirm_operation_payment(
+                        str(target_open_op.get("id")),
+                        {
+                            "amount": collection_amount,
+                            "paymentMethod": payload.get("paymentMethod") or payload.get("payment_method") or "pos",
+                            "payment_method": payload.get("paymentMethod") or payload.get("payment_method") or "pos",
+                            "workshopId": payload.get("workshopId") or payload.get("workshop_id"),
+                            "notes": payload.get("notes") or "تحصيل مرتبط من POS بدون إنشاء عملية مكررة",
+                        },
+                    )
+                    return {
+                        "success": True,
+                        "preventedDuplicateOperation": True,
+                        "settledOperationId": str(target_open_op.get("id")),
+                        "data": settlement_result,
+                    }
+            except HTTPException:
+                raise
+            except Exception as duplicate_guard_error:
+                print(f"POS duplicate collection guard warning: {duplicate_guard_error}")
 
         visit_data = None
         if payload.get("vehicleId"):
@@ -4272,6 +4335,53 @@ async def vehicle_financial_summary(vehicle_id: str):
                 total_paid += fin['total_paid']
                 total_advance += fin['advance_paid']
 
+            try:
+                operation_rows = (
+                    supa.client.table("operations")
+                    .select("id,type,total,items")
+                    .eq("vehicle_id", vehicle_id)
+                    .execute()
+                    .data
+                    or []
+                )
+                operation_ids = [str(row.get("id") or "").strip() for row in operation_rows if row.get("id")]
+                operation_workshop_total = 0.0
+                operation_supplier_total = 0.0
+                for op_row in operation_rows:
+                    op_type = str(op_row.get("type") or "").strip().lower()
+                    if op_type in {"payment_order", "receipt_voucher", "settlement"}:
+                        continue
+                    parsed_items = op_row.get("items") or []
+                    if isinstance(parsed_items, str):
+                        try:
+                            parsed_items = json.loads(parsed_items)
+                        except Exception:
+                            parsed_items = []
+                    split = _split_operation_totals({**op_row, "items": parsed_items})
+                    operation_workshop_total += split.get("workshop_total", 0.0)
+                    operation_supplier_total += split.get("supplier_total", 0.0)
+
+                if operation_workshop_total > total_workshop:
+                    total_workshop = operation_workshop_total
+                if operation_supplier_total > total_suppliers:
+                    total_suppliers = operation_supplier_total
+
+                if operation_ids:
+                    payment_rows = (
+                        supa.client.table("journal_entries")
+                        .select("total,source,reference_id")
+                        .in_("reference_id", operation_ids)
+                        .in_("source", ["operation_payment", "operation_payment_income", "supplier_balance_payment"])
+                        .execute()
+                        .data
+                        or []
+                    )
+                    operation_paid = sum(float(row.get("total") or 0) for row in payment_rows)
+                    if operation_paid > 0:
+                        total_paid += operation_paid
+            except Exception as summary_link_error:
+                print(f"Vehicle financial summary operation-link warning: {summary_link_error}")
+
         else:
             exists = await db.vehicles.find_one({"id": vehicle_id}, {"_id": 0, "id": 1})
             if not exists:
@@ -4324,10 +4434,48 @@ async def get_vehicle_visits(vehicle_id: str):
             )
             rows = res.data or []
             visit_numbers = _apply_visit_numbers(rows)
+            paid_by_visit: Dict[str, float] = {}
+            try:
+                visit_ids = [str(r.get("id") or "").strip() for r in rows if r.get("id")]
+                if visit_ids:
+                    op_rows = (
+                        supa.client.table("operations")
+                        .select("id,visit_id")
+                        .in_("visit_id", visit_ids)
+                        .execute()
+                        .data
+                        or []
+                    )
+                    op_to_visit = {
+                        str(row.get("id") or "").strip(): str(row.get("visit_id") or "").strip()
+                        for row in op_rows
+                        if row.get("id") and row.get("visit_id")
+                    }
+                    if op_to_visit:
+                        payment_rows = (
+                            supa.client.table("journal_entries")
+                            .select("reference_id,total,source")
+                            .in_("reference_id", list(op_to_visit.keys()))
+                            .in_("source", ["operation_payment", "operation_payment_income", "supplier_balance_payment"])
+                            .execute()
+                            .data
+                            or []
+                        )
+                        for payment_row in payment_rows:
+                            visit_ref = op_to_visit.get(str(payment_row.get("reference_id") or "").strip())
+                            if visit_ref:
+                                paid_by_visit[visit_ref] = paid_by_visit.get(visit_ref, 0.0) + float(payment_row.get("total") or 0)
+            except Exception as visit_payment_error:
+                print(f"Vehicle visits payment-link warning: {visit_payment_error}")
             enriched = []
             for r in rows:
                 parsed = _parse_notes_json(r.get('notes'))
                 fin = _calc_visit_financial(parsed)
+                extra_paid = paid_by_visit.get(str(r.get("id") or "").strip(), 0.0)
+                if extra_paid:
+                    fin["total_paid"] = round(float(fin.get("total_paid") or 0) + extra_paid, 2)
+                    fin["balance"] = round(max(float(fin.get("total_amount") or 0) - float(fin.get("total_paid") or 0), 0), 2)
+                    fin["payment_status"] = "paid_full" if fin["balance"] <= 0.01 else "partial"
                 number_info = visit_numbers.get(str(r.get("id") or ""), {})
 
                 out = {

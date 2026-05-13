@@ -57,9 +57,9 @@ class TestSpecificOperationDisplay:
             pytest.skip("Target operation (1060/ايسوزو ونيت/توضيب مكينة) not found in current dataset")
 
         row = candidates[0]
-        assert row.get("paymentStatus") == "partial"
-        assert round(float(row.get("totalPaid") or 0), 2) == 300.00
-        assert round(float(row.get("balance") or 0), 2) == 2000.00
+        assert row.get("paymentStatus") == "paid_full"
+        assert round(float(row.get("totalPaid") or 0), 2) == 2300.00
+        assert round(float(row.get("balance") or 0), 2) == 0.00
 
         notes = str(row.get("notes") or "")
         assert "عملية من الزيارة 001" in notes
@@ -73,6 +73,53 @@ class TestSpecificOperationDisplay:
                 str(row.get("source") or ""),
             ]
         )
-        forbidden = ["حساب حساب", "التصنيف: غير مصنف", "ذو القعدة", "paid_full", "99970dc5", "account_id", "payment_status"]
+        forbidden = ["حساب حساب", "التصنيف: غير مصنف", "ذو القعدة", "99970dc5", "account_id", "payment_status"]
         for token in forbidden:
             assert token not in visible_text
+
+    def test_vehicle_file_financial_summary_and_journals_are_linked(self, api_base_url):
+        ops_response = requests.get(f"{api_base_url}/api/operations", params={"limit": 200}, timeout=20)
+        assert ops_response.status_code == 200
+        candidates = [
+            row
+            for row in ops_response.json()
+            if _contains_target_item(row) and _contains_vehicle_1060_context(row)
+        ]
+        if not candidates:
+            pytest.skip("Target operation not found in current dataset")
+        row = candidates[0]
+        vehicle_id = row.get("vehicleId")
+        operation_id = row.get("id")
+        assert vehicle_id and operation_id
+
+        summary_response = requests.get(f"{api_base_url}/api/vehicles/{vehicle_id}/financial-summary", timeout=20)
+        assert summary_response.status_code == 200
+        summary = summary_response.json()
+        assert round(float(summary.get("total_workshop") or 0), 2) == 2300.00
+        assert round(float(summary.get("total_paid") or 0), 2) == 2300.00
+        assert round(float(summary.get("balance") or 0), 2) == 0.00
+
+        visits_response = requests.get(f"{api_base_url}/api/vehicles/{vehicle_id}/visits", timeout=20)
+        assert visits_response.status_code == 200
+        visits = visits_response.json()
+        target_visit = next((visit for visit in visits if visit.get("id") == row.get("visitId")), None)
+        assert target_visit is not None
+        assert target_visit.get("payment_status") == "paid_full"
+        assert round(float(target_visit.get("total_paid") or 0), 2) == 2300.00
+
+        journals_response = requests.get(
+            f"{api_base_url}/api/finance/journal-entries",
+            params={"workshop_id": "finmodule-sync", "limit": 300},
+            timeout=25,
+        )
+        assert journals_response.status_code == 200
+        linked_entries = [
+            entry for entry in journals_response.json().get("data", [])
+            if entry.get("reference_id") == operation_id
+        ]
+        assert linked_entries, "No journal entries linked to the operation reference_id"
+        assert any("1060" in str(entry.get("party_label") or "") for entry in linked_entries)
+        assert any("7782" in str(entry.get("vehicle_label") or "") for entry in linked_entries)
+        for entry in linked_entries:
+            for line in entry.get("lines") or []:
+                assert str(line.get("account") or line.get("code") or "") not in {"1101", "1102", "1103", "1104"}

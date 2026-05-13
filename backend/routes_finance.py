@@ -434,6 +434,8 @@ def _normalize_line(line, id_to_code, code_to_name):
         else line.get("credit_amount") or line.get("creditAmount")
     )
     return {
+        "account": account_code,
+        "account_name": account_name,
         "code": account_code,
         "name": account_name,
         "debit": debit,
@@ -1799,10 +1801,11 @@ async def get_account_tree_details(
             include_rakan=False,
         )
 
+        operation_link_sources = {"operation", "operation_rakan_parts", "operation_payment", "operation_payment_income", "supplier_balance_payment"}
         operation_refs = [
             str(e.get("reference_id") or "").strip()
             for e in entries
-            if str(e.get("source") or "").strip().lower() in {"operation", "operation_rakan_parts"}
+            if str(e.get("source") or "").strip().lower() in operation_link_sources
             and str(e.get("reference_id") or "").strip()
         ]
         operation_refs = list(dict.fromkeys(operation_refs))
@@ -1830,7 +1833,7 @@ async def get_account_tree_details(
                 if visit_ids:
                     visit_rows = (
                         supabase.table("vehicle_visits")
-                        .select("id,customer_name,vehicle_plate,plate_number,car_type,vehicle_number,customer_id")
+                        .select("*")
                         .in_("id", visit_ids)
                         .execute()
                         .data
@@ -1927,7 +1930,7 @@ async def get_account_tree_details(
 
             ref = str(entry.get("reference_id") or "").strip()
             src = str(entry.get("source") or "").strip().lower()
-            if ref and src in {"operation", "operation_rakan_parts"}:
+            if ref and src in operation_link_sources:
                 op_row = operation_map.get(ref) or {}
                 visit_id = str(op_row.get("visit_id") or op_row.get("visitId") or "").strip()
                 visit_row = visit_map.get(visit_id) or {}
@@ -2503,10 +2506,11 @@ async def get_journal_entries(
             include_rakan=include_rakan,
         )
 
+        operation_link_sources = {"operation", "operation_rakan_parts", "operation_payment", "operation_payment_income", "supplier_balance_payment"}
         operation_refs = [
             str(e.get("reference_id") or "").strip()
             for e in entries
-            if str(e.get("source") or "").strip().lower() in {"operation", "operation_rakan_parts"}
+            if str(e.get("source") or "").strip().lower() in operation_link_sources
             and str(e.get("reference_id") or "").strip()
         ]
         operation_refs = list(dict.fromkeys(operation_refs))
@@ -2524,6 +2528,22 @@ async def get_journal_entries(
                     or []
                 )
                 operation_map = {str(row.get("id") or ""): row for row in op_rows}
+                vehicle_ids = [
+                    str(row.get("vehicle_id") or row.get("vehicleId") or "").strip()
+                    for row in op_rows
+                    if str(row.get("vehicle_id") or row.get("vehicleId") or "").strip()
+                ]
+                vehicle_ids = list(dict.fromkeys(vehicle_ids))
+                if vehicle_ids:
+                    vehicle_rows = (
+                        supabase.table("vehicles")
+                        .select("*")
+                        .in_("id", vehicle_ids)
+                        .execute()
+                        .data
+                        or []
+                    )
+                    vehicle_map = {str(v.get("id") or ""): v for v in vehicle_rows}
                 visit_ids = [
                     str(row.get("visit_id") or row.get("visitId") or "").strip()
                     for row in op_rows
@@ -2533,7 +2553,7 @@ async def get_journal_entries(
                 if visit_ids:
                     visit_rows = (
                         supabase.table("vehicle_visits")
-                        .select("id,customer_name,vehicle_plate,plate_number,vehicle_number,car_type")
+                        .select("*")
                         .in_("id", visit_ids)
                         .execute()
                         .data
@@ -2566,9 +2586,10 @@ async def get_journal_entries(
             op = operation_map.get(reference_id, {}) if reference_id else {}
             visit_id = str(op.get("visit_id") or op.get("visitId") or "").strip()
             visit = visit_map.get(visit_id, {}) if visit_id else {}
+            vehicle = vehicle_map.get(str(op.get("vehicle_id") or op.get("vehicleId") or "").strip(), {})
 
             party_type = str(op.get("partner_type") or op.get("partnerType") or "").strip().lower()
-            if not party_type and source in {"operation", "operation_rakan_parts"}:
+            if not party_type and source in operation_link_sources:
                 party_type = "open"
 
             party_label = (
@@ -2582,11 +2603,25 @@ async def get_journal_entries(
                     party_label = "مورد غير محدد"
                 elif party_type == "customer":
                     party_label = "عميل غير محدد"
-                elif source in {"operation", "operation_rakan_parts"}:
+                elif source in operation_link_sources:
                     party_label = "مفتوح"
 
             vehicle_label = (
-                visit.get("vehicle_plate")
+                op.get("vehicle_label")
+                or op.get("vehicleLabel")
+                or op.get("vehicle_plate")
+                or op.get("vehiclePlate")
+                or op.get("plate_number")
+                or op.get("plateNumber")
+                or op.get("vehicle_number")
+                or op.get("vehicleNumber")
+                or op.get("car_type")
+                or vehicle.get("plate_number")
+                or vehicle.get("plateNumber")
+                or vehicle.get("vehicle_number")
+                or vehicle.get("vehicleNumber")
+                or " ".join([str(vehicle.get("brand") or "").strip(), str(vehicle.get("model") or "").strip()]).strip()
+                or visit.get("vehicle_plate")
                 or visit.get("plate_number")
                 or visit.get("vehicle_number")
                 or visit.get("car_type")
@@ -2608,12 +2643,20 @@ async def get_journal_entries(
             if not payment_status and payment_method == "credit":
                 payment_status = "unpaid"
 
+            normalized_lines = []
+            try:
+                accounts = _fetch_accounts()
+                id_to_code, code_to_name, _ = _build_account_maps(accounts)
+                normalized_lines = [ln for ln in (_normalize_line(line, id_to_code, code_to_name) for line in (lines or [])) if ln]
+            except Exception:
+                normalized_lines = lines or []
+
             formatted.append(
                 {
                     "id": entry.get("id"),
                     "date": entry.get("date", ""),
                     "description": description,
-                    "lines": lines,
+                    "lines": normalized_lines,
                     "total": entry.get("total", 0),
                     "source": source,
                     "transaction_type": tx_type,

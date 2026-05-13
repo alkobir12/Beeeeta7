@@ -106,6 +106,20 @@ const normalizePartyCatalog = (rows = [], entityPrefix = 'entity') => {
   return normalized;
 };
 
+const extractJournalTag = (text = '', tag = '') => {
+  if (!tag) return '';
+  const match = String(text || '').match(new RegExp(`\\[${tag}:([^\\]]+)\\]`, 'i'));
+  return String(match?.[1] || '').trim();
+};
+
+const stripJournalTags = (text = '') => String(text || '')
+  .replace(/\[PARTY:[^\]]+\]/gi, '')
+  .replace(/\[PARTY_TYPE:[^\]]+\]/gi, '')
+  .replace(/\[VEHICLE_REF:[^\]]+\]/gi, '')
+  .replace(/\[VISIT:[^\]]+\]/gi, '')
+  .replace(/\s{2,}/g, ' ')
+  .trim();
+
 const RAKAN_SUPPLIER_NAMES = new Set(['راكان', 'rakan', 'Rakan', 'RAKAN']);
 
 const isRakanSupplierName = (value) => {
@@ -2400,6 +2414,7 @@ const VehicleDetails = () => {
   const [waPreview, setWaPreview] = useState(null);
 
   const [financeSummary, setFinanceSummary] = useState(null);
+  const [linkedJournalEntries, setLinkedJournalEntries] = useState([]);
   const [vehicleLinkSummary, setVehicleLinkSummary] = useState({ total: 0, ok: 0, warnings: 0, duplicates: 0 });
   const [vehicleLinkIssues, setVehicleLinkIssues] = useState([]);
   const integrityLabelMap = {
@@ -2639,17 +2654,21 @@ const VehicleDetails = () => {
         .getAll(workshopId ? { workshop_id: workshopId } : {})
         .catch(() => ({ data: [] }));
       const customersPromise = customerAPI.getAll().catch(() => ({ data: [] }));
+      const journalEntriesPromise = financeAPI
+        .getJournalEntries({ workshop_id: workshopId || process.env.REACT_APP_WORKSHOP_ID || 'finmodule-sync', limit: 300 })
+        .catch(() => ({ data: { data: [] } }));
       const operationsPromise = axios
         .get(`${API_URL}/operations`, { params: { vehicle_id: id, limit: 200 } })
         .catch(() => ({ data: [] }));
 
-      const [filesRes, approvalsRes, servicesRes, partsRes, suppliersRes, customersRes, operationsRes] = await Promise.all([
+      const [filesRes, approvalsRes, servicesRes, partsRes, suppliersRes, customersRes, journalEntriesRes, operationsRes] = await Promise.all([
         filesPromise,
         approvalsPromise,
         servicesPromise,
         partsPromise,
         suppliersPromise,
         customersPromise,
+        journalEntriesPromise,
         operationsPromise,
       ]);
       
@@ -2658,6 +2677,27 @@ const VehicleDetails = () => {
       setPartsCatalog(normalizeListPayload(partsRes, ['parts']));
       setSuppliersCatalog(normalizePartyCatalog(normalizeListPayload(suppliersRes, ['suppliers']), 'supplier'));
       setCustomersCatalog(normalizePartyCatalog(normalizeListPayload(customersRes, ['customers']), 'customer'));
+
+      const journalRows = Array.isArray(journalEntriesRes?.data?.data)
+        ? journalEntriesRes.data.data
+        : (Array.isArray(journalEntriesRes?.data) ? journalEntriesRes.data : []);
+      const visitRows = normalizeListPayload(visitsRes, ['visits']);
+      const visitIds = new Set((visitRows || []).map((row) => String(row?.id || row?.visitId || '')).filter(Boolean));
+      const vehicleTokens = [
+        String(vehicleRes.data?.plateNumber || '').trim(),
+        String(vehicleRes.data?.fileNumber || '').trim(),
+      ].filter(Boolean);
+      const customerToken = String(vehicleRes.data?.customerName || '').trim().toLowerCase();
+      const filteredJournalEntries = (journalRows || []).filter((entry) => {
+        const description = String(entry?.description || '');
+        const vehicleRef = extractJournalTag(description, 'VEHICLE_REF').toLowerCase();
+        const partyRef = extractJournalTag(description, 'PARTY').toLowerCase();
+        const referenceId = String(entry?.reference_id || entry?.referenceId || '').trim();
+        return vehicleTokens.some((token) => vehicleRef === token.toLowerCase())
+          || (customerToken && partyRef === customerToken)
+          || visitIds.has(referenceId);
+      }).slice(0, 8);
+      setLinkedJournalEntries(filteredJournalEntries);
 
       const vehicleOps = normalizeListPayload(operationsRes, ['operations']);
       const vehicleOpIds = (vehicleOps || []).map((row) => String(row?.id || '')).filter(Boolean);
@@ -3603,6 +3643,64 @@ const VehicleDetails = () => {
               {!showFiles && (
                 <div className="text-xs" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="vehicle-files-placeholder">
                   اضغط “عرض” لتحميل ملفات المركبة
+                </div>
+              )}
+            </div>
+
+            <div
+              className="liquid-surface lg:col-span-2"
+              style={{
+                borderRadius: 20,
+                padding: 16,
+                background:
+                  'radial-gradient(circle at 12% 18%, rgba(16,185,129,0.10), transparent 55%), rgba(255,255,255,0.05)',
+                border: '1px solid rgba(148,163,184,0.14)',
+              }}
+              data-testid="vehicle-linked-journal-card"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2" style={{ color: 'rgba(167,243,208,0.95)' }}>
+                  <Receipt size={18} />
+                  <h3 className="text-sm font-extrabold" style={{ color: 'rgba(248,250,252,0.95)' }}>
+                    قيود دفتر اليومية المرتبطة
+                  </h3>
+                </div>
+                <div className="text-[11px]" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="vehicle-linked-journal-count">
+                  {linkedJournalEntries.length} قيد
+                </div>
+              </div>
+
+              {linkedJournalEntries.length === 0 ? (
+                <div className="text-xs" style={{ color: 'rgba(226,232,240,0.62)' }} data-testid="vehicle-linked-journal-empty">
+                  لا توجد قيود مرتبطة بالمركبة أو العميل حالياً.
+                </div>
+              ) : (
+                <div className="space-y-2" data-testid="vehicle-linked-journal-list">
+                  {linkedJournalEntries.map((entry, index) => (
+                    <div
+                      key={entry?.id || `linked-journal-${index}`}
+                      className="rounded-xl px-3 py-2.5"
+                      style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(148,163,184,0.16)',
+                      }}
+                      data-testid={`vehicle-linked-journal-row-${entry?.id || index}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold truncate" style={{ color: 'rgba(248,250,252,0.92)' }}>
+                            {stripJournalTags(entry?.description || 'قيد مرتبط')}
+                          </div>
+                          <div className="text-[11px] mt-1" style={{ color: 'rgba(226,232,240,0.62)' }}>
+                            {String(entry?.date || '').slice(0, 10) || '-'} • {entry?.source || 'journal'}
+                          </div>
+                        </div>
+                        <div className="text-sm font-extrabold tabular-nums" style={{ color: 'rgba(167,243,208,0.95)' }}>
+                          {formatCurrency(entry?.total || 0)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

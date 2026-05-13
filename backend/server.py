@@ -16,6 +16,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone
 import uuid
 import json
+import re
 
 from models import (
     Vehicle,
@@ -1917,22 +1918,41 @@ async def _augment_supplier_movements_from_journal(
         entry_id = str(entry.get("id") or "")
         entry_date = str(entry.get("date") or "")
         entry_desc = str(entry.get("description") or "")
+        manual_party_match = re.search(r"\[PARTY:([^\]]+)\]", entry_desc)
+        manual_party_type_match = re.search(r"\[PARTY_TYPE:([^\]]+)\]", entry_desc)
+        manual_party_norm = _normalize_partner_name(manual_party_match.group(1).strip()) if manual_party_match else ""
+        manual_party_type = str(manual_party_type_match.group(1) or "").strip().lower() if manual_party_type_match else ""
         for idx, line in enumerate(entry.get("lines") or []):
             if not isinstance(line, dict):
                 continue
             acc_name_raw = str(line.get("account_name") or line.get("name") or "").strip()
-            if not acc_name_raw:
-                continue
             acc_name_norm = _normalize_partner_name(acc_name_raw)
-            if not acc_name_norm:
-                continue
+            line_account_code = str(line.get("account") or "").strip()
 
             # Find first matching supplier by substring on normalized account name.
             target_id = None
-            for sup_name, sid in supplier_targets:
-                if sup_name in acc_name_norm:
-                    target_id = sid
-                    break
+            if manual_party_norm and manual_party_type == "supplier":
+                for sup_name, sid in supplier_targets:
+                    if sup_name == manual_party_norm or manual_party_norm in sup_name or sup_name in manual_party_norm:
+                        target_id = sid
+                        break
+
+                # POS / manual supplier journal entries must only attach the supplier-side line,
+                # not the cash/bank line of the same entry.
+                if target_id and not (
+                    line_account_code.startswith("2101")
+                    or "مورد" in acc_name_norm
+                    or "supplier" in acc_name_norm
+                ):
+                    target_id = None
+
+            if not target_id:
+                if not acc_name_raw or not acc_name_norm:
+                    continue
+                for sup_name, sid in supplier_targets:
+                    if sup_name in acc_name_norm:
+                        target_id = sid
+                        break
             if not target_id or target_id not in by_id:
                 continue
 

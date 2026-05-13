@@ -29,6 +29,27 @@
 
 ## What's Been Implemented
 
+### 🔄 انعكاس تحديثات ملف المركبة على العمليات (13 May 2026)
+
+**طلب المستخدم:** أي تحديث في صفحة ملف المركبة يجب أن ينعكس على العمليات.
+
+**ما تم تنفيذه:**
+- تم إثراء `GET /api/operations` و `GET /api/operations/{id}` من بيانات المركبة الحية نفسها داخل `supabase_service.py`.
+- العمليات المرتبطة بمركبة أصبحت تُرجع الآن حقولاً حية من سجل المركبة الحالي:
+  - `customerName`
+  - `customerPhone`
+  - `vehiclePlate`
+  - `vehicleBrand`
+  - `vehicleModel`
+- بهذا أصبح أي تعديل على ملف المركبة/العميل ينعكس في صفحة العمليات عبر القراءة الحية بدلاً من الاعتماد على بيانات قديمة مخزنة داخل العملية.
+- في `OperationCard.jsx` تم تفضيل اسم العميل الحالي القادم من المركبة للعمليات المرتبطة بمركبة عندما يكون `partnerType=customer`.
+
+**التحقق:**
+- `testing_agent`: `/app/test_reports/iteration_203.json`
+  - Backend: **7/7 PASS**
+  - Frontend: **100% PASS**
+- لا توجد بيانات اختبارية جديدة في هذه الجولة (read-only).
+
 ### 🚚 Supplier Movements + Vehicle Linked Journal Entries (13 May 2026)
 
 **ما تم في هذه الجولة:**

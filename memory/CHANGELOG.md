@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 13 May 2026 — Live vehicle updates reflected in operations
+- `GET /api/operations` and `GET /api/operations/{id}` now enrich vehicle-linked operations with live vehicle/customer fields from the current vehicle record.
+- Operations responses now include `customerName`, `customerPhone`, `vehiclePlate`, `vehicleBrand`, and `vehicleModel` for linked vehicle operations.
+- `OperationCard.jsx` now prefers live vehicle customer data for customer-linked vehicle operations.
+
 ## 13 May 2026 — Supplier/vehicle reference-page linking
 - Added supplier journal-token parsing so supplier-linked manual/POS journal entries can be surfaced inside supplier movements.
 - Added linked journal entries panel in `VehicleDetails.jsx` so vehicle/customer/visit-related journal entries appear inside the vehicle file.
@@ -28,6 +33,7 @@
 - Hardened `JournalEntries.jsx` fetch lifecycle with `AbortController` during navigation.
 
 ## Verification
+- `/app/test_reports/iteration_203.json` → PASS
 - `/app/test_reports/iteration_202.json` → PASS
 - `/app/test_reports/iteration_201.json` → PASS
 - `/app/test_reports/iteration_200.json` → PASS (with low note fixed afterward)

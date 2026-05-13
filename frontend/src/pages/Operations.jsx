@@ -492,9 +492,9 @@ const Operations = () => {
       const res = await axios.get(`${API_URL}/operations`, { params });
       return res.data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     keepPreviousData: true,
     initialData: cachedOperations.length ? cachedOperations : undefined,
     placeholderData: cachedOperations.length ? cachedOperations : undefined,

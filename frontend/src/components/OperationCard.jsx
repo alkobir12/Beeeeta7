@@ -62,6 +62,13 @@ const resolveTargetAccountName = (operation, chartAccount, businessAccount, t) =
   if (businessAccount) return sanitizeAccountingText(businessAccount.name || businessAccount.code) || businessAccount.code;
   if (operation.accountingAccountId) return sanitizeAccountingText(operation.accountingAccountId) || operation.accountingAccountId;
   if (operation.accountId) return sanitizeAccountingText(operation.accountId) || operation.accountId;
+
+  const opType = String(operation?.type || '').toLowerCase();
+  const partnerType = String(operation?.partnerType || '').toLowerCase();
+  if (['sale', 'service', 'sale_return'].includes(opType)) return 'إيرادات الخدمات';
+  if (['purchase', 'expense', 'purchase_return'].includes(opType)) return 'مصروفات / مشتريات';
+  if (opType === 'payment_order' && partnerType === 'supplier') return 'الموردون';
+  if (opType === 'payment_order' && partnerType === 'customer') return 'العملاء';
   return t('operations.account') || 'الحساب';
 };
 

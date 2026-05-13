@@ -8,7 +8,7 @@ import os
 import requests
 import pytest
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://accounting-firewall.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://vehicle-ledger-hub-1.preview.emergentagent.com").rstrip("/")
 WORKSHOP_ID = "finmodule-sync"
 
 

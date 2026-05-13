@@ -1,52 +1,62 @@
-<analysis>**original_problem_statement:**
-نظام إدارة ورشة سيارات متكامل (ERP) يدعم اللغة العربية، يضم وحدات محاسبية صارمة (ميزان مراجعة، دفتر يومية، شجرة حسابات)، نظام جرد ذكي، تتبع ذمم، ومدقق مالي بالذكاء الاصطناعي. يتطلب النظام توجيه إيرادات الموردين والورشة لحسابات دقيقة، وتسهيل عمليات الدفع والتسويات للموردين، بالإضافة إلى نظام أرشفة للمركبات. 
-PRODUCT REQUIREMENTS: Strict double-entry accounting with real-time integration, Double-Entry Firewall, Smart Inventory with COGS generation, Idempotency, AI Auditor with Auto-Escalation, and Unified Bot.
-LATEST REQUEST: Upgrade the Journal Entries page into a Smart POS (). The user specifically requested adding Salary templates (رواتب), inputs for Customer/Vehicle/Items (العميل، المركبة، البنود), Instant Sale (بيع فوري) capabilities, and to remove or merge the Cashier Basket (سلة كاشير) tab.
+<analysis>**original_problem_statement:** 
+نظام إدارة ورشة سيارات متكامل (ERP) يدعم اللغة العربية، يضم وحدات محاسبية صارمة (ميزان مراجعة، دفتر يومية، شجرة حسابات)، نظام جرد ذكي، تتبع ذمم، ومدقق مالي بالذكاء الاصطناعي. يتطلب النظام توجيه إيرادات الموردين والورشة لحسابات دقيقة، وتسهيل عمليات الدفع والتسويات للموردين، بالإضافة إلى نظام أرشفة للمركبات.
+PRODUCT REQUIREMENTS: Strict double-entry accounting with real-time integration, Double-Entry Firewall, Smart POS Journal Entries, Smart Inventory with COGS generation, Idempotency, AI Auditor with Auto-Escalation, Unified Bot.
+LATEST REQUEST: Fix raw fields (UUIDs/English keys showing instead of Arabic names) across the Operations page and other pages. Change the Visit Numbering format to start at 001.
 
 **User's preferred language**: Arabic (العربية)
 INSTRUCT NEXT AGENT: You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only (Arabic).
 
 **what currently exists?** 
-A mature React SPA + FastAPI backend featuring a 100% strict double-entry accounting firewall. All legacy Rakan logic has been purged. The agent was in the process of replacing the old  with a new  but stopped to gather context on how customers and vehicles are currently fetched after the user provided specific feedback for the POS layout.
+A mature React SPA + FastAPI backend featuring a 100% strict double-entry accounting firewall. A fully functional Smart POS journal entry system is implemented that automatically generates full Reference Operations linked to Customers, Vehicles, and Suppliers. Payments made inside Vehicle files now automatically generate receipt vouchers (سند قبض) and reflect accurately on Operation balances. 
 
 **Last working item**: 
-    - Last item agent was working: Implementing the user's requested additions in  (Salary templates, Customer/Vehicle/Item fields, Instant Sale, and removing the Cashier Basket tab). The agent was gathering context from  to copy over the party/customer fetching logic.
-    - Status: IN PROGRESS
+    - Last item agent was working: The user just requested to fix raw fields (حقول خام) appearing in the Operations page and others (likely UUIDs or unmapped keys rendering instead of names) and to format the Visit Number to start with 001. The agent received the request but hasn't started the implementation.
+    - Status: NOT STARTED
     - Agent Testing Done: N
-    - Which testing method agent to use? Frontend testing agent / screenshot tool.
+    - Which testing method agent to use? Frontend testing agent / screenshot tool for the UI fixes, curl/backend testing for visit numbering.
     - User Testing Done: N
 
-**All Pending/In progress Issue list**:
-  - Issue 1: Finish Smart POS Journal UI () based on latest user feedback.
-     - Attempted fixes: Agent viewed existing  logic to understand how to fetch , , and handle  in the new UI.
+**All Pending/In progress Issue list**:  
+  - Issue 1: Raw fields displaying in UI (P0)
+     - Attempted fixes: None yet.
      - Next debug checklist: 
-       1. Add Salary (رواتب) to the quick templates.
-       2. Add missing fields (Customer, Vehicle, Items).
-       3. Implement Instant Sale (بيع فوري) logic.
-       4. Remove or merge the Cashier Basket (سلة كاشير) tab.
-       5. Wire up the actual API submission .
-     - Why fix this issue and what will be achieved with the fix? Completes the transition to a user-friendly, POS-style manual journal entry interface while fulfilling the user's explicit design requirements.
-     - Status: IN PROGRESS
+        1. Inspect  and other main list views.
+        2. Identify where , , or  enums are rendering directly instead of passing through resolving functions or mapping objects.
+        3. Fetch and map missing labels (e.g., account names, customer names) before rendering.
+     - Why fix this issue and what will be achieved with the fix? Critical for UX; users shouldn't see database UUIDs or system English keys in an Arabic UI.
+     - Status: NOT STARTED
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? Frontend
-     - Blocked on other issue: None
 
-**In progress Task List**:
-  - Task 1: Complete  implementation
-     - Where to resume: .
-     - What will be achieved with this? A seamless, POS-like UX for accounting entries tailored exactly to the user's feedback.
-     - Status: IN PROGRESS
-     - Should Test frontend/backend/both after fix? Frontend
-     - Blocked on something: None
+  - Issue 2: Visit Number formatting (P1)
+     - Attempted fixes: None yet.
+     - Next debug checklist: 
+        1. Check visit creation logic in  or .
+        2. Ensure the visit number auto-increment logic pads the integer to 3 digits (e.g., , ).
+        3. Update any frontend components rendering the visit number to reflect this format if it's handled client-side.
+     - Why fix this issue and what will be achieved with the fix? Meets user's specific business formatting requirement for workshop tracking.
+     - Status: NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
+
+**In progress Task List**: 
+  *(None. Previous tasks regarding POS/Operations linkage were completed).*
 
 **Upcoming and Future Tasks**
-  - **P1**: Refactoring: Extract , ,  from  into their own routers (similar to ).
+  - **P1**: Refactoring: Extract , ,  from  into their own routers.
   - **P1**: Refactoring: Extract , ,  from .
-  - **P2**: إضافة ميزة OCR (التعرف البصري على الحروف) للمستندات المرفوعة في البوت المالي للتدقيق التلقائي للفواتير.
+  - **P2**: إضافة ميزة OCR للتدقيق التلقائي للفواتير المرفوعة.
+  - **P2**: إضافة دفتر أستاذ مصغر للدفعات المقدمة تحت كل مركبة/عميل لعرض كل سند قبض ورصيده المتبقي.
 
 **Completed work in this session**
-- Gathered required context on how API fetches  and  from  to port over to  (DONE)
-*(Note: No file edits were finalized in this immediate session before context ran out).*
+- : Added Salary, Instant Sale, Customer/Vehicle/Item fields, and removed Cashier Basket (DONE)
+- Vehicle  and  updating and saving logic fixed (DONE)
+- Operations balance calculation (Total vs Paid vs Balance) sync fixed for partial payments (DONE)
+- Down payments/Advances on vehicles now automatically create Journal Entry Receipt Vouchers (سند قبض) (DONE)
+- Smart POS entries now generate fully tracked Operations linked to Vehicles/Suppliers/Customers (DONE)
+- Supplier ledger linked to Operations and manual Journal Entries (DONE)
+- Journal Entry UI Cards upgraded to show payment method pills (Cash, Bank, POS) and clear operation types (DONE)
+- Cleaned up obsolete test data without affecting live records (DONE)
 
 **Earlier issues found/mentioned but not fixed**
   - None.
@@ -61,11 +71,12 @@ A mature React SPA + FastAPI backend featuring a 100% strict double-entry accoun
 
 **Key Technical Concepts**
 - React SPA + FastAPI backend.
-- Strict Ledger Engine: Operations dynamically generate double-entry  and COGS based on predefined item types.
+- Strict Ledger Engine: Operations dynamically generate double-entry .
 - Dual Database Strategy: Supabase (Primary) and MongoDB (Fallback).
-- Universal AI Integrations: Uses  for LLM operations.
+- Idempotency & syncing: Visits, Operations, and Journal Entries heavily rely on syncing functions (e.g., ).
 
 **key DB schema**
+  - : 
   - : 
   - : 
   - : 
@@ -73,50 +84,63 @@ A mature React SPA + FastAPI backend featuring a 100% strict double-entry accoun
 **changes in tech stack**
   - None.
 
-**All files of reference**
-  - : The primary target file requiring edits to fulfill the user's POS interface requests.
-  - : Reference file being used by the agent to understand existing fetching logic for customers and lines.
-  - : Contains the route registration.
+**All files of reference** 
+  -  (Contains raw fields rendering bug)
+  -  (Visit numbering needs modification)
+  -  (Previously edited, might contain raw field leaks)
 
 **Areas that need refactoring**:
--  and  still contain heavy modules (Vehicles, Customers, Operations) that should be extracted into their own routers.
+-  and  are extremely bloated and need modularization.
 
 **key api endpoints**
--  (Strict debits = credits validation applies)
-- 
-- 
+-  (Returns list of operations)
+-  /  (Where visit numbering occurs)
 
 **Critical Info for New Agent**
-- **STRICT ACCOUNTING IS ACTIVE**: Any payload sent from  to  MUST have exactly balancing debits and credits. 
-- **USER'S LATEST REQUEST**: Do not ignore the user's exact UI requests for the POS: Add Salary template (قالب رواتب), Add Customer/Vehicle/Items fields (حقول العميل والمركبة والبنود), Add instant sale (بيع فوري), and remove/merge the Cashier Basket tab (إزالة أو دمج تبويب سلة كاشير).
-- **LANGUAGE**: Always respond in Arabic.
+- **RAW FIELDS BUG**: The user noted that UUIDs or raw English enums are showing up in the UI (specifically  and most other pages). You must trace where relationships (like , ) are failing to map to their  equivalents in the frontend or backend aggregations.
+- **VISIT NUMBERING**: The user specifically requested visit numbers to start formatted as . Locate the visit ID/Number generation logic and apply  or equivalent.
+- **LANGUAGE**: The user speaks Arabic. All UI labels, toasts, and your direct responses MUST be in Arabic.
 
 **documents and test reports created in this job**
-  - No new test reports were created in this brief context-gathering session. Re-use older ones if needed.
+  -  to 
+  -  (Updated)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-1. *User*: 1) Enhance Journal Entries page to be a Smart POS. 2) Make Sidebar show last 5 pages at top. 3) Add duplicate customer alert in Vehicle Reception.
-2. *Agent*: Completed Sidebar recent pages and duplicate customer alert. Created  file. *(From Previous Handoff)*
-3. *Agent*: (Used  to check if the user is ready for the Smart POS implementation or needs other changes).
-4. *User*: (LATEST PENDING) اضف قوالب اخرى مثل رواتب ايضا يوجد نواقص مثل حقول العميل والمركبه والبنود واماكنيه بيع فوري ازل تبويب سلة كاشير او ادمجه (Add other templates like salaries. Also, there are missing fields like customer, vehicle, and items, and the ability for instant sale. Remove the cashier basket tab or merge it.) -> IN PROGRESS.
+1. *User*: (Deployer Notif) App deployed to production.
+2. *Agent*: Health check run. Deployment is ready.
+3. *User*: Expand the linkage. Journal entry cards need to be clearer (show operation type: cash, bank, etc.).
+4. *Agent*: (Asked for permission to proceed).
+5. *User*: Preview / ب / أ-ج (Proceed).
+6. *Agent*: Connected Smart POS entries to generate full Reference Operations. Updated Journal Entry cards with payment methods. Tested successfully.
+7. *User*: (LATEST PENDING) اكمل الخطوه التاليه. بعض حقول الحسابات تظهر كخام افحصها. اجعل رقم الزياره يبدا 001. لازال في صفحة العمليات واغلب الصفحات يوجد حقول خام (Continue to next step. Some account fields appear as raw, check them. Make the visit number start at 001. Still in the Operations page and most pages there are raw fields).
 
 **Project Health Check:**
-- Broken: None. 
+- Broken:  and other pages are rendering raw database UUIDs or english string keys instead of mapped localized labels.
 - Mocked: None.
 
 **3rd Party Integrations**
 - OpenAI/Anthropic (via Emergent Integrations LLM Key)
 - Supabase (Database)
-- MongoDB (Fallback Database)
 
 **Testing status**
-  - Testing agent used after significant changes: NO (No actual code changes were applied in this session).
+  - Testing agent used after significant changes: YES (Iterations 199-206)
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None.
-  - Known regressions: None.
+  - Test files created: None
+  - Known regressions: Raw unmapped fields showing in UI after the recent heavy backend syncing updates.
 
 **Credentials to test flow:**
 -  / No password (Preview bypasses auth).
 
 **What agent forgot to execute**
-- The agent was analyzing how to fetch customers/vehicles but ran out of context before writing any code inside . The new agent must immediately resume updating this file with the user's required fields and features.</analysis>
+- The agent successfully completed the POS/Operations linkage but the job ended right after the user reported the raw fields and 001 visit numbering requirement. The new agent must start immediately on fixing the raw fields in  and adjusting the visit numbering logic.
+
+**Debugging checklist for current issue**
+    Issue: Raw fields displaying instead of names/labels & Visit number format (001)
+
+    Frontend files to check: 
+    -  (Check rendering of accounts, partners, and statuses).
+    - 
+  
+    Backend files to check:
+    -  (Check  endpoint to ensure it joins/populates names for IDs, and check Visit creation logic for  format).
+    -  (If visit numbering logic lives here).</analysis>

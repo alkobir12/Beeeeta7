@@ -6,7 +6,7 @@ Test Requirements:
 1. PUT /api/vehicles/{id} - supports fileNumber and customerFileNumber fields
 2. GET /api/finance/journal-entries/{entry_id} - returns basic fields at top level (not just in data)
 3. Check for journal entries with source=visit_receipt_voucher linked to visits via reference_id
-4. Use existing data where possible (vehicle id=9a359734-02bb-460c-92d3-c43306a682c8, visit id=ef0a3030-d377-4a96-ba7f-acf302cf3ad4)
+4. Use existing data where possible (vehicle id=vehicle-ledger-hub-1, visit id=vehicle-ledger-hub-1)
 5. Minimize data creation - only create if absolutely necessary and report it for cleanup
 """
 
@@ -15,7 +15,7 @@ import json
 from typing import Dict, Any, Optional
 
 # Backend URL
-BASE_URL = "https://accounting-firewall.preview.emergentagent.com/api"
+BASE_URL = "https://vehicle-ledger-hub-1.preview.emergentagent.com/api"
 WORKSHOP_ID = "finmodule-sync"
 
 # Test data
@@ -363,7 +363,7 @@ def main():
     print("\n" + "=" * 80)
     print("  اختبار backend شبه read-only للمركبات والمالية")
     print("  Backend Testing for Vehicle and Finance Features (Read-Only Mode)")
-    print("  URL: https://accounting-firewall.preview.emergentagent.com")
+    print("  URL: https://vehicle-ledger-hub-1.preview.emergentagent.com")
     print("=" * 80)
     
     # Run all tests

@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 13 May 2026 — Smart POS reference operations + journal card clarity
+- Smart POS now creates reference operations via `POST /api/operations` for most templates instead of only writing standalone journal entries.
+- Journal entries API now exposes `payment_method`, `payment_method_label_ar`, `payment_status`, and `payment_status_label_ar`.
+- Journal Entries cards now show clearer payment method/source/status pills in Arabic.
+- Bank deposit remains a direct journal-entry flow for now.
+
 ## 13 May 2026 — OperationCard payment visibility fix
 - Operations page now refetches operation data on mount instead of relying on stale cached status.
 - Added explicit payment status pill, paid amount, and remaining balance display to `OperationCard.jsx`.
@@ -39,6 +45,7 @@
 - Hardened `JournalEntries.jsx` fetch lifecycle with `AbortController` during navigation.
 
 ## Verification
+- `/app/test_reports/iteration_206.json` → PASS
 - `/app/test_reports/iteration_205.json` → PASS
 - `/app/test_reports/iteration_203.json` → PASS
 - `/app/test_reports/iteration_202.json` → PASS

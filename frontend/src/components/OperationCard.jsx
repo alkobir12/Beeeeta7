@@ -162,8 +162,13 @@ export default function OperationCard({
   );
 
   const customerDisplay = useMemo(
-    () => operation.partnerName || vehicle?.customerName || vehicle?.ownerName || 'غير محدد',
-    [operation.partnerName, vehicle]
+    () => {
+      if (String(operation?.partnerType || '').toLowerCase() === 'customer') {
+        return vehicle?.customerName || vehicle?.ownerName || operation?.customerName || operation?.partnerName || 'غير محدد';
+      }
+      return operation?.partnerName || vehicle?.customerName || vehicle?.ownerName || 'غير محدد';
+    },
+    [operation?.partnerType, operation?.partnerName, operation?.customerName, vehicle]
   );
 
   const vehicleDisplay = useMemo(() => {

@@ -531,6 +531,30 @@ class SupabaseService:
             except Exception as visit_error:
                 print(f"Supabase operations list visit-summary warning: {visit_error}")
 
+        vehicle_context = {}
+        vehicle_ids = [
+            str(r.get("vehicle_id") or r.get("vehicleId") or "").strip()
+            for r in rows
+            if str(r.get("vehicle_id") or r.get("vehicleId") or "").strip()
+        ]
+        if vehicle_ids:
+            try:
+                vehicle_rows = (
+                    self.client.table("vehicles")
+                    .select("id,plate_number,brand,model,customer_name,customer_phone")
+                    .in_("id", vehicle_ids)
+                    .execute()
+                    .data
+                    or []
+                )
+                vehicle_context = {
+                    str(row.get("id") or "").strip(): row
+                    for row in vehicle_rows
+                    if str(row.get("id") or "").strip()
+                }
+            except Exception as vehicle_error:
+                print(f"Supabase operations list vehicle-context warning: {vehicle_error}")
+
         # map snake_case to camelCase if needed, or just return as is if frontend expects it
         # The frontend likely expects camelCase.
         out = []
@@ -569,6 +593,9 @@ class SupabaseService:
             payment_status = visit_summary.get("payment_status") if has_visit_summary else None
             if not payment_status:
                 payment_status = r.get("payment_status") or r.get("paymentStatus") or visit_summary.get("payment_status")
+            vehicle_row = vehicle_context.get(str(r.get("vehicle_id") or r.get("vehicleId") or "").strip(), {})
+            partner_type = r.get("partner_type") or r.get("partnerType")
+            live_partner_name = vehicle_row.get("customer_name") if str(partner_type or '').lower() == 'customer' else None
 
             out.append(
                 {
@@ -578,9 +605,14 @@ class SupabaseService:
                     "accountingAccountId": r.get("accounting_account_id") or r.get("accountingAccountId"),
                     "vehicleId": r.get("vehicle_id") or r.get("vehicleId"),
                     "visitId": r.get("visit_id") or r.get("visitId"),
-                    "partnerType": r.get("partner_type") or r.get("partnerType"),
+                    "partnerType": partner_type,
                     "partnerId": r.get("partner_id") or r.get("partnerId"),
-                    "partnerName": r.get("partner_name") or r.get("partnerName"),
+                    "partnerName": live_partner_name or r.get("partner_name") or r.get("partnerName"),
+                    "customerName": vehicle_row.get("customer_name") or '',
+                    "customerPhone": vehicle_row.get("customer_phone") or '',
+                    "vehiclePlate": vehicle_row.get("plate_number") or '',
+                    "vehicleBrand": vehicle_row.get("brand") or '',
+                    "vehicleModel": vehicle_row.get("model") or '',
                     "items": r.get("items"),
                     "subtotal": r.get("subtotal"),
                     "total": r.get("total"),
@@ -656,6 +688,27 @@ class SupabaseService:
             except Exception as visit_error:
                 print(f"Supabase operations get visit-summary warning: {visit_error}")
 
+        vehicle_row = {}
+        vehicle_id = str(r.get("vehicle_id") or r.get("vehicleId") or "").strip()
+        if vehicle_id:
+            try:
+                vehicle_rows = (
+                    self.client.table("vehicles")
+                    .select("id,plate_number,brand,model,customer_name,customer_phone")
+                    .eq("id", vehicle_id)
+                    .limit(1)
+                    .execute()
+                    .data
+                    or []
+                )
+                if vehicle_rows:
+                    vehicle_row = vehicle_rows[0]
+            except Exception as vehicle_error:
+                print(f"Supabase operations get vehicle-context warning: {vehicle_error}")
+
+        partner_type = r.get("partner_type")
+        live_partner_name = vehicle_row.get("customer_name") if str(partner_type or '').lower() == 'customer' else None
+
         return {
             "id": r.get("id"),
             "type": r.get("type"),
@@ -663,9 +716,14 @@ class SupabaseService:
             "accountingAccountId": r.get("accounting_account_id"),
             "vehicleId": r.get("vehicle_id"),
             "visitId": r.get("visit_id"),
-            "partnerType": r.get("partner_type"),
+            "partnerType": partner_type,
             "partnerId": r.get("partner_id"),
-            "partnerName": r.get("partner_name"),
+            "partnerName": live_partner_name or r.get("partner_name"),
+            "customerName": vehicle_row.get("customer_name") or '',
+            "customerPhone": vehicle_row.get("customer_phone") or '',
+            "vehiclePlate": vehicle_row.get("plate_number") or '',
+            "vehicleBrand": vehicle_row.get("brand") or '',
+            "vehicleModel": vehicle_row.get("model") or '',
             "items": r.get("items"),
             "subtotal": r.get("subtotal"),
             "total": r.get("total"),

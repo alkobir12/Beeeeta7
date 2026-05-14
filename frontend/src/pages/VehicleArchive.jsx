@@ -1,18 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Car, Search, Calendar, User, Phone, FileText, MoreVertical, Wrench, Trash2, History } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { vehicleAPI } from '../services/api';
 import { getStatusLabel, getStatusColor } from '../mock/data';
+import { hasPermission } from '../utils/permissions';
 
 const VehicleArchive = () => {
   const ARCHIVE_AUDIT_KEY = 'vehicle-archive-edit-audit-v1';
   const { toast } = useToast();
   const navigate = useNavigate();
+  const session = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('session') || '{}'); } catch (e) { return {}; }
+  }, []);
+  const canEditArchive = hasPermission(session, 'archive', 'edit') || hasPermission(session, 'vehicles', 'edit');
+  const canDeleteArchive = hasPermission(session, 'archive', 'delete') || hasPermission(session, 'vehicles', 'delete');
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('delivered'); // Default to delivered
+  const [statusFilter, setStatusFilter] = useState('all');
   const [archiveAuditRows, setArchiveAuditRows] = useState([]);
 
   useEffect(() => {
@@ -29,9 +35,22 @@ const VehicleArchive = () => {
   const fetchVehicles = async () => {
     try {
       setLoading(true);
-      const response = await vehicleAPI.getAll();
-      setVehicles(response.data);
-    } catch (error) { console.error(error); } finally { setLoading(false); }
+      let response = null;
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        try {
+          response = await vehicleAPI.getAll();
+          break;
+        } catch (error) {
+          if (attempt === 2) throw error;
+          await new Promise((resolve) => setTimeout(resolve, 450));
+        }
+      }
+      setVehicles(Array.isArray(response?.data) ? response.data : []);
+    } catch (error) {
+      console.error(error);
+      toast({ title: 'تعذر تحميل الملفات', description: 'حاول فتح الأرشيف مرة أخرى.', variant: 'destructive' });
+      setVehicles([]);
+    } finally { setLoading(false); }
   };
 
   const handleDelete = async (vehicleId) => {
@@ -117,7 +136,11 @@ const VehicleArchive = () => {
         </div>
 
         <div className="space-y-4">
-          {filteredVehicles.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-10 text-gray-500" data-testid="vehicle-archive-loading">
+              جاري تحميل الملفات...
+            </div>
+          ) : filteredVehicles.length === 0 ? (
             <div className="text-center py-10 text-gray-500">
               لا توجد مركبات في هذا التصنيف
             </div>
@@ -153,6 +176,7 @@ const VehicleArchive = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity self-start md:self-center">
+                    {canEditArchive ? (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -163,7 +187,10 @@ const VehicleArchive = () => {
                     >
                       تحرير شامل
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(vehicle.id); }} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"><Trash2 size={18} /></button>
+                    ) : null}
+                    {canDeleteArchive ? (
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(vehicle.id); }} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors" data-testid={`vehicle-archive-delete-button-${vehicle.id}`}><Trash2 size={18} /></button>
+                    ) : null}
                     <button className="p-2 hover:bg-gray-100 text-gray-500 rounded-lg transition-colors"><MoreVertical size={18} /></button>
                   </div>
                 </div>

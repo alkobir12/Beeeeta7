@@ -94,9 +94,9 @@
         "view": true
       },
       "vehicles": {
-        "view": false,
-        "create": false,
-        "edit": false,
+        "view": true,
+        "create": true,
+        "edit": true,
         "delete": false
       },
       "customers": {
@@ -122,9 +122,9 @@
         "delete": false
       },
       "work_orders": {
-        "view": false,
-        "create": false,
-        "edit": false,
+        "view": true,
+        "create": true,
+        "edit": true,
         "delete": false
       },
       "reports": {
@@ -160,7 +160,8 @@
     "createdAt": "2025-12-08T08:25:06.676970",
     "lastLogin": null,
     "isActive": true,
-    "guidanceEnabled": true
+    "guidanceEnabled": true,
+    "username": "فرج1"
   },
   {
     "name": "مستخدم اختبار",

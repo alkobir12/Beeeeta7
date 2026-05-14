@@ -7,7 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import { ThemeProvider } from './contexts/ThemeContext';
 import { queryClient } from './queryClient';
-import { getFirstAllowedRoute, hasPermission, normalizePermissions, resolveRoutePermission } from './utils/permissions';
+import { getFirstAllowedRoute, hasRoutePermission, normalizePermissions, resolveRoutePermission } from './utils/permissions';
 import { resolveBackendBase } from './utils/backendBase';
 
 // Eager load critical pages
@@ -160,7 +160,7 @@ const Protected = ({ children }) => {
     const fallbackPath = getFirstAllowedRoute(session);
     return <Navigate to={fallbackPath} replace />;
   }
-  if (routePermission && !hasPermission(session, routePermission.module, routePermission.action)) {
+  if (routePermission && !hasRoutePermission(session, routePermission)) {
     const fallbackPath = getFirstAllowedRoute(session);
     return <Navigate to={fallbackPath === location.pathname ? '/login' : fallbackPath} replace />;
   }

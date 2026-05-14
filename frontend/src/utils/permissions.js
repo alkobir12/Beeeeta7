@@ -106,11 +106,15 @@ export const hasPermission = (session, moduleKey, action = 'view') => {
   return permissions?.[moduleKey]?.[action] === true;
 };
 
+export const hasAnyPermission = (session, rules = []) => (
+  (rules || []).some((rule) => hasPermission(session, rule.module, rule.action || 'view'))
+);
+
 export const ROUTE_PERMISSIONS = [
   { pattern: /^\/$/, module: 'dashboard', action: 'view' },
   { pattern: /^\/operations/, module: 'operations', action: 'view' },
-  { pattern: /^\/new-vehicle/, module: 'vehicles', action: 'create' },
-  { pattern: /^\/vehicle\//, module: 'vehicles', action: 'view' },
+  { pattern: /^\/new-vehicle/, anyOf: [{ module: 'vehicles', action: 'create' }, { module: 'archive', action: 'create' }] },
+  { pattern: /^\/vehicle\//, anyOf: [{ module: 'vehicles', action: 'view' }, { module: 'archive', action: 'view' }] },
   { pattern: /^\/customers/, module: 'customers', action: 'view' },
   { pattern: /^\/customer\//, module: 'customers', action: 'view' },
   { pattern: /^\/technicians/, module: 'users', action: 'view' },
@@ -139,6 +143,12 @@ export const ROUTE_PERMISSIONS = [
 export const resolveRoutePermission = (path) => {
   if (!path) return null;
   return ROUTE_PERMISSIONS.find((rule) => rule.pattern.test(path)) || null;
+};
+
+export const hasRoutePermission = (session, routeRule) => {
+  if (!routeRule) return true;
+  if (Array.isArray(routeRule.anyOf)) return hasAnyPermission(session, routeRule.anyOf);
+  return hasPermission(session, routeRule.module, routeRule.action || 'view');
 };
 
 export const FIRST_ALLOWED_ROUTES = [

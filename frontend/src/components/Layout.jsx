@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import UnifiedBotWidget from './UnifiedBotWidget';
 import FinanceAlertsWidget from './FinanceAlertsWidget';
 import { Toaster } from './ui/toaster';
-import { hasPermission, resolveRoutePermission } from '../utils/permissions';
+import { hasRoutePermission, resolveRoutePermission } from '../utils/permissions';
 import { siteBuilderAPI } from '../services/siteBuilderAPI';
 import { PageCustomCardsDock } from './PageCustomCardsDock';
 import { applyPageCustomizations, clearPageCustomizations } from '../utils/pageCustomization';
@@ -201,7 +201,7 @@ const Layout = ({ pageTitle }) => {
   };
 
   const permissionRule = resolveRoutePermission(location.pathname);
-  const canAccessRoute = !permissionRule || hasPermission(session, permissionRule.module, permissionRule.action);
+  const canAccessRoute = hasRoutePermission(session, permissionRule);
 
   const UnauthorizedPanel = () => (
     <div className="mx-auto max-w-xl rounded-3xl border border-white/10 bg-slate-950/70 p-6 text-center shadow-xl shadow-black/20">

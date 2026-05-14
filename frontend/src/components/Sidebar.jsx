@@ -29,7 +29,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import LanguageToggleButton from './LanguageToggleButton';
 import { resolveBackendBase } from '../utils/backendBase';
-import { hasPermission, resolveRoutePermission } from '../utils/permissions';
+import { hasPermission, hasRoutePermission, resolveRoutePermission } from '../utils/permissions';
 import { readRecentPages, clearRecentPages } from '../hooks/useRecentPages';
 import { Clock } from 'lucide-react';
 
@@ -455,7 +455,7 @@ const Sidebar = ({
               <ul className="space-y-0.5">
                 {recentPages.filter((p) => {
                   const rule = resolveRoutePermission(p.path);
-                  return !rule || hasPermission(session, rule.module, rule.action);
+                  return hasRoutePermission(session, rule);
                 }).map((p) => (
                   <li key={p.path}>
                     <button

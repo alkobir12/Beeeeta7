@@ -20,7 +20,7 @@ const Dashboard = () => {
   const session = useMemo(() => {
     try { return JSON.parse(localStorage.getItem('session') || '{}'); } catch (e) { return {}; }
   }, []);
-  const canCreateVehicle = hasPermission(session, 'vehicles', 'create');
+  const canCreateVehicle = hasPermission(session, 'vehicles', 'create') || hasPermission(session, 'archive', 'create');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [vehicles, setVehicles] = useState([]);

@@ -8,6 +8,7 @@ PermissionsMap = Dict[str, Dict[str, bool]]
 class User(BaseModel):
     id: str
     name: str
+    username: Optional[str] = None
     email: Optional[str] = None
     phone: str
     role: str = "employee"  # admin, manager, employee
@@ -20,6 +21,8 @@ class User(BaseModel):
 
 class UserCreate(BaseModel):
     name: str
+    username: Optional[str] = None
+    password: Optional[str] = None
     email: Optional[str] = None
     phone: str
     role: str = "employee"
@@ -29,6 +32,8 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
     role: Optional[str] = None

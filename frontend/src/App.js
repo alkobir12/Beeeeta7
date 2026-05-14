@@ -7,7 +7,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import { ThemeProvider } from './contexts/ThemeContext';
 import { queryClient } from './queryClient';
-import { getFirstAllowedRoute, hasPermission, resolveRoutePermission } from './utils/permissions';
+import { getFirstAllowedRoute, hasPermission, normalizePermissions, resolveRoutePermission } from './utils/permissions';
+import { resolveBackendBase } from './utils/backendBase';
 
 // Eager load critical pages
 import Dashboard from "./pages/Dashboard";
@@ -101,6 +102,54 @@ const Protected = ({ children }) => {
       window.removeEventListener('sessionUpdated', sync);
     };
   }, []);
+
+  React.useEffect(() => {
+    if (!session?.id && !session?.name) return undefined;
+    let cancelled = false;
+    const refreshSessionPermissions = async () => {
+      try {
+        const res = await fetch(`${resolveBackendBase()}/api/users`, { cache: 'no-store' });
+        if (!res.ok || cancelled) return;
+        const users = await res.json();
+        const latest = (Array.isArray(users) ? users : []).find((user) => (
+          String(user.id || '') === String(session.id || '')
+          || String(user.username || '').trim() === String(session.name || '').trim()
+          || String(user.name || '').trim() === String(session.name || '').trim()
+        ));
+        if (!latest || latest.isActive === false || cancelled) return;
+        const nextSession = {
+          ...session,
+          id: latest.id || session.id,
+          name: latest.name || session.name,
+          phone: latest.phone || session.phone || '',
+          email: latest.email || session.email || '',
+          role: latest.role || session.role,
+          permissions: normalizePermissions(latest.permissions, latest.role || session.role),
+          guidanceEnabled: latest.guidanceEnabled !== false,
+        };
+        const currentSerialized = JSON.stringify(session.permissions || {});
+        const nextSerialized = JSON.stringify(nextSession.permissions || {});
+        if (currentSerialized !== nextSerialized || nextSession.role !== session.role || nextSession.name !== session.name) {
+          localStorage.setItem('session', JSON.stringify(nextSession));
+          localStorage.setItem('user', JSON.stringify(latest));
+          try {
+            document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+            document.cookie = `session=${encodeURIComponent(JSON.stringify(nextSession))}; path=/`;
+          } catch (e) {
+            // ignore cookie refresh errors
+          }
+          window.dispatchEvent(new Event('sessionUpdated'));
+          setSession(nextSession);
+        }
+      } catch (e) {
+        // keep current session if refresh fails
+      }
+    };
+    refreshSessionPermissions();
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.id, session?.name]);
 
   if (!session) {
     return <Login />;

@@ -90,6 +90,7 @@ const Login = () => {
 
       // keep session in cookie for Protected routes
       try {
+        document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
         document.cookie = `session=${encodeURIComponent(JSON.stringify(session))}; path=/`;
       } catch (e) {
         // ignore
@@ -118,7 +119,10 @@ const Login = () => {
       if (!response.ok) throw new Error('Server error');
       
       const users = await response.json();
-      const user = users.find(u => (u.name || '').toLowerCase() === name.trim().toLowerCase());
+      const loginName = name.trim().toLowerCase();
+      const user = users.find((u) => [u.username, u.name, u.phone]
+        .filter(Boolean)
+        .some((value) => String(value || '').trim().toLowerCase() === loginName));
 
       if (!user) {
         if (name.trim() === 'مدير') {
@@ -144,6 +148,7 @@ const Login = () => {
           };
 
           try {
+            document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
             document.cookie = `session=${encodeURIComponent(JSON.stringify(session))}; path=/`;
           } catch (e) {
             // ignore
@@ -191,6 +196,7 @@ const Login = () => {
 
 
       try {
+        document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
         document.cookie = `session=${encodeURIComponent(JSON.stringify(session))}; path=/`;
       } catch (e) {
         // ignore

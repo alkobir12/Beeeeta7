@@ -85,6 +85,32 @@ def _normalize_permissions(raw_permissions):
     return normalized
 
 
+def _normalize_user_row(row: dict) -> dict:
+    user = dict(row or {})
+    user["permissions"] = _normalize_permissions(user.get("permissions"))
+    if not user.get("username"):
+        user["username"] = user.get("name") or user.get("phone") or ""
+    user.pop("password", None)
+    return user
+
+
+def _prepare_user_payload(payload: dict, *, is_create: bool = False) -> dict:
+    doc = dict(payload or {})
+    if is_create and not doc.get("username"):
+        doc["username"] = doc.get("name") or doc.get("phone") or ""
+    elif not is_create and any(key in doc for key in ("username", "name", "phone")) and not doc.get("username"):
+        doc["username"] = doc.get("name") or doc.get("phone") or ""
+    doc.pop("password", None)
+    if is_create:
+        doc["id"] = str(uuid.uuid4())
+        doc["createdAt"] = datetime.utcnow().isoformat()
+        doc.setdefault("lastLogin", None)
+        doc.setdefault("isActive", True)
+    if "permissions" in doc:
+        doc["permissions"] = _normalize_permissions(doc.get("permissions") or {})
+    return doc
+
+
 def set_db(database):
     global _db
     _db = database
@@ -136,36 +162,23 @@ async def get_users():
     try:
         if DB_PROVIDER == "supabase" and not supabase.mock_mode:
             rows = supabase.users_list()
-            normalized_rows = []
-            for row in rows:
-                row = dict(row)
-                row["permissions"] = _normalize_permissions(row.get("permissions"))
-                normalized_rows.append(row)
+            normalized_rows = [_normalize_user_row(row) for row in rows]
             return [User(**r) for r in normalized_rows]
         if DB_PROVIDER == "memory":
             rows = _read_users()
-            normalized_rows = []
-            for row in rows:
-                row = dict(row)
-                row["permissions"] = _normalize_permissions(row.get("permissions"))
-                normalized_rows.append(row)
+            normalized_rows = [_normalize_user_row(row) for row in rows]
             return [User(**r) for r in normalized_rows]
         # Mongo fallback
         users = await _db.users.find({}).to_list(length=1000)
         out = []
         for u in users:
             u.pop("_id", None)
-            u["permissions"] = _normalize_permissions(u.get("permissions"))
-            out.append(User(**u))
+            out.append(User(**_normalize_user_row(u)))
         return out
     except Exception:
         # Fallback to memory on any error (e.g., Mongo down)
         rows = _read_users()
-        normalized_rows = []
-        for row in rows:
-            row = dict(row)
-            row["permissions"] = _normalize_permissions(row.get("permissions"))
-            normalized_rows.append(row)
+        normalized_rows = [_normalize_user_row(row) for row in rows]
         return [User(**r) for r in normalized_rows]
 
 
@@ -173,86 +186,65 @@ async def get_users():
 async def create_user(user_data: UserCreate):
     try:
         if DB_PROVIDER == "supabase" and not supabase.mock_mode:
-            payload = user_data.dict()
-            payload["id"] = str(uuid.uuid4())
-            payload["createdAt"] = datetime.utcnow().isoformat()
-            payload["permissions"] = _normalize_permissions(payload.get("permissions") or {})
+            payload = _prepare_user_payload(user_data.dict(), is_create=True)
             created = supabase.users_create(payload)
-            return User(**created)
+            return User(**_normalize_user_row(created))
         if DB_PROVIDER == "memory":
             users = _read_users()
             if any(
                 (u.get("phone") == user_data.phone and user_data.phone) for u in users
             ):
                 raise HTTPException(status_code=400, detail="رقم الهاتف مسجل مسبقاً")
-            doc = user_data.dict()
-            doc["id"] = str(uuid.uuid4())
-            doc["createdAt"] = datetime.utcnow().isoformat()
-            doc["lastLogin"] = None
-            doc["isActive"] = True
-            doc["permissions"] = _normalize_permissions(doc.get("permissions") or {})
+            doc = _prepare_user_payload(user_data.dict(), is_create=True)
             users.append(doc)
             _write_users(users)
-            return User(**doc)
+            return User(**_normalize_user_row(doc))
         # Mongo
         existing = await _db.users.find_one({"phone": user_data.phone})
         if existing:
             raise HTTPException(status_code=400, detail="رقم الهاتف مسجل مسبقاً")
-        user_dict = user_data.dict()
-        user_dict["id"] = str(uuid.uuid4())
+        user_dict = _prepare_user_payload(user_data.dict(), is_create=True)
         user_dict["createdAt"] = datetime.utcnow()
-        user_dict["lastLogin"] = None
-        user_dict["isActive"] = True
-        user_dict["permissions"] = _normalize_permissions(user_dict.get("permissions") or {})
         await _db.users.insert_one(user_dict)
         user_dict.pop("_id", None)
-        return User(**user_dict)
+        return User(**_normalize_user_row(user_dict))
     except HTTPException:
         raise
     except Exception:
         # fallback to memory
         users = _read_users()
-        doc = user_data.dict()
-        doc["id"] = str(uuid.uuid4())
-        doc["createdAt"] = datetime.utcnow().isoformat()
-        doc["lastLogin"] = None
-        doc["isActive"] = True
-        doc["permissions"] = _normalize_permissions(doc.get("permissions") or {})
+        doc = _prepare_user_payload(user_data.dict(), is_create=True)
         users.append(doc)
         _write_users(users)
-        return User(**doc)
+        return User(**_normalize_user_row(doc))
 
 
 @router.put("/users/{user_id}", response_model=User)
 async def update_user(user_id: str, update_data: UserUpdate):
     try:
         if DB_PROVIDER == "supabase" and not supabase.mock_mode:
-            updated = supabase.users_update(
-                user_id, {k: v for k, v in update_data.dict().items() if v is not None}
-            )
-            updated["permissions"] = _normalize_permissions(updated.get("permissions"))
-            return User(**updated)
+            payload = _prepare_user_payload({k: v for k, v in update_data.dict().items() if v is not None})
+            updated = supabase.users_update(user_id, payload)
+            return User(**_normalize_user_row(updated))
         if DB_PROVIDER == "memory":
             users = _read_users()
             idx = next((i for i, u in enumerate(users) if u.get("id") == user_id), -1)
             if idx == -1:
                 raise HTTPException(status_code=404, detail="المستخدم غير موجود")
-            upd = {k: v for k, v in update_data.dict().items() if v is not None}
+            upd = _prepare_user_payload({k: v for k, v in update_data.dict().items() if v is not None})
             users[idx].update(upd)
             _write_users(users)
-            users[idx]["permissions"] = _normalize_permissions(users[idx].get("permissions"))
-            return User(**users[idx])
+            return User(**_normalize_user_row(users[idx]))
         # Mongo fallback
         user = await _db.users.find_one({"id": user_id})
         if not user:
             raise HTTPException(status_code=404, detail="المستخدم غير موجود")
-        update_dict = {k: v for k, v in update_data.dict().items() if v is not None}
+        update_dict = _prepare_user_payload({k: v for k, v in update_data.dict().items() if v is not None})
         if update_dict:
             await _db.users.update_one({"id": user_id}, {"$set": update_dict})
             user = await _db.users.find_one({"id": user_id})
         user.pop("_id", None)
-        user["permissions"] = _normalize_permissions(user.get("permissions"))
-        return User(**user)
+        return User(**_normalize_user_row(user))
     except HTTPException:
         raise
     except Exception:
@@ -261,11 +253,10 @@ async def update_user(user_id: str, update_data: UserUpdate):
         idx = next((i for i, u in enumerate(users) if u.get("id") == user_id), -1)
         if idx == -1:
             raise HTTPException(status_code=404, detail="المستخدم غير موجود")
-        upd = {k: v for k, v in update_data.dict().items() if v is not None}
+        upd = _prepare_user_payload({k: v for k, v in update_data.dict().items() if v is not None})
         users[idx].update(upd)
         _write_users(users)
-        users[idx]["permissions"] = _normalize_permissions(users[idx].get("permissions"))
-        return User(**users[idx])
+        return User(**_normalize_user_row(users[idx]))
 
 
 @router.delete("/users/{user_id}")

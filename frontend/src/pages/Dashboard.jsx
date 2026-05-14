@@ -8,6 +8,7 @@ import VehicleQuickActions from '../components/VehicleQuickActions';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
+import { hasPermission } from '../utils/permissions';
 
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
@@ -16,6 +17,10 @@ const Dashboard = () => {
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const { toast } = useToast();
+  const session = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('session') || '{}'); } catch (e) { return {}; }
+  }, []);
+  const canCreateVehicle = hasPermission(session, 'vehicles', 'create');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [vehicles, setVehicles] = useState([]);
@@ -90,15 +95,20 @@ const Dashboard = () => {
       
       const today = new Date().toISOString().slice(0, 10);
 
-      // Load core data first (vehicles + technicians). Finance AR is heavy; load it lazily.
-      const [vehiclesRes, techniciansRes] = await Promise.all([
-        vehicleAPI.getAll(),
-        technicianAPI.getAll(),
+      const withTimeout = (promise, ms = 9000) => Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('dashboard-timeout')), ms)),
+      ]);
+
+      // Load core data first without letting one slow request keep the dashboard spinner forever.
+      const [vehiclesRes, techniciansRes] = await Promise.allSettled([
+        withTimeout(vehicleAPI.getAll()),
+        withTimeout(technicianAPI.getAll()),
       ]);
 
       if (isMountedRef.current) {
-        setVehicles(vehiclesRes.data);
-        setTechnicians(techniciansRes.data);
+        setVehicles(vehiclesRes.status === 'fulfilled' && Array.isArray(vehiclesRes.value?.data) ? vehiclesRes.value.data : []);
+        setTechnicians(techniciansRes.status === 'fulfilled' && Array.isArray(techniciansRes.value?.data) ? techniciansRes.value.data : []);
       }
 
       // Lazy load AR in background (doesn't block UI)
@@ -408,6 +418,7 @@ const Dashboard = () => {
             >
               {i18n.language === 'ar' ? 'EN' : 'AR'}
             </button>
+            {canCreateVehicle ? (
             <button 
               onClick={() => navigate('/new-vehicle')}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-white transition-all"
@@ -419,6 +430,7 @@ const Dashboard = () => {
               <Plus size={18} />
               <span>{t('dashboard.newVehicle') || t('dashboard.new_vehicle')}</span>
             </button>
+            ) : null}
           </div>
         </div>
 

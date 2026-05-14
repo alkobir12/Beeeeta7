@@ -48,7 +48,7 @@ const UsersManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${API_URL}/users`);
+      const res = await fetch(`${API_URL}/users`, { cache: 'no-store' });
       const data = await res.json();
       setUsers(data || []);
     } catch (e) { console.error(e); }
@@ -150,7 +150,7 @@ const UsersManagement = () => {
   const editUser = (user) => {
     setForm({
       name: user.name || '',
-      username: user.username || '',
+      username: user.username || user.name || '',
       password: '',
       phone: user.phone || '',
       email: user.email || '',
@@ -196,6 +196,7 @@ const UsersManagement = () => {
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900" data-testid={`users-card-name-${user.id}`}>{user.name}</h3>
+                    <p className="text-xs text-gray-500 mt-0.5" data-testid={`users-card-username-${user.id}`}>اسم الدخول: {user.username || user.name}</p>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
                       {getRoleLabel(user.role)}
                     </span>

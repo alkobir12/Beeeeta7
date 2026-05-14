@@ -1,0 +1,40 @@
+{
+  "summary": "Retested requested users/dashboard permission fixes on preview URL. Backend regression for /api/users and /api/users/{id} update behavior passed (4/4). Frontend flows passed for فرج1 dashboard access, blocked operations access, hidden New Vehicle action, and updated /users cards/badges visibility.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_212_users_dashboard_permissions.py",
+    "/app/test_reports/pytest/pytest_results_iter212.xml"
+  ],
+  "action_items": [
+    "Optional hardening: current session cookie is client-written via document.cookie (not HttpOnly). If security requirements apply, migrate to server-set HttpOnly cookie flow.",
+    "Provide /app/auth_testing.md or update playbook path; optional auth playbook checks could not be executed from the requested location.",
+    "Update /app/memory/test_credentials.md to include فرج1 and مدير entries together for deterministic auth retests."
+  ],
+  "critical_code_review_comments": [
+    "Dashboard.jsx is very large (~980 lines), increasing regression risk and making permission/UI fixes harder to isolate and verify.",
+    "Login/session flow stores auth session in localStorage + JS-readable cookie; this does not satisfy HttpOnly cookie control from auth best practices."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_212_users_dashboard_permissions.py",
+    "/app/test_reports/iteration_212.json"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "Created two temporary TEST_ users via API during regression and deleted them in teardown.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Validated on https://vehicle-ledger-hub-1.preview.emergentagent.com: فرج1 login redirects to / and dashboard stat cards render (no stuck initial loader), /operations direct route redirects away for فرج1, and استقبال مركبة button is hidden. Admin /users shows 4 cards including label 'اسم الدخول: فرج1' and permission badges صفحة العمليات/دفتر اليومية/الأرشيف. Backend tests confirm /api/users includes username, strips password, contains normalized modules, and PUT non-permission update preserves existing permissions.",
+  "rca of the issue": "Previously reported behavior likely stemmed from stale/partial session permissions and inconsistent username handling. Current implementation now refreshes session permissions from /api/users and normalizes username fallback in backend routes, which removed dashboard loading/routing mismatch for فرج1 and restored users page expected labels/modules.",
+  "mocked_api": "NO MOCKED APIs",
+  "test_credentials": "File /app/memory/test_credentials.md exists but currently lists only مدير; فرج1 credential had to be taken from review request."
+}

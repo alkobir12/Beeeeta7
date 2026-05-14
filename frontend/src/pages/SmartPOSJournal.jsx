@@ -252,6 +252,7 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
   const [saving, setSaving] = useState(false);
   const [savedToast, setSavedToast] = useState(null);
   const [localRecentEntries, setLocalRecentEntries] = useState([]);
+  const [recentEntriesLoading, setRecentEntriesLoading] = useState(false);
 
   const accountRefs = useMemo(() => {
     const cash = pickAccount(accounts, [
@@ -400,9 +401,11 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
     const loadRecentEntries = async () => {
       if (normalizeArray(recentEntries).length > 0) {
         setLocalRecentEntries([]);
+        setRecentEntriesLoading(false);
         return;
       }
       try {
+        setRecentEntriesLoading(true);
         const response = await axios.get(`${apiBase}/finance/journal-entries`, {
           params: { workshop_id: workshopId, limit: 5 },
         });
@@ -411,6 +414,8 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
         setLocalRecentEntries(rows);
       } catch {
         if (mounted) setLocalRecentEntries([]);
+      } finally {
+        if (mounted) setRecentEntriesLoading(false);
       }
     };
     loadRecentEntries();
@@ -1223,7 +1228,11 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
             آخر القيود
           </div>
 
-          {effectiveRecentEntries.length === 0 ? (
+          {effectiveRecentEntries.length === 0 && recentEntriesLoading ? (
+            <div className="rounded-2xl border border-cyan-300/15 bg-cyan-500/10 px-4 py-8 text-center text-sm text-cyan-100" data-testid="pos-recent-entries-loading">
+              جاري تحميل آخر القيود...
+            </div>
+          ) : effectiveRecentEntries.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-4 py-8 text-center text-sm text-slate-500" data-testid="pos-recent-entries-empty">
               لا توجد قيود سابقة للنسخ.
             </div>

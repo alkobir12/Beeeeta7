@@ -24,7 +24,6 @@ const Technicians = lazy(() => import("./pages/Technicians"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
 const PartsDashboard = lazy(() => import("./pages/PartsDashboard"));
 const ServicesManagement = lazy(() => import("./pages/ServicesManagement"));
-const Templates = lazy(() => import("./pages/Templates"));
 const InvoiceDesignerStudio = lazy(() => import("./pages/InvoiceDesignerStudio"));
 const Settings = lazy(() => import("./pages/Settings"));
 const WorkshopProfile = lazy(() => import("./pages/WorkshopProfile"));
@@ -203,7 +202,6 @@ function App() {
                   <Route path="parts-dashboard" element={<PartsDashboard />} />
                   <Route path="catalog" element={<Navigate to="/parts" replace />} />
                   <Route path="services" element={<ServicesManagement />} />
-                  <Route path="templates" element={<Templates />} />
                   <Route path="invoice-templates" element={<InvoiceDesignerStudio />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="profile" element={<WorkshopProfile />} />

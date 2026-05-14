@@ -460,7 +460,7 @@ const Sidebar = ({
                   <li key={p.path}>
                     <button
                       type="button"
-                      onClick={() => { navigate(p.path); if (typeof onNavigate === 'function') onNavigate(); }}
+                      onClick={() => handleNavigate(p.path)}
                       className={`w-full text-right text-[12px] px-2 py-1 rounded-md transition truncate ${
                         location.pathname === p.path
                           ? 'bg-cyan-500/15 text-cyan-100'

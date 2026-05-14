@@ -4,7 +4,10 @@ export const ROLE_DEFINITIONS = rolePermissions?.roles || {};
 
 export const MODULE_DEFINITIONS = [
   { key: 'dashboard', label: 'لوحة التحكم', actions: ['view'] },
-  { key: 'vehicles', label: 'المركبات', actions: ['view', 'create', 'edit', 'delete'] },
+  { key: 'operations', label: 'صفحة العمليات', actions: ['view', 'settle', 'edit', 'delete'] },
+  { key: 'journal_entries', label: 'دفتر اليومية', actions: ['view', 'create', 'edit', 'delete', 'pos'] },
+  { key: 'archive', label: 'الأرشيف', actions: ['view', 'create', 'edit', 'delete'] },
+  { key: 'vehicles', label: 'ملفات المركبات', actions: ['view', 'create', 'edit', 'delete'] },
   { key: 'customers', label: 'العملاء', actions: ['view', 'create', 'edit', 'delete'] },
   { key: 'invoices', label: 'الفواتير', actions: ['view', 'create', 'edit', 'delete'] },
   { key: 'debts', label: 'الذمم', actions: ['view', 'settle'] },
@@ -21,6 +24,7 @@ export const ACTION_LABELS = {
   edit: 'تعديل',
   delete: 'حذف',
   settle: 'تسوية',
+  pos: 'POS',
 };
 
 const LEGACY_PERMISSION_MAP = {
@@ -54,7 +58,33 @@ export const normalizePermissions = (permissions, role) => {
   }
 
   if (!isLegacyPermissions(permissions)) {
-    return permissions;
+    const next = clonePermissions(permissions);
+    if (!next.operations && next.work_orders) {
+      next.operations = {
+        view: next.work_orders.view === true,
+        settle: next.work_orders.edit === true || next.debts?.settle === true,
+        edit: next.work_orders.edit === true,
+        delete: next.work_orders.delete === true,
+      };
+    }
+    if (!next.journal_entries && next.reports) {
+      next.journal_entries = {
+        view: next.reports.view === true,
+        create: next.reports.create === true,
+        edit: next.reports.edit === true,
+        delete: next.reports.delete === true,
+        pos: next.reports.view === true,
+      };
+    }
+    if (!next.archive && next.vehicles) {
+      next.archive = {
+        view: next.vehicles.view === true,
+        create: next.vehicles.create === true,
+        edit: next.vehicles.edit === true,
+        delete: next.vehicles.delete === true,
+      };
+    }
+    return next;
   }
 
   const next = {};
@@ -66,7 +96,8 @@ export const normalizePermissions = (permissions, role) => {
     });
   });
 
-  return Object.keys(next).length ? next : getRolePermissions(role);
+  const resolved = Object.keys(next).length ? next : getRolePermissions(role);
+  return normalizePermissions(resolved, role);
 };
 
 export const hasPermission = (session, moduleKey, action = 'view') => {
@@ -77,7 +108,7 @@ export const hasPermission = (session, moduleKey, action = 'view') => {
 
 export const ROUTE_PERMISSIONS = [
   { pattern: /^\/$/, module: 'dashboard', action: 'view' },
-  { pattern: /^\/operations/, module: 'work_orders', action: 'view' },
+  { pattern: /^\/operations/, module: 'operations', action: 'view' },
   { pattern: /^\/new-vehicle/, module: 'vehicles', action: 'create' },
   { pattern: /^\/vehicle\//, module: 'vehicles', action: 'view' },
   { pattern: /^\/customers/, module: 'customers', action: 'view' },
@@ -88,10 +119,11 @@ export const ROUTE_PERMISSIONS = [
   { pattern: /^\/parts-dashboard/, module: 'inventory', action: 'view' },
   { pattern: /^\/services/, module: 'work_orders', action: 'view' },
   { pattern: /^\/finance\//, module: 'reports', action: 'view' },
+  { pattern: /^\/accounting\/journal-entries/, module: 'journal_entries', action: 'view' },
   { pattern: /^\/accounting\//, module: 'reports', action: 'view' },
   { pattern: /^\/ai-financial/, module: 'reports', action: 'view' },
   { pattern: /^\/system-audit/, module: 'reports', action: 'view' },
-  { pattern: /^\/archive/, module: 'vehicles', action: 'view' },
+  { pattern: /^\/archive/, module: 'archive', action: 'view' },
   { pattern: /^\/import/, module: 'inventory', action: 'create' },
   { pattern: /^\/users/, module: 'users', action: 'view' },
   { pattern: /^\/settings/, module: 'settings', action: 'view' },
@@ -108,6 +140,20 @@ export const resolveRoutePermission = (path) => {
   if (!path) return null;
   return ROUTE_PERMISSIONS.find((rule) => rule.pattern.test(path)) || null;
 };
+
+export const FIRST_ALLOWED_ROUTES = [
+  { path: '/', module: 'dashboard', action: 'view' },
+  { path: '/operations', module: 'operations', action: 'view' },
+  { path: '/accounting/journal-entries', module: 'journal_entries', action: 'view' },
+  { path: '/archive', module: 'archive', action: 'view' },
+  { path: '/customers', module: 'customers', action: 'view' },
+  { path: '/parts-dashboard', module: 'inventory', action: 'view' },
+  { path: '/settings', module: 'settings', action: 'view' },
+];
+
+export const getFirstAllowedRoute = (session) => (
+  FIRST_ALLOWED_ROUTES.find((route) => hasPermission(session, route.module, route.action))?.path || '/login'
+);
 
 export const clonePermissions = (permissions) => {
   return JSON.parse(JSON.stringify(permissions || {}));

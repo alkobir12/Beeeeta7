@@ -115,9 +115,11 @@ const OperationDetailsModal = ({
             <button className="apple-button-secondary" onClick={() => onOpenChange(false)} data-testid="operation-details-close-button">
               {t('buttons.close')}
             </button>
-            <button className="apple-button-secondary text-red-600" onClick={onDelete} data-testid="operation-details-delete-button">
-              {t('buttons.delete')}
-            </button>
+            {typeof onDelete === 'function' ? (
+              <button className="apple-button-secondary text-red-600" onClick={onDelete} data-testid="operation-details-delete-button">
+                {t('buttons.delete')}
+              </button>
+            ) : null}
           </div>
         </DialogFooter>
       </DialogContent>

@@ -1189,8 +1189,6 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
                         <span>{entry?.date || ''}</span>
-                        <span>·</span>
-                        <span>{formatSAR(entry?.total)}</span>
                       </div>
                     </div>
 

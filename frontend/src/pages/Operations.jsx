@@ -21,6 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { resolveBackendBase } from '../utils/backendBase';
 import { resolveVisitDisplay } from '../utils/displayLabels';
+import { hasPermission } from '../utils/permissions';
 
 const API_URL = `${resolveBackendBase()}/api`;
 const OPERATIONS_PAGE_SIZE = 15;
@@ -221,6 +222,9 @@ const Operations = () => {
       return null;
     }
   }, []);
+  const canSettleOperations = hasPermission(session, 'operations', 'settle');
+  const canEditOperations = hasPermission(session, 'operations', 'edit');
+  const canDeleteOperations = hasPermission(session, 'operations', 'delete');
   const guidanceEnabled = session?.guidanceEnabled !== false;
   const [selectedOperation, setSelectedOperation] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -2249,6 +2253,7 @@ const Operations = () => {
         </div>
 
         {/* Create Operation Card */}
+        {false ? (
         <div 
           className="ops-glass-create p-5 sm:p-6"
         >
@@ -3267,6 +3272,7 @@ const Operations = () => {
           </form>
           </div>
         </div>
+        ) : null}
 
         {/* Recent Operations */}
         <div className="space-y-6" data-testid="operations-sections-wrapper">
@@ -3380,13 +3386,13 @@ const Operations = () => {
                       if (!o?.vehicleId) return;
                       navigate(`/vehicle/${o.vehicleId}`);
                     }}
-                    onConfirmCreditPayment={(o) => {
+                    onConfirmCreditPayment={canSettleOperations ? ((o) => {
                       setConfirmTarget(o);
                       setConfirmOpen(true);
-                    }}
-                    onDelete={(o) => requestDeleteOperation(o)}
-                    onEditInForm={(o) => startEditOperationInMainForm(o)}
-                    onUpdateItems={(opId, items, meta) => handleUpdateOperationItems(opId, items, meta)}
+                    }) : undefined}
+                    onDelete={canDeleteOperations ? ((o) => requestDeleteOperation(o)) : undefined}
+                    onEditInForm={canEditOperations ? ((o) => startEditOperationInMainForm(o)) : undefined}
+                    onUpdateItems={canEditOperations ? ((opId, items, meta) => handleUpdateOperationItems(opId, items, meta)) : undefined}
                   />
                   );
                 })}
@@ -3459,10 +3465,10 @@ const Operations = () => {
             if (!selectedOperation?.vehicleId) return;
             navigate(`/vehicle/${selectedOperation.vehicleId}`);
           }}
-          onDelete={async () => {
+          onDelete={canDeleteOperations ? (async () => {
             if (!selectedOperation?.id) return;
             requestDeleteOperation(selectedOperation);
-          }}
+          }) : undefined}
         />
       
       {/* أبوفهد (المساعد المالي) أصبح عبر الزر العائم الموحد */}

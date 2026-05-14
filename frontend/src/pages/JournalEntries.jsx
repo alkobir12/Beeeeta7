@@ -3,6 +3,7 @@ import { resolveBackendBase } from '../utils/backendBase';
 import SmartAccountSelect from '../components/SmartAccountSelect';
 import SmartPOSJournal from './SmartPOSJournal';
 import axios from 'axios';
+import { hasPermission } from '../utils/permissions';
 import {
   BookOpen,
   Plus,
@@ -21,7 +22,6 @@ import {
   ShoppingCart,
   Briefcase,
   CreditCard,
-  TrendingUp,
   DollarSign,
   Wrench,
   Pencil,
@@ -186,8 +186,22 @@ export default function JournalEntries() {
   });
   const [workshopProfile, setWorkshopProfile] = useState(null);
   const [workshopSettings, setWorkshopSettings] = useState(null);
+  const session = useMemo(() => {
+    try { return JSON.parse(localStorage.getItem('session') || '{}'); } catch (e) { return {}; }
+  }, []);
+  const canCreateJournal = hasPermission(session, 'journal_entries', 'create');
+  const canEditJournal = hasPermission(session, 'journal_entries', 'edit');
+  const canDeleteJournal = hasPermission(session, 'journal_entries', 'delete');
+  const canUsePosJournal = hasPermission(session, 'journal_entries', 'pos');
   
   const isLight = false;
+
+  useEffect(() => {
+    if (!canUsePosJournal && viewMode === 'pos') {
+      setViewMode('full');
+      try { localStorage.setItem('journal.viewMode', 'full'); } catch (e) {}
+    }
+  }, [canUsePosJournal, viewMode]);
 
   useEffect(() => {
     const journalController = new AbortController();
@@ -671,6 +685,7 @@ export default function JournalEntries() {
           </div>
 
           <div className="flex gap-2">
+            {canDeleteJournal ? (
             <button
               onClick={handleResetToDebtsOnly}
               disabled={resetKeepDebtsLoading}
@@ -685,6 +700,7 @@ export default function JournalEntries() {
               <Trash2 size={17} />
               <span>{resetKeepDebtsLoading ? 'جارِ الحذف...' : 'حذف الكل مع إبقاء الذمم'}</span>
             </button>
+            ) : null}
 
             <button
               onClick={fetchJournalEntries}
@@ -699,6 +715,7 @@ export default function JournalEntries() {
             >
               <RefreshCw size={18} />
             </button>
+            {canCreateJournal ? (
             <button
               onClick={() => {
                 setEditingEntry(null);
@@ -714,6 +731,7 @@ export default function JournalEntries() {
               <Plus size={18} />
               <span>قيد جديد</span>
             </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -721,6 +739,7 @@ export default function JournalEntries() {
       {/* 💳 POS / Full View Toggle */}
       <div className="mb-4 flex items-center gap-2" data-testid="journal-view-mode-toggle">
         <span className="text-xs text-slate-400">العرض:</span>
+        {canUsePosJournal ? (
         <button
           type="button"
           onClick={() => { setViewMode('pos'); try { localStorage.setItem('journal.viewMode','pos'); } catch (e) {} }}
@@ -733,6 +752,7 @@ export default function JournalEntries() {
         >
           💳 POS الذكي
         </button>
+        ) : null}
         <button
           type="button"
           onClick={() => { setViewMode('full'); try { localStorage.setItem('journal.viewMode','full'); } catch (e) {} }}
@@ -769,36 +789,7 @@ export default function JournalEntries() {
       {viewMode === 'full' ? (
         <>
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {/* AI Assistant Card */}
-        <div 
-          className="col-span-2 lg:col-span-1 rounded-2xl p-5 border backdrop-blur-xl"
-          style={{ 
-            background: 'linear-gradient(145deg, rgba(8,47,73,0.85) 0%, rgba(15,23,42,0.95) 100%)',
-            boxShadow: '0 20px 28px -20px rgba(14,165,233,0.55), inset 0 1px 0 rgba(255,255,255,0.10)',
-            borderColor: 'rgba(56,189,248,0.35)',
-            backdropFilter: styles.cardBlur
-          }}
-          data-testid="journal-ai-card"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}
-            >
-              <TrendingUp size={24} className="text-white" />
-            </div>
-            <div>
-              <p className="text-white/60 text-xs uppercase tracking-wide">المساعد المالي</p>
-              <p className="text-white font-bold">أبو فهد</p>
-            </div>
-          </div>
-          <div className="bg-white/10 rounded-xl p-3" data-testid="journal-ai-summary">
-            <p className="text-white/90 text-sm leading-relaxed">
-              لديك {stats.total} قيد محاسبي ({stats.manual} يدوي)، إجمالي الحركات {formatCurrency(stats.totalAmount)}
-            </p>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
 
         {/* Stat Cards */}
         {[
@@ -1019,33 +1010,39 @@ export default function JournalEntries() {
                         >
                           <Eye size={16} className="text-blue-300" />
                         </button>
-                        <button
-                          onClick={() => handleQuickEditParty(entry)}
-                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                          title="تعديل طرف العملية"
-                          data-testid={`entry-card-edit-party-${entry.id}`}
-                        >
-                          <User size={16} className="text-cyan-300" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingEntry(entry);
-                            setShowEntryForm(true);
-                          }}
-                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                          title="تعديل"
-                          data-testid={`entry-card-edit-${entry.id}`}
-                        >
-                          <Pencil size={16} className="text-amber-300" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(entry)}
-                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                          title="حذف"
-                          data-testid={`entry-card-delete-${entry.id}`}
-                        >
-                          <Trash2 size={16} className="text-rose-300" />
-                        </button>
+                        {canEditJournal ? (
+                          <button
+                            onClick={() => handleQuickEditParty(entry)}
+                            className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                            title="تعديل طرف العملية"
+                            data-testid={`entry-card-edit-party-${entry.id}`}
+                          >
+                            <User size={16} className="text-cyan-300" />
+                          </button>
+                        ) : null}
+                        {canEditJournal ? (
+                          <button
+                            onClick={() => {
+                              setEditingEntry(entry);
+                              setShowEntryForm(true);
+                            }}
+                            className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                            title="تعديل"
+                            data-testid={`entry-card-edit-${entry.id}`}
+                          >
+                            <Pencil size={16} className="text-amber-300" />
+                          </button>
+                        ) : null}
+                        {canDeleteJournal ? (
+                          <button
+                            onClick={() => setDeleteConfirm(entry)}
+                            className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                            title="حذف"
+                            data-testid={`entry-card-delete-${entry.id}`}
+                          >
+                            <Trash2 size={16} className="text-rose-300" />
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -1117,14 +1114,16 @@ export default function JournalEntries() {
                           <p className="text-sm truncate" style={{ color: styles.textPrimary }} data-testid={`entry-row-party-${entry.id}`}>
                             طرف العملية: {entry.party_label || 'مفتوح'}
                           </p>
-                          <button
-                            onClick={() => handleQuickEditParty(entry)}
-                            className="p-1.5 rounded-md hover:bg-white/10"
-                            title="تعديل طرف العملية"
-                            data-testid={`entry-row-party-edit-${entry.id}`}
-                          >
-                            <Pencil size={13} className="text-cyan-300" />
-                          </button>
+                          {canEditJournal ? (
+                            <button
+                              onClick={() => handleQuickEditParty(entry)}
+                              className="p-1.5 rounded-md hover:bg-white/10"
+                              title="تعديل طرف العملية"
+                              data-testid={`entry-row-party-edit-${entry.id}`}
+                            >
+                              <Pencil size={13} className="text-cyan-300" />
+                            </button>
+                          ) : null}
                         </div>
                         <p className="text-xs" style={{ color: styles.textMuted }} data-testid={`entry-row-vehicle-${entry.id}`}>
                           المركبة: {entry.vehicle_plate || 'غير محدد'}
@@ -1172,25 +1171,29 @@ export default function JournalEntries() {
                         >
                           <Eye size={16} style={{ color: styles.textSecondary }} />
                         </button>
-                        <button
-                          onClick={() => {
-                            setEditingEntry(entry);
-                            setShowEntryForm(true);
-                          }}
-                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                          title="تعديل"
-                          data-testid={`edit-btn-${entry.id}`}
-                        >
-                          <Pencil size={16} className="text-amber-300" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(entry)}
-                          className="p-2 rounded-lg transition-colors hover:bg-white/10"
-                          title="حذف"
-                          data-testid={`delete-btn-${entry.id}`}
-                        >
-                          <Trash2 size={16} className="text-rose-300" />
-                        </button>
+                        {canEditJournal ? (
+                          <button
+                            onClick={() => {
+                              setEditingEntry(entry);
+                              setShowEntryForm(true);
+                            }}
+                            className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                            title="تعديل"
+                            data-testid={`edit-btn-${entry.id}`}
+                          >
+                            <Pencil size={16} className="text-amber-300" />
+                          </button>
+                        ) : null}
+                        {canDeleteJournal ? (
+                          <button
+                            onClick={() => setDeleteConfirm(entry)}
+                            className="p-2 rounded-lg transition-colors hover:bg-white/10"
+                            title="حذف"
+                            data-testid={`delete-btn-${entry.id}`}
+                          >
+                            <Trash2 size={16} className="text-rose-300" />
+                          </button>
+                        ) : null}
                         <button
                           onClick={() => handlePrintInvoice(entry)}
                               className="p-2 rounded-lg transition-colors hover:bg-white/10"

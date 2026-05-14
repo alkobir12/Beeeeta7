@@ -94,21 +94,21 @@
         "view": true
       },
       "vehicles": {
-        "view": true,
-        "create": true,
-        "edit": true,
+        "view": false,
+        "create": false,
+        "edit": false,
         "delete": false
       },
       "customers": {
-        "view": true,
-        "create": true,
-        "edit": true,
+        "view": false,
+        "create": false,
+        "edit": false,
         "delete": false
       },
       "invoices": {
-        "view": true,
-        "create": true,
-        "edit": true,
+        "view": false,
+        "create": false,
+        "edit": false,
         "delete": false
       },
       "debts": {
@@ -116,8 +116,8 @@
         "settle": true
       },
       "inventory": {
-        "view": true,
-        "create": true,
+        "view": false,
+        "create": false,
         "edit": false,
         "delete": false
       },
@@ -135,13 +135,32 @@
       },
       "settings": {
         "view": false
+      },
+      "operations": {
+        "view": false,
+        "settle": false,
+        "edit": false,
+        "delete": false
+      },
+      "journal_entries": {
+        "view": true,
+        "create": true,
+        "edit": true,
+        "delete": false,
+        "pos": true
+      },
+      "archive": {
+        "view": true,
+        "create": true,
+        "edit": true,
+        "delete": false
       }
     },
     "id": "dde5fac4-fa9e-42a1-a16c-4c2bbef61dac",
     "createdAt": "2025-12-08T08:25:06.676970",
     "lastLogin": null,
     "isActive": true,
-    "guidanceEnabled": false
+    "guidanceEnabled": true
   },
   {
     "name": "مستخدم اختبار",

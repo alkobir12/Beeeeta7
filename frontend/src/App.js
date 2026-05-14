@@ -1,12 +1,13 @@
 import React, { lazy, Suspense } from "react";
 import "./App.css"
 import "./i18n"; // Initialize i18next
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
 import { ThemeProvider } from './contexts/ThemeContext';
 import { queryClient } from './queryClient';
+import { getFirstAllowedRoute, hasPermission, resolveRoutePermission } from './utils/permissions';
 
 // Eager load critical pages
 import Dashboard from "./pages/Dashboard";
@@ -71,6 +72,7 @@ const getSessionFromCookie = () => {
 };
 
 const Protected = ({ children }) => {
+  const location = useLocation();
   const readSession = () => {
     // أولوية القراءة من الكوكي
     const fromCookie = getSessionFromCookie();
@@ -103,6 +105,17 @@ const Protected = ({ children }) => {
   if (!session) {
     return <Login />;
   }
+
+  const routePermission = resolveRoutePermission(location.pathname);
+  if (!routePermission && location.pathname !== '/') {
+    const fallbackPath = getFirstAllowedRoute(session);
+    return <Navigate to={fallbackPath} replace />;
+  }
+  if (routePermission && !hasPermission(session, routePermission.module, routePermission.action)) {
+    const fallbackPath = getFirstAllowedRoute(session);
+    return <Navigate to={fallbackPath === location.pathname ? '/login' : fallbackPath} replace />;
+  }
+
   return children;
 };
 
@@ -119,7 +132,6 @@ function App() {
                 <Route path="/approval/:token" element={<ApprovalPublic />} />
                 <Route path="/report/:token" element={<ReportPublic />} />
                 <Route path="/track/:trackingId" element={<CustomerTracking />} />
-                <Route path="*" element={<Dashboard />} />
 
 
                 <Route
@@ -170,6 +182,8 @@ function App() {
                   <Route path="ai-financial" element={<AIFinancial />} />
                   <Route path="system-audit" element={<SystemAudit />} />
                   <Route path="moltbot" element={<MoltBot />} />
+
+                  <Route path="*" element={<Dashboard />} />
 
                   
                 </Route>

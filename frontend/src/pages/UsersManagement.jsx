@@ -24,7 +24,7 @@ const ROLE_OPTIONS = Object.entries(ROLE_DEFINITIONS).map(([key, value]) => ({
   label: value?.name || key,
 }));
 
-const LINKED_VIEW_MODULES = ['work_orders', 'reports'];
+const LINKED_VIEW_MODULES = [];
 
 const UsersManagement = () => {
   const { toast } = useToast();
@@ -178,7 +178,7 @@ const UsersManagement = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">المستخدمين والصلاحيات</h1>
-            <p className="text-gray-500 mt-1">إدارة فريق العمل وتحديد الصلاحيات</p>
+            <p className="text-gray-500 mt-1">إدارة فريق العمل وتحديد صلاحية كل صفحة ووظائفها بدقة.</p>
           </div>
           <button onClick={() => setShowModal(true)} className="apple-button flex items-center gap-2" data-testid="users-add-button">
             <Plus size={18} />
@@ -313,7 +313,7 @@ const UsersManagement = () => {
                     الصلاحيات
                   </h3>
                   <p className="text-xs text-amber-700 mb-3" data-testid="users-linked-permissions-note">
-                    ملاحظة: صلاحية عرض العمليات ودفتر الأستاذ مترابطة ولا يمكن فصلها.
+                    اختر الصفحات والوظائف المسموحة فقط؛ الصفحات غير المصرح بها تختفي من القائمة ولا تُفتح بالرابط المباشر.
                   </p>
                   <div className="grid grid-cols-1 gap-3">
                     {MODULE_DEFINITIONS.map((module) => (

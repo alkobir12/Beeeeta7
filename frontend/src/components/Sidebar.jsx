@@ -24,13 +24,12 @@ import {
   BookOpen,
   Truck,
   Bot,
-  Lock
 } from 'lucide-react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import LanguageToggleButton from './LanguageToggleButton';
 import { resolveBackendBase } from '../utils/backendBase';
-import { hasPermission } from '../utils/permissions';
+import { hasPermission, resolveRoutePermission } from '../utils/permissions';
 import { readRecentPages, clearRecentPages } from '../hooks/useRecentPages';
 import { Clock } from 'lucide-react';
 
@@ -61,9 +60,9 @@ const Sidebar = ({
 
   const MENU_ITEMS = [
     { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, enabled: true, permission: { module: 'dashboard', action: 'view' } },
-    { path: '/operations', label: t('nav.operations'), icon: Receipt, enabled: true, permission: { module: 'work_orders', action: 'view' } },
+    { path: '/operations', label: t('nav.operations'), icon: Receipt, enabled: true, permission: { module: 'operations', action: 'view' } },
     { path: '/debts-followup', label: '📲 متابعة الذمم والتحصيل', icon: DollarSign, enabled: true, permission: { module: 'debts', action: 'view' } },
-    { path: '/archive', label: t('nav.archive'), icon: Archive, enabled: true, permission: { module: 'vehicles', action: 'view' } },
+    { path: '/archive', label: t('nav.archive'), icon: Archive, enabled: true, permission: { module: 'archive', action: 'view' } },
     { path: '/customers', label: t('nav.customers'), icon: Users, enabled: true, permission: { module: 'customers', action: 'view' } },
     { path: '/technicians', label: t('nav.technicians'), icon: Users, enabled: true, permission: { module: 'users', action: 'view' } },
     {
@@ -88,7 +87,7 @@ const Sidebar = ({
       children: [
         { path: '/accounting/chart-of-accounts', label: t('nav.chart_of_accounts'), enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/accounting/comprehensive', label: `📊 ${t('nav.financial_statements')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
-        { path: '/accounting/journal-entries', label: `📖 ${t('nav.journal')}`, enabled: true, permission: { module: 'reports', action: 'view' } },
+        { path: '/accounting/journal-entries', label: `📖 ${t('nav.journal')}`, enabled: true, permission: { module: 'journal_entries', action: 'view' } },
         { path: '/accounting/firewall', label: `🛡️ ${i18n.language === 'ar' ? 'جدار حماية المحاسبة' : 'Accounting Firewall'}`, enabled: true, permission: { module: 'reports', action: 'view' } },
         { path: '/finance/taxes', label: t('nav.taxes'), enabled: true, permission: { module: 'reports', action: 'view' } },
         // المساعد الذكي متاح عبر البوت العائم — أُزيل من القائمة لتخفيف الموقع
@@ -267,7 +266,10 @@ const Sidebar = ({
     const canAccessItem = !item.permission || hasPermission(session, item.permission.module, item.permission.action);
 
     if (item.group && item.children) {
-      const visibleChildren = item.children.filter((child) => child.enabled !== false);
+      const visibleChildren = item.children.filter((child) => {
+        if (child.enabled === false) return false;
+        return !child.permission || hasPermission(session, child.permission.module, child.permission.action);
+      });
 
       if (!visibleChildren.length) return null;
 
@@ -310,18 +312,16 @@ const Sidebar = ({
             <div className="mt-1 space-y-0.5" style={{ paddingRight: '0.5rem', paddingLeft: '0.25rem' }}>
               {visibleChildren.map((child, childIndex) => {
                 const isActive = location.pathname === child.path;
-                const childCanAccess = !child.permission || hasPermission(session, child.permission.module, child.permission.action);
                 return (
                   <button
                     key={childIndex}
-                    onClick={() => { if (childCanAccess) handleNavigate(child.path); }}
-                    className={`sidebar-item w-full text-sm ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-300'} ${childCanAccess ? '' : 'opacity-60 cursor-not-allowed'}`}
+                    onClick={() => handleNavigate(child.path)}
+                    className={`sidebar-item w-full text-sm ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-300'}`}
                     style={{ borderRight: isActive ? '3px solid rgba(56,189,248,0.7)' : '3px solid transparent', borderRadius: '12px' }}
                     data-testid={`sidebar-item-${child.path.replace(/\//g, '-')}`}
                     title={child.label}
                   >
                     <span className="truncate">{child.label}</span>
-                    {!childCanAccess && <Lock size={12} className="mr-auto text-amber-300" />}
                   </button>
                 );
               })}
@@ -341,17 +341,15 @@ const Sidebar = ({
               <div className="space-y-1">
                 {visibleChildren.map((child, childIndex) => {
                   const isActive = location.pathname === child.path;
-                  const childCanAccess = !child.permission || hasPermission(session, child.permission.module, child.permission.action);
                   return (
                     <button
                       key={childIndex}
                       type="button"
-                      onClick={() => { if (childCanAccess) handleNavigate(child.path); }}
-                      className={`sidebar-item w-full ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-200'} ${childCanAccess ? '' : 'opacity-60 cursor-not-allowed'}`}
+                      onClick={() => handleNavigate(child.path)}
+                      className={`sidebar-item w-full ${isActive ? 'sidebar-item-active active' : '!bg-transparent hover:!bg-white/8 !text-slate-200'}`}
                       data-testid={`sidebar-collapsed-item-${child.path.replace(/\//g, '-')}`}
                     >
                       <span className="truncate">{child.label}</span>
-                      {!childCanAccess && <Lock size={12} className="mr-auto text-amber-300" />}
                     </button>
                   );
                 })}
@@ -362,18 +360,20 @@ const Sidebar = ({
       );
     }
 
+    if (!canAccessItem) return null;
+
     const Icon = item.icon || FileText;
     const isActive = location.pathname === item.path;
 
     return (
       <button
         key={index}
-        onClick={() => { if (canAccessItem) handleNavigate(item.path); }}
+        onClick={() => handleNavigate(item.path)}
         className={`sidebar-item w-full rounded-2xl px-3 py-2 text-[0.9rem] flex items-center gap-3 transition-colors ${isCollapsed ? '!justify-center !px-0' : ''} ${
           isActive
             ? 'sidebar-item-active active'
             : 'text-slate-300 hover:bg-white/8 hover:text-slate-50'
-        } ${canAccessItem ? '' : 'opacity-60 cursor-not-allowed'}`}
+        }`}
         data-testid={`sidebar-item-${item.path.replace(/\//g, '-') || 'dashboard'}`}
         title={item.label}
       >
@@ -382,7 +382,6 @@ const Sidebar = ({
           className={isActive ? 'text-white' : 'text-slate-400'}
         />
         {!isCollapsed && <span className="truncate">{item.label}</span>}
-        {!isCollapsed && !canAccessItem && <Lock size={12} className="mr-auto text-amber-300" />}
       </button>
     );
   };
@@ -454,7 +453,10 @@ const Sidebar = ({
                 </button>
               </div>
               <ul className="space-y-0.5">
-                {recentPages.map((p) => (
+                {recentPages.filter((p) => {
+                  const rule = resolveRoutePermission(p.path);
+                  return !rule || hasPermission(session, rule.module, rule.action);
+                }).map((p) => (
                   <li key={p.path}>
                     <button
                       type="button"

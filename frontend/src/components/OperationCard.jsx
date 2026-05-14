@@ -375,6 +375,8 @@ export default function OperationCard({
   const canConfirmCreditPayment = isCredit
     && remainingBalance > 0.009
     && !['paid', 'paid_full', 'full', 'settled'].includes(paymentStatus);
+  const canEditOperation = typeof onEditInForm === 'function' || typeof onUpdateItems === 'function';
+  const canDeleteOperation = typeof onDelete === 'function';
   const paymentStatusLabel = labelFromMap(paymentStatus, PAYMENT_STATUS_LABELS, '-');
   const paymentMethodLabel = labelFromMap(paymentMethod, PAYMENT_METHOD_LABELS, '-');
   const visitDisplay = resolveVisitDisplay(operation, 'زيارة مرتبطة');
@@ -529,7 +531,7 @@ export default function OperationCard({
 
       <div className="px-4 pb-3" onClick={stop}>
         <div className="flex flex-wrap items-center justify-end gap-1.5" data-testid={`operation-card-actions-${operation.id}`}>
-          {!editing ? (
+          {!editing && canEditOperation ? (
             <button
               type="button"
               className="apple-button-secondary h-8 px-2.5 text-[11px]"
@@ -549,7 +551,7 @@ export default function OperationCard({
                 {t('common.edit') || 'تعديل'}
               </span>
             </button>
-          ) : (
+          ) : editing ? (
             <>
               <button
                 type="button"
@@ -588,7 +590,7 @@ export default function OperationCard({
                 </span>
               </button>
             </>
-          )}
+          ) : null}
 
           <button
             type="button"
@@ -618,7 +620,7 @@ export default function OperationCard({
             </button>
           ) : null}
 
-          {canConfirmCreditPayment ? (
+          {canConfirmCreditPayment && typeof onConfirmCreditPayment === 'function' ? (
             <button
               type="button"
               className="apple-button-secondary h-8 px-2.5 text-[11px]"
@@ -630,19 +632,21 @@ export default function OperationCard({
             </button>
           ) : null}
 
-          <button
-            type="button"
-            className="h-8 px-2.5 text-[11px] rounded-lg border border-rose-500/25 bg-rose-500/10 text-rose-200 hover:bg-rose-500/15 transition-colors"
-            onClick={() => onDelete(operation)}
-            disabled={isDeleting}
-            title={t('common.delete') || 'حذف'}
-            data-testid={`operation-card-delete-${operation.id}`}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <Trash2 size={12} />
-              {isDeleting ? (t('common.loading') || '...') : (t('common.delete') || 'حذف')}
-            </span>
-          </button>
+          {canDeleteOperation ? (
+            <button
+              type="button"
+              className="h-8 px-2.5 text-[11px] rounded-lg border border-rose-500/25 bg-rose-500/10 text-rose-200 hover:bg-rose-500/15 transition-colors"
+              onClick={() => onDelete(operation)}
+              disabled={isDeleting}
+              title={t('common.delete') || 'حذف'}
+              data-testid={`operation-card-delete-${operation.id}`}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <Trash2 size={12} />
+                {isDeleting ? (t('common.loading') || '...') : (t('common.delete') || 'حذف')}
+              </span>
+            </button>
+          ) : null}
         </div>
       </div>
 

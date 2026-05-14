@@ -22,7 +22,34 @@ def _normalize_permissions(raw_permissions):
         return {}
 
     if not any(key.startswith("can") for key in raw_permissions.keys()):
-        return raw_permissions
+        normalized = dict(raw_permissions)
+        if "operations" not in normalized and isinstance(raw_permissions.get("work_orders"), dict):
+            work_orders = raw_permissions.get("work_orders") or {}
+            debts = raw_permissions.get("debts") or {}
+            normalized["operations"] = {
+                "view": work_orders.get("view") is True,
+                "settle": work_orders.get("edit") is True or debts.get("settle") is True,
+                "edit": work_orders.get("edit") is True,
+                "delete": work_orders.get("delete") is True,
+            }
+        if "journal_entries" not in normalized and isinstance(raw_permissions.get("reports"), dict):
+            reports = raw_permissions.get("reports") or {}
+            normalized["journal_entries"] = {
+                "view": reports.get("view") is True,
+                "create": reports.get("create") is True,
+                "edit": reports.get("edit") is True,
+                "delete": reports.get("delete") is True,
+                "pos": reports.get("view") is True,
+            }
+        if "archive" not in normalized and isinstance(raw_permissions.get("vehicles"), dict):
+            vehicles = raw_permissions.get("vehicles") or {}
+            normalized["archive"] = {
+                "view": vehicles.get("view") is True,
+                "create": vehicles.get("create") is True,
+                "edit": vehicles.get("edit") is True,
+                "delete": vehicles.get("delete") is True,
+            }
+        return normalized
 
     normalized = {}
 
@@ -36,14 +63,17 @@ def _normalize_permissions(raw_permissions):
         enable("dashboard", ["view"])
     if raw_permissions.get("canManageVehicles"):
         enable("vehicles", ["view", "create", "edit", "delete"])
+        enable("archive", ["view", "create", "edit", "delete"])
     if raw_permissions.get("canManageCustomers"):
         enable("customers", ["view", "create", "edit", "delete"])
     if raw_permissions.get("canManageParts"):
         enable("inventory", ["view", "create", "edit", "delete"])
     if raw_permissions.get("canManageServices"):
         enable("work_orders", ["view", "create", "edit", "delete"])
+        enable("operations", ["view", "settle", "edit", "delete"])
     if raw_permissions.get("canViewReports"):
         enable("reports", ["view"])
+        enable("journal_entries", ["view", "create", "edit", "delete", "pos"])
     if raw_permissions.get("canManageFinance"):
         enable("debts", ["view", "settle"])
         enable("invoices", ["view", "create", "edit", "delete"])

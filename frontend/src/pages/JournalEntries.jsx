@@ -260,6 +260,8 @@ export default function JournalEntries() {
           return {
           id: entry?.id || String(index),
           entry_number: `JE-${String(index + 1).padStart(4, '0')}`,
+          date: entry?.date,
+          total: Number(entry?.total || 0),
           entry_date: entry?.date,
           description: sanitizeEntryText(entry?.description || ''),
           reference_type: entry?.source === 'operation'
@@ -269,12 +271,16 @@ export default function JournalEntries() {
           total_debit: Number(entry?.total || 0),
           total_credit: Number(entry?.total || 0),
           lines: rawLines.map((line) => ({
+            account: resolveCurrentAccountCode(line?.account, line?.account_name, coaAccounts),
+            code: resolveCurrentAccountCode(line?.account || line?.code, line?.account_name || line?.name, coaAccounts),
             account_code: resolveCurrentAccountCode(line?.account, line?.account_name, coaAccounts),
-            account_name: line?.account_name || '',
+            account_name: line?.account_name || line?.name || '',
+            name: line?.account_name || line?.name || '',
             debit: Number(line?.debit || 0),
             credit: Number(line?.credit || 0)
           })),
           vehicle_plate: entry?.vehicle_label || entry?.vehicle_plate,
+          vehicle_label: entry?.vehicle_label || entry?.vehicle_plate,
           customer_name: entry?.party_label || entry?.customer_name,
           party_label: entry?.party_label || 'مفتوح',
           party_type: entry?.party_type || 'open',

@@ -16,6 +16,7 @@ import {
   UserRound,
   Wallet,
 } from 'lucide-react';
+import { PAYMENT_METHOD_LABELS, SOURCE_LABELS, labelFromMap } from '../utils/displayLabels';
 
 const formatSAR = (value) => (
   `${new Intl.NumberFormat('ar-SA', {
@@ -40,8 +41,31 @@ const stripTokens = (text = '') => String(text || '')
   .replace(/\[PARTY:[^\]]+\]/gi, '')
   .replace(/\[PARTY_TYPE:[^\]]+\]/gi, '')
   .replace(/\[VEHICLE_REF:[^\]]+\]/gi, '')
+  .replace(/\[VISIT:[^\]]+\]/gi, '')
+  .replace(/\[IDEMP:[^\]]+\]/gi, '')
   .replace(/\s{2,}/g, ' ')
   .trim();
+
+const resolveRecentParty = (entry = {}) => (
+  entry.party_label || entry.partyLabel || extractToken(entry.description, 'PARTY') || 'مفتوح'
+);
+
+const resolveRecentVehicle = (entry = {}) => (
+  entry.vehicle_label || entry.vehicleLabel || entry.vehicle_plate || entry.vehiclePlate || extractToken(entry.description, 'VEHICLE_REF') || 'غير محددة'
+);
+
+const recentEntryLinesSummary = (entry = {}) => {
+  const lines = normalizeArray(entry.lines).slice(0, 3);
+  if (!lines.length) return '';
+  return lines.map((line) => {
+    const account = line.account_name || line.name || line.account || line.code || 'حساب';
+    const debit = Number(line.debit || 0);
+    const credit = Number(line.credit || 0);
+    if (debit > 0) return `${account}: مدين ${formatSAR(debit)}`;
+    if (credit > 0) return `${account}: دائن ${formatSAR(credit)}`;
+    return account;
+  }).join(' • ');
+};
 
 const PAYMENT_METHODS = [
   { key: 'cash', label: 'نقدي', icon: Banknote },
@@ -227,6 +251,7 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
   const [lookupsLoading, setLookupsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedToast, setSavedToast] = useState(null);
+  const [localRecentEntries, setLocalRecentEntries] = useState([]);
 
   const accountRefs = useMemo(() => {
     const cash = pickAccount(accounts, [
@@ -369,6 +394,34 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
       mounted = false;
     };
   }, [apiBase]);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadRecentEntries = async () => {
+      if (normalizeArray(recentEntries).length > 0) {
+        setLocalRecentEntries([]);
+        return;
+      }
+      try {
+        const response = await axios.get(`${apiBase}/finance/journal-entries`, {
+          params: { workshop_id: workshopId, limit: 5 },
+        });
+        if (!mounted) return;
+        const rows = normalizeArray(response?.data?.data || response?.data);
+        setLocalRecentEntries(rows);
+      } catch {
+        if (mounted) setLocalRecentEntries([]);
+      }
+    };
+    loadRecentEntries();
+    return () => {
+      mounted = false;
+    };
+  }, [apiBase, workshopId, recentEntries]);
+
+  const effectiveRecentEntries = normalizeArray(recentEntries).length > 0
+    ? normalizeArray(recentEntries)
+    : normalizeArray(localRecentEntries);
 
   const partyOptions = activeTemplate?.partyRole === 'supplier' ? suppliers : customers;
 
@@ -1170,13 +1223,13 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
             آخر القيود
           </div>
 
-          {normalizeArray(recentEntries).length === 0 ? (
+          {effectiveRecentEntries.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-white/10 bg-black/10 px-4 py-8 text-center text-sm text-slate-500" data-testid="pos-recent-entries-empty">
               لا توجد قيود سابقة للنسخ.
             </div>
           ) : (
             <div className="space-y-2 max-h-[720px] overflow-y-auto pr-1">
-              {normalizeArray(recentEntries).slice(0, 5).map((entry, index) => (
+              {effectiveRecentEntries.slice(0, 5).map((entry, index) => (
                 <div
                   key={entry?.id || `recent-${index}`}
                   className="rounded-2xl border border-white/10 bg-black/15 p-3"
@@ -1184,11 +1237,27 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold text-slate-100" title={entry?.description || ''}>
-                        {stripTokens(entry?.description || 'قيد')}
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1 text-sm font-semibold leading-6 text-slate-100" title={stripTokens(entry?.description || '')}>
+                          {stripTokens(entry?.description || 'قيد')}
+                        </div>
+                        <div
+                          className="shrink-0 rounded-full border border-emerald-300/30 bg-emerald-500/15 px-3 py-1 text-sm font-bold tabular-nums text-emerald-100"
+                          data-testid={`pos-recent-entry-amount-${entry?.id || index}`}
+                        >
+                          {formatSAR(entry?.total)}
+                        </div>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
                         <span>{entry?.date || ''}</span>
+                        <span>•</span>
+                        <span>{labelFromMap(entry?.source, SOURCE_LABELS, 'قيد يومية')}</span>
+                        {(entry?.payment_method || entry?.paymentMethod || entry?.payment_method_label_ar) ? (
+                          <>
+                            <span>•</span>
+                            <span>{entry?.payment_method_label_ar || labelFromMap(entry?.payment_method || entry?.paymentMethod, PAYMENT_METHOD_LABELS, '')}</span>
+                          </>
+                        ) : null}
                       </div>
                     </div>
 
@@ -1204,11 +1273,16 @@ export default function SmartPOSJournal({ apiBase, workshopId, accounts = [], re
 
                   <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-slate-300">
                     <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                      الطرف: {extractToken(entry?.description || '', 'PARTY') || 'مفتوح'}
+                      الطرف: {resolveRecentParty(entry)}
                     </div>
                     <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                      المركبة: {extractToken(entry?.description || '', 'VEHICLE_REF') || 'غير محددة'}
+                      المركبة: {resolveRecentVehicle(entry)}
                     </div>
+                    {recentEntryLinesSummary(entry) ? (
+                      <div className="rounded-xl border border-cyan-300/15 bg-cyan-500/10 px-3 py-2 text-cyan-50" data-testid={`pos-recent-entry-lines-${entry?.id || index}`}>
+                        القيد: {recentEntryLinesSummary(entry)}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))}

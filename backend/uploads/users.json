@@ -106,10 +106,10 @@
         "delete": false
       },
       "invoices": {
-        "view": false,
-        "create": false,
-        "edit": false,
-        "delete": false
+        "view": true,
+        "create": true,
+        "edit": true,
+        "delete": true
       },
       "debts": {
         "view": true,
@@ -122,7 +122,7 @@
         "delete": false
       },
       "work_orders": {
-        "view": true,
+        "view": false,
         "create": false,
         "edit": false,
         "delete": false

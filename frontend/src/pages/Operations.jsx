@@ -288,8 +288,8 @@ const Operations = () => {
         hint: 'حدد طريقة السداد أو أرفق إيصالًا إن وجد.',
         done: Boolean(form.paymentMethod),
       },
-    ]
-  ), [form.accountingAccountId, form.items.length, form.paymentMethod]);
+    ].filter((step) => step.id !== 'payment' || canSettleOperations)
+  ), [form.accountingAccountId, form.items.length, form.paymentMethod, canSettleOperations]);
 
   const operationsSubtitle = form.operationKind === OPERATION_KIND_WORKSHOP
     ? 'أنت تنشئ عملية ورشة تشغيلية مستقلة عن المركبات. راجع القيد قبل الحفظ.'

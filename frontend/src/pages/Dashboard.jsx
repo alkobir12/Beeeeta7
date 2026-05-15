@@ -435,10 +435,10 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid - Responsive expandable widgets */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-8">
+        <div className="dashboard-stats-grid grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-8">
           {/* إجمالي المركبات */}
           <div
-            className="dash-widget-shell"
+            className="dash-widget-shell dashboard-stat-card"
             style={{ 
               backgroundColor: styles.cardBg, 
               border: `1px solid ${styles.cardBorder}`,
@@ -508,7 +508,7 @@ const Dashboard = () => {
 
           {/* مركبات قيد العمل */}
           <div
-            className="dash-widget-shell"
+            className="dash-widget-shell dashboard-stat-card"
             style={{ 
               backgroundColor: styles.cardBg, 
               border: `1px solid ${styles.cardBorder}`,
@@ -553,7 +553,7 @@ const Dashboard = () => {
 
           {/* جاهزة للتسليم */}
           <div
-            className="dash-widget-shell"
+            className="dash-widget-shell dashboard-stat-card"
             style={{ 
               backgroundColor: styles.cardBg, 
               border: `1px solid ${styles.cardBorder}`,
@@ -598,7 +598,7 @@ const Dashboard = () => {
 
           {/* الفنيين */}
           <div
-            className="dash-widget-shell"
+            className="dash-widget-shell dashboard-stat-card"
             style={{ 
               backgroundColor: styles.cardBg, 
               border: `1px solid ${styles.cardBorder}`,

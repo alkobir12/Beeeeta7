@@ -384,6 +384,56 @@ body[data-theme="dashPro"] .sidebar-item {
     @apply shadow-xl;
   }
 
+  @media (max-width: 639px) {
+    .dashboard-stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-stats-grid .dashboard-stat-card {
+      aspect-ratio: 1 / 1;
+      max-height: none !important;
+      min-height: 0;
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .dashboard-stats-grid .dashboard-stat-card .dash-widget-top {
+      padding: 0.75rem 0.8rem 0.15rem;
+    }
+
+    .dashboard-stats-grid .dashboard-stat-card .dash-widget-main {
+      padding: 0.15rem 0.8rem;
+    }
+
+    .dashboard-stats-grid .dashboard-stat-card .dash-widget-main > div > div {
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 18px;
+    }
+
+    .dashboard-stats-grid .dashboard-stat-card .dash-widget-bottom {
+      padding: 0.45rem 0.8rem 0.8rem;
+      gap: 0.45rem;
+      align-items: flex-end;
+    }
+
+    .dashboard-stats-grid .dashboard-stat-card .dash-widget-bottom > div {
+      min-width: 0;
+    }
+
+    .dashboard-stats-grid .dashboard-stat-card .dash-widget-bottom span:first-child {
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    .dashboard-stats-grid .dashboard-stat-card[data-expanded="true"] {
+      aspect-ratio: auto;
+      min-height: 9.5rem;
+    }
+  }
+
   /* Emergent-style Input */
   .apple-input {
     @apply h-10 w-full rounded-lg border border-border bg-input px-3 text-base text-foreground transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none placeholder:text-muted-foreground;

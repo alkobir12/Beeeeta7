@@ -94,9 +94,9 @@
         "view": true
       },
       "vehicles": {
-        "view": true,
-        "create": true,
-        "edit": true,
+        "view": false,
+        "create": false,
+        "edit": false,
         "delete": false
       },
       "customers": {
@@ -106,10 +106,10 @@
         "delete": false
       },
       "invoices": {
-        "view": true,
-        "create": true,
-        "edit": true,
-        "delete": true
+        "view": false,
+        "create": false,
+        "edit": false,
+        "delete": false
       },
       "debts": {
         "view": true,
@@ -122,9 +122,9 @@
         "delete": false
       },
       "work_orders": {
-        "view": true,
-        "create": true,
-        "edit": true,
+        "view": false,
+        "create": false,
+        "edit": false,
         "delete": false
       },
       "reports": {

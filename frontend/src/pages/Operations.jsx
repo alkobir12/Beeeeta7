@@ -506,7 +506,7 @@ const Operations = () => {
     queryFn: async () => {
       const params = new URLSearchParams({ limit: '200' });
       if (vehicleIdFromUrl) params.set('vehicle_id', vehicleIdFromUrl);
-      const res = await fetch(`/api/operations?${params.toString()}`, { cache: 'no-store' });
+      const res = await fetch(`${API_URL}/operations?${params.toString()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`operations-fetch-${res.status}`);
       const data = await res.json();
       if (Array.isArray(data)) {
@@ -531,7 +531,7 @@ const Operations = () => {
     operationsBootstrapStartedRef.current = true;
     const params = new URLSearchParams({ limit: '200' });
     if (vehicleIdFromUrl) params.set('vehicle_id', vehicleIdFromUrl);
-    fetch(`/api/operations?${params.toString()}`, { cache: 'no-store' })
+    fetch(`${API_URL}/operations?${params.toString()}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (!Array.isArray(data)) return;
@@ -554,7 +554,7 @@ const Operations = () => {
       try {
         const params = new URLSearchParams({ limit: '200' });
         if (vehicleIdFromUrl) params.set('vehicle_id', vehicleIdFromUrl);
-        const res = await fetch(`/api/operations?${params.toString()}`, { cache: 'no-store' });
+        const res = await fetch(`${API_URL}/operations?${params.toString()}`, { cache: 'no-store' });
         const data = await res.json();
         if (!mounted || !Array.isArray(data)) return;
         setFallbackOperations(data);
@@ -903,7 +903,7 @@ const Operations = () => {
     try {
       const params = new URLSearchParams({ limit: '200' });
       if (vehicleIdFromUrl) params.set('vehicle_id', vehicleIdFromUrl);
-      const res = await fetch(`/api/operations?${params.toString()}`, { cache: 'no-store' });
+      const res = await fetch(`${API_URL}/operations?${params.toString()}`, { cache: 'no-store' });
       const data = await res.json();
       if (!Array.isArray(data)) return;
       setFallbackOperations(data);

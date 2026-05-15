@@ -18,7 +18,7 @@ const Login = () => {
   const warmOperationsCache = async (API_URL) => {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 1500);
+      const timeout = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${API_URL}/operations?limit=200`, { signal: controller.signal });
       clearTimeout(timeout);
       if (!res.ok) return;

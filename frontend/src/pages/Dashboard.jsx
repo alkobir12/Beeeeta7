@@ -106,9 +106,32 @@ const Dashboard = () => {
         withTimeout(technicianAPI.getAll()),
       ]);
 
+      let nextVehicles = vehiclesRes.status === 'fulfilled' && Array.isArray(vehiclesRes.value?.data) ? vehiclesRes.value.data : [];
+      let nextTechnicians = techniciansRes.status === 'fulfilled' && Array.isArray(techniciansRes.value?.data) ? techniciansRes.value.data : [];
+
+      if (!nextVehicles.length) {
+        try {
+          const fallbackRes = await fetch('/api/vehicles', { cache: 'no-store' });
+          const fallbackData = await fallbackRes.json();
+          if (Array.isArray(fallbackData)) nextVehicles = fallbackData;
+        } catch (fallbackError) {
+          // keep empty list
+        }
+      }
+
+      if (!nextTechnicians.length) {
+        try {
+          const fallbackRes = await fetch('/api/technicians', { cache: 'no-store' });
+          const fallbackData = await fallbackRes.json();
+          if (Array.isArray(fallbackData)) nextTechnicians = fallbackData;
+        } catch (fallbackError) {
+          // keep empty list
+        }
+      }
+
       if (isMountedRef.current) {
-        setVehicles(vehiclesRes.status === 'fulfilled' && Array.isArray(vehiclesRes.value?.data) ? vehiclesRes.value.data : []);
-        setTechnicians(techniciansRes.status === 'fulfilled' && Array.isArray(techniciansRes.value?.data) ? techniciansRes.value.data : []);
+        setVehicles(nextVehicles);
+        setTechnicians(nextTechnicians);
       }
 
       // Lazy load AR in background (doesn't block UI)

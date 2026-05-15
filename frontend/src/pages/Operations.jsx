@@ -330,6 +330,8 @@ const Operations = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [activeOperationsTab, setActiveOperationsTab] = useState('workshop');
   const [operationsSearchQuery, setOperationsSearchQuery] = useState('');
+  const [fallbackOperations, setFallbackOperations] = useState([]);
+  const operationsBootstrapStartedRef = useRef(false);
   const [rakanPage, setRakanPage] = useState(1);
   const [workshopPage, setWorkshopPage] = useState(1);
   const [creditReminderDays, setCreditReminderDays] = useState(() => {
@@ -502,12 +504,20 @@ const Operations = () => {
   const operationsQuery = useQuery({
     queryKey: ['operations', workshopId || 'default', vehicleIdFromUrl || 'all'],
     queryFn: async () => {
-      const params = {
-        limit: 200,
-        ...(vehicleIdFromUrl ? { vehicle_id: vehicleIdFromUrl } : {}),
-      };
-      const res = await axios.get(`${API_URL}/operations`, { params });
-      return res.data || [];
+      const params = new URLSearchParams({ limit: '200' });
+      if (vehicleIdFromUrl) params.set('vehicle_id', vehicleIdFromUrl);
+      const res = await fetch(`/api/operations?${params.toString()}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`operations-fetch-${res.status}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        try {
+          localStorage.setItem(operationsCacheKey, JSON.stringify(data));
+          localStorage.setItem(operationsCacheUpdatedAtKey, new Date().toISOString());
+        } catch (e) {
+          // ignore cache write errors
+        }
+      }
+      return data || [];
     },
     staleTime: 30 * 1000,
     refetchOnWindowFocus: false,
@@ -515,14 +525,54 @@ const Operations = () => {
     keepPreviousData: true,
     initialData: cachedOperations.length ? cachedOperations : undefined,
     placeholderData: cachedOperations.length ? cachedOperations : undefined,
-    onSuccess: (data) => {
-      if (typeof window === 'undefined') return;
-      if (Array.isArray(data)) {
-        localStorage.setItem(operationsCacheKey, JSON.stringify(data));
-        localStorage.setItem(operationsCacheUpdatedAtKey, new Date().toISOString());
-      }
-    },
   });
+
+  if (typeof window !== 'undefined' && !fallbackOperations.length && !cachedOperations.length && !operationsBootstrapStartedRef.current) {
+    operationsBootstrapStartedRef.current = true;
+    const params = new URLSearchParams({ limit: '200' });
+    if (vehicleIdFromUrl) params.set('vehicle_id', vehicleIdFromUrl);
+    fetch(`/api/operations?${params.toString()}`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        setFallbackOperations(data);
+        try {
+          localStorage.setItem(operationsCacheKey, JSON.stringify(data));
+          localStorage.setItem(operationsCacheUpdatedAtKey, new Date().toISOString());
+        } catch (e) {
+          // ignore cache write errors
+        }
+      })
+      .catch(() => {
+        operationsBootstrapStartedRef.current = false;
+      });
+  }
+
+  useEffect(() => {
+    let mounted = true;
+    const loadFallbackOperations = async () => {
+      try {
+        const params = new URLSearchParams({ limit: '200' });
+        if (vehicleIdFromUrl) params.set('vehicle_id', vehicleIdFromUrl);
+        const res = await fetch(`/api/operations?${params.toString()}`, { cache: 'no-store' });
+        const data = await res.json();
+        if (!mounted || !Array.isArray(data)) return;
+        setFallbackOperations(data);
+        try {
+          localStorage.setItem(operationsCacheKey, JSON.stringify(data));
+          localStorage.setItem(operationsCacheUpdatedAtKey, new Date().toISOString());
+        } catch (e) {
+          // ignore cache write errors
+        }
+      } catch (e) {
+        if (mounted) setFallbackOperations([]);
+      }
+    };
+    loadFallbackOperations();
+    return () => {
+      mounted = false;
+    };
+  }, [vehicleIdFromUrl, operationsCacheKey, operationsCacheUpdatedAtKey]);
 
   useEffect(() => {
     if (isDeferredDataEnabled) return;
@@ -628,7 +678,7 @@ const Operations = () => {
   );
   const operationsForRanking = (Array.isArray(operationsQuery.data) && operationsQuery.data.length)
     ? operationsQuery.data
-    : cachedOperations;
+    : (cachedOperations.length ? cachedOperations : fallbackOperations);
   const accountUsageStats = useMemo(() => {
     const usage = new Map();
     const lastUsed = new Map();
@@ -846,7 +896,33 @@ const Operations = () => {
     return list.length ? list : vehicleOptions;
   }, [vehicleOptions, form.partnerId]);
   const ops = operationsForRanking;
-  const operationsLoading = operationsQuery.isLoading || operationsQuery.isFetching;
+  const operationsLoading = (!ops.length) && (operationsQuery.isLoading || operationsQuery.isFetching);
+
+  const ensureOperationsLoaded = useCallback(async (force = false) => {
+    if (!force && (ops.length || fallbackOperations.length || cachedOperations.length)) return;
+    try {
+      const params = new URLSearchParams({ limit: '200' });
+      if (vehicleIdFromUrl) params.set('vehicle_id', vehicleIdFromUrl);
+      const res = await fetch(`/api/operations?${params.toString()}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+      setFallbackOperations(data);
+      try {
+        localStorage.setItem(operationsCacheKey, JSON.stringify(data));
+        localStorage.setItem(operationsCacheUpdatedAtKey, new Date().toISOString());
+      } catch (e) {
+        // ignore cache write errors
+      }
+    } catch (e) {
+      // keep existing loading state
+    }
+  }, [ops.length, fallbackOperations.length, cachedOperations.length, vehicleIdFromUrl, operationsCacheKey, operationsCacheUpdatedAtKey]);
+
+  const handleOperationsSearchChange = useCallback((event) => {
+    setOperationsSearchQuery(event.target.value);
+    if (event.target.value.trim()) ensureOperationsLoaded(true);
+    else ensureOperationsLoaded(false);
+  }, [ensureOperationsLoaded]);
   const visits = visitsQuery.data || [];
 
   const vehicleSearchById = useMemo(() => {
@@ -1043,10 +1119,12 @@ const Operations = () => {
   }, [workshopOps, workshopPage]);
 
   const isRakanTabActive = activeOperationsTab === 'rakan';
-  const activeOps = isRakanTabActive ? paginatedRakanOps : paginatedWorkshopOps;
-  const activeOpsTotalCount = isRakanTabActive ? rakanOps.length : workshopOps.length;
-  const activePage = isRakanTabActive ? rakanPage : workshopPage;
-  const activeTotalPages = isRakanTabActive ? rakanTotalPages : workshopTotalPages;
+  const hasOperationsSearch = Boolean(normalizeSearchText(operationsSearchQuery));
+  const searchPageOps = hasOperationsSearch ? searchableOps.slice(0, OPERATIONS_PAGE_SIZE) : [];
+  const activeOps = hasOperationsSearch ? searchPageOps : (isRakanTabActive ? paginatedRakanOps : paginatedWorkshopOps);
+  const activeOpsTotalCount = hasOperationsSearch ? searchableOps.length : (isRakanTabActive ? rakanOps.length : workshopOps.length);
+  const activePage = hasOperationsSearch ? 1 : (isRakanTabActive ? rakanPage : workshopPage);
+  const activeTotalPages = hasOperationsSearch ? 1 : (isRakanTabActive ? rakanTotalPages : workshopTotalPages);
 
   const setActivePage = (nextPage) => {
     if (isRakanTabActive) {
@@ -3380,7 +3458,9 @@ const Operations = () => {
               <input
                 type="text"
                 value={operationsSearchQuery}
-                onChange={(e) => setOperationsSearchQuery(e.target.value)}
+                onFocus={ensureOperationsLoaded}
+                onChange={handleOperationsSearchChange}
+                onInput={handleOperationsSearchChange}
                 placeholder="ابحث بالاسم، رقم الملف، رقم العملية، اللوحة أو البند"
                 className="w-full rounded-2xl border border-white/12 bg-white/10 py-3 pl-4 pr-10 text-sm text-slate-50 placeholder:text-slate-300/70 outline-none transition focus:border-sky-300/70 focus:bg-white/15"
                 data-testid="operations-search-input"

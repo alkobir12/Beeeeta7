@@ -783,6 +783,7 @@ const Dashboard = () => {
                     // التوسيع/الطي يكون بالضغط فقط لتجنب التعليق
                     setExpandedVehicleId(prev => prev === vehicle.id ? null : vehicle.id);
                   }}
+                  data-testid={`dashboard-vehicle-card-${vehicle.id}`}
                 >
                   {/* النقاط الرأسية أعلى اليسار */}
                   <div className="absolute top-5 left-5 flex flex-col gap-1 opacity-60">

@@ -613,11 +613,17 @@ const Operations = () => {
   }, [form.operationKind, rakanBizAccount, workshopBizAccount]);
 
   const rakanBizAccountIds = useMemo(
-    () => new Set((bizAccounts || []).filter((account) => isRakanBusinessAccount(account)).map((account) => String(account.id || account.code || ''))),
+    () => new Set((bizAccounts || [])
+      .filter((account) => isRakanBusinessAccount(account))
+      .map((account) => String(account.id || account.code || '').trim())
+      .filter(Boolean)),
     [bizAccounts]
   );
   const rakanChartAccountIds = useMemo(
-    () => new Set((accounts || []).filter((account) => isRakanChartAccount(account)).map((account) => String(account.id || account.code || ''))),
+    () => new Set((accounts || [])
+      .filter((account) => isRakanChartAccount(account))
+      .map((account) => String(account.id || account.code || '').trim())
+      .filter(Boolean)),
     [accounts]
   );
   const operationsForRanking = (Array.isArray(operationsQuery.data) && operationsQuery.data.length)

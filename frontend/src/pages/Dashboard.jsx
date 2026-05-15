@@ -221,12 +221,6 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
@@ -677,8 +671,18 @@ const Dashboard = () => {
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
-              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+
+              const fallbackEstimatedTotal = (vehicle.parts || []).reduce((sum, item) => {
+                const qty = Number(item.quantity || 1);
+                const price = Number(item.price || 0);
+                return sum + qty * price;
+              }, 0);
+
+              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? fallbackEstimatedTotal ?? 0;
+              const items = [...(vehicle.parts || []), ...(vehicle.services || [])]
+                .map(item => typeof item === 'string' ? { name: item } : item);
+              const fallbackServiceType = getServiceTypeLabel(items);
+              const serviceType = summary.serviceType || fallbackServiceType || 'غير محدد';
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}
@@ -705,7 +709,11 @@ const Dashboard = () => {
                       return;
                     }
                     // التوسيع/الطي يكون بالضغط فقط لتجنب التعليق
+                    const isExpanding = expandedVehicleId !== vehicle.id;
                     setExpandedVehicleId(prev => prev === vehicle.id ? null : vehicle.id);
+                    if (isExpanding) {
+                      loadVehicleSummary(vehicle.id);
+                    }
                   }}
                 >
                   {/* النقاط الرأسية أعلى اليسار */}

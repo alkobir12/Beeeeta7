@@ -61,24 +61,24 @@ body[data-theme="light"] {
 
 /* Dash Pro Mode (Glass Purple) */
 body[data-theme="dashPro"] {
-  --bg-primary: #070a14;
-  --bg-secondary: #0b1020;
-  --bg-surface: rgba(255, 255, 255, 0.06);
-  --bg-card: rgba(255, 255, 255, 0.06);
-  --text-primary: #f8fafc;
-  --text-secondary: rgba(226, 232, 240, 0.78);
-  --text-muted: rgba(148, 163, 184, 0.82);
-  --border-color: rgba(168, 85, 247, 0.18);
-  --border-light: rgba(255, 255, 255, 0.10);
-  --accent-primary: #a855f7;
+  --bg-primary: #f6f7fb;
+  --bg-secondary: #eef3f8;
+  --bg-surface: rgba(255, 255, 255, 0.88);
+  --bg-card: rgba(255, 255, 255, 0.92);
+  --text-primary: #172033;
+  --text-secondary: #516071;
+  --text-muted: #8794a6;
+  --border-color: rgba(15, 23, 42, 0.08);
+  --border-light: rgba(15, 23, 42, 0.06);
+  --accent-primary: #2563eb;
   --accent-success: #10b981;
   --accent-warning: #f59e0b;
   --accent-error: #ef4444;
-  --sidebar-bg: #0b1020;
-  --sidebar-text: rgba(226, 232, 240, 0.80);
-  --sidebar-active: #a855f7;
-  --input-bg: rgba(255, 255, 255, 0.06);
-  --shadow-color: rgba(2, 6, 23, 0.65);
+  --sidebar-bg: #172033;
+  --sidebar-text: rgba(241, 245, 249, 0.84);
+  --sidebar-active: #38bdf8;
+  --input-bg: rgba(255, 255, 255, 0.96);
+  --shadow-color: rgba(15, 23, 42, 0.10);
 }
 
 /* Theme-aware utility classes */

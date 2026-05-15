@@ -51,12 +51,17 @@ const friendlyLabel = (pathname) => {
   return parts.length ? `📄 ${parts[parts.length - 1]}` : '';
 };
 
+const isSafeRecentPage = (page) => {
+  const text = `${page?.path || ''} ${page?.label || ''}`;
+  return !/DOM-CHECK|page-description|\[VISIT:|\[IDEMP:/i.test(text);
+};
+
 export const readRecentPages = () => {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return [];
     const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr.slice(0, MAX_PAGES) : [];
+    return Array.isArray(arr) ? arr.filter(isSafeRecentPage).slice(0, MAX_PAGES) : [];
   } catch (e) {
     return [];
   }
@@ -82,7 +87,7 @@ export const useRecentPagesTracker = () => {
     const existing = readRecentPages();
     // Dedupe: move existing to top, otherwise prepend
     const filtered = existing.filter((p) => p.path !== path);
-    const next = [{ path, label, ts: Date.now() }, ...filtered].slice(0, MAX_PAGES);
+    const next = [{ path, label, ts: Date.now() }, ...filtered].filter(isSafeRecentPage).slice(0, MAX_PAGES);
     writeRecentPages(next);
   }, [location.pathname]);
 };

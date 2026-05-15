@@ -124,7 +124,7 @@ export const themes = {
   dashPro: {
     name: 'داش برو',
     nameEn: 'Dash Pro',
-    mode: 'dark',
+    mode: 'light',
     // الألوان الأساسية
     primary: '#1e40af',
     primaryLight: '#3b82f6',

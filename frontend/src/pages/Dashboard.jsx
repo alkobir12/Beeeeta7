@@ -13,7 +13,7 @@ import { hasPermission } from '../utils/permissions';
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
-  const isLight = true; // glass/purple theme on dashboard
+  const isLight = true;
   const isRTL = i18n.language === 'ar';
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -187,6 +187,46 @@ const Dashboard = () => {
   };
 
   const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+  const normalizeSearchText = (value) => String(value || '')
+    .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+    .replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/[\u064B-\u065F\u0670]/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .toLowerCase();
+
+  const compactSearchText = (value) => normalizeSearchText(value).replace(/\s+/g, '');
+
+  const buildVehicleSearchText = (vehicle) => {
+    const summary = vehicleSummaries[vehicle.id] || getVehicleFallbackSummary(vehicle);
+    const itemNames = [
+      ...(Array.isArray(vehicle?.services) ? vehicle.services : []),
+      ...(Array.isArray(vehicle?.parts) ? vehicle.parts : []),
+    ].map((item) => item.name || item.description || item.partName || '').join(' ');
+    return [
+      vehicle.customerName,
+      vehicle.ownerName,
+      vehicle.customerPhone,
+      vehicle.fileNumber,
+      vehicle.file_number,
+      vehicle.customerFileNumber,
+      vehicle.customer_file_number,
+      vehicle.vehicleNumber,
+      vehicle.id,
+      vehicle.plateNumber,
+      vehicle.plate_number,
+      vehicle.brand,
+      vehicle.model,
+      vehicle.year,
+      vehicle.status,
+      STATUS_CONFIG[vehicle.status]?.label,
+      summary?.serviceType,
+      itemNames,
+    ].filter(Boolean).join(' ');
+  };
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
@@ -318,12 +358,17 @@ const Dashboard = () => {
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
-  const filteredVehicles = dashboardVehicles.filter(vehicle => {
-    const matchesSearch = 
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
+  const searchSourceVehicles = searchQuery.trim() ? vehicles : dashboardVehicles;
+
+  const filteredVehicles = searchSourceVehicles.filter(vehicle => {
+    const normalizedQuery = normalizeSearchText(searchQuery);
+    const compactQuery = compactSearchText(searchQuery);
+    const haystack = buildVehicleSearchText(vehicle);
+    const normalizedHaystack = normalizeSearchText(haystack);
+    const compactHaystack = compactSearchText(haystack);
+    const matchesSearch = !normalizedQuery
+      || normalizedHaystack.includes(normalizedQuery)
+      || (compactQuery && compactHaystack.includes(compactQuery));
     
     const matchesStatus = filterStatus === 'all' || 
                          vehicle.status === filterStatus ||
@@ -346,25 +391,25 @@ const Dashboard = () => {
     );
   }
 
-  // Theme-based styles (Glass / Purple)
+  // Light Dash Pro-style dashboard palette
   const styles = {
-    bg: isLight ? 'radial-gradient(1200px circle at 20% 10%, rgba(168,85,247,0.18), transparent 45%), radial-gradient(900px circle at 80% 20%, rgba(99,102,241,0.16), transparent 50%), linear-gradient(180deg, #0b1020 0%, #0b1020 40%, #070a14 100%)' : '#0b1120',
-    cardBg: isLight ? 'rgba(255,255,255,0.06)' : '#1e293b',
-    cardBorder: isLight ? 'rgba(168,85,247,0.18)' : '#334155',
-    textPrimary: isLight ? '#f8fafc' : '#f9fafb',
-    textSecondary: isLight ? 'rgba(226,232,240,0.78)' : '#cbd5f5',
-    textMuted: isLight ? 'rgba(148,163,184,0.8)' : '#64748b',
-    inputBg: isLight ? 'rgba(255,255,255,0.06)' : '#1e293b',
-    inputBorder: isLight ? 'rgba(255,255,255,0.10)' : '#334155',
-    hoverBg: isLight ? 'rgba(255,255,255,0.08)' : '#334155',
-    statCardBg: isLight ? 'rgba(255,255,255,0.06)' : 'rgba(30, 41, 59, 0.8)',
+    bg: 'linear-gradient(180deg, #f6f7fb 0%, #eef3f8 48%, #f8fafc 100%)',
+    cardBg: 'rgba(255,255,255,0.92)',
+    cardBorder: 'rgba(15,23,42,0.08)',
+    textPrimary: '#172033',
+    textSecondary: '#516071',
+    textMuted: '#8794a6',
+    inputBg: 'rgba(255,255,255,0.96)',
+    inputBorder: 'rgba(15,23,42,0.10)',
+    hoverBg: 'rgba(37,99,235,0.08)',
+    statCardBg: 'rgba(255,255,255,0.94)',
   };
 
   // ألوان خاصة لكروت المركبات لتشبه الكرت الأزرق في الصورة
-  const isGlassPurpleTheme = true;
+  const isGlassPurpleTheme = false;
   const vehicleCardBackground = isGlassPurpleTheme
     ? 'radial-gradient(circle at 12% 18%, rgba(168,85,247,0.24), transparent 52%), radial-gradient(circle at 88% 78%, rgba(99,102,241,0.20), transparent 55%), rgba(255,255,255,0.06)'
-    : styles.cardBg;
+    : 'linear-gradient(145deg, rgba(255,255,255,0.98) 0%, rgba(247,250,252,0.96) 100%)';
   const vehicleCardBorder = isGlassPurpleTheme
     ? 'rgba(168,85,247,0.22)'
     : styles.cardBorder;
@@ -378,7 +423,7 @@ const Dashboard = () => {
     <div 
       className={`max-w-7xl mx-auto min-h-screen px-1 sm:px-4 py-4 ${isRTL ? 'rtl' : 'ltr'}`} 
       dir={isRTL ? 'rtl' : 'ltr'}
-      style={{ background: 'transparent' }}
+      style={{ background: styles.bg }}
     >
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
@@ -654,7 +699,7 @@ const Dashboard = () => {
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2" size={18} style={{ color: styles.textMuted }} />
             <input
               type="text"
-              placeholder={t('dashboard.searchPlaceholder') || t('dashboard.search')}
+              placeholder="ابحث بالاسم، رقم الملف، العملية، اللوحة، الماركة أو الموديل"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pr-10 pl-4 py-2.5 rounded-xl text-sm sm:text-base transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
@@ -663,6 +708,7 @@ const Dashboard = () => {
                 border: `1px solid ${styles.inputBorder}`,
                 color: styles.textPrimary
               }}
+              data-testid="dashboard-search-input"
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 -mx-1 px-1">
@@ -717,8 +763,8 @@ const Dashboard = () => {
                     background: vehicleCardBackground,
                     border: `1px solid ${vehicleCardBorder}`,
                     boxShadow: expandedVehicleId === vehicle.id
-                      ? '0 32px 120px rgba(2,6,23,0.85), 0 0 0 1px rgba(168,85,247,0.22)'
-                      : '0 18px 60px rgba(2,6,23,0.65)',
+                      ? '0 28px 80px rgba(15,23,42,0.16), 0 0 0 1px rgba(37,99,235,0.12)'
+                      : '0 18px 50px rgba(15,23,42,0.10)',
                     backdropFilter: isGlassPurpleTheme ? 'blur(14px)' : undefined,
                     WebkitBackdropFilter: isGlassPurpleTheme ? 'blur(14px)' : undefined,
                     height: expandedVehicleId === vehicle.id ? 'auto' : '260px',
@@ -780,7 +826,7 @@ const Dashboard = () => {
                     </div>
 
                     {/* اسم المركبة + الموديل + حالة الاستعجال */}
-                    <div className="flex flex-wrap items-center justify-center gap-2 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
                       <div className="flex items-baseline gap-2 flex-wrap justify-center">
                         <span
                           className="vehicle-title-main text-base sm:text-xl font-semibold tracking-tight"
@@ -789,17 +835,26 @@ const Dashboard = () => {
                           {vehicle.brand || ''} {vehicle.model || ''}
                         </span>
                         {vehicle.year && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-slate-800/60 text-slate-200 text-xs font-semibold">
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">
                             {vehicle.year}
                           </span>
                         )}
+                      </div>
+                      {(vehicle.fileNumber || vehicle.file_number) && (
+                        <span
+                          className="vehicle-file-number text-base sm:text-xl font-semibold tracking-tight"
+                          style={{ color: vehicleText.primary }}
+                          data-testid={`dashboard-vehicle-file-number-${vehicle.id}`}
+                        >
+                          رقم ملف: {vehicle.fileNumber || vehicle.file_number}
+                        </span>
+                      )}
                       <span
-                        className="px-2.5 py-0.5 rounded-full bg-slate-800/50 text-slate-200 text-[11px] font-semibold"
+                        className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold border border-slate-200"
                         data-testid={`vehicle-service-type-${vehicle.id}`}
                       >
                         نوع الخدمة: {serviceType}
                       </span>
-                      </div>
                       {isUrgent && (
                         <span className="px-2.5 py-0.5 rounded-full bg-red-500/15 text-red-400 text-[11px] font-bold border border-red-500/30">
                           ⚡ {t('common.urgent')}
@@ -832,12 +887,6 @@ const Dashboard = () => {
                         <p className="font-bold text-sm truncate" style={{ color: vehicleText.primary }}>
                           {vehicle.customerName || '-'}
                         </p>
-                        {(vehicle.fileNumber || vehicle.file_number) && (
-                          <p className="text-xs font-bold mt-0.5" style={{ color: 'rgba(56,189,248,0.90)' }}
-                            data-testid={`dashboard-vehicle-file-number-${vehicle.id}`}>
-                            ملف: {vehicle.fileNumber || vehicle.file_number}
-                          </p>
-                        )}
                       </div>
                     </div>
                   </div>

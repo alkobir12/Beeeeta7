@@ -1,9 +1,9 @@
 /* eslint-disable */
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Plus, Trash2, FileText, CreditCard, User, Car, Clock, Camera, Upload } from 'lucide-react';
+import { Plus, Trash2, FileText, CreditCard, User, Car, Clock, Camera, Upload, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../hooks/use-toast';
 import GuidanceStepper from '../components/GuidanceStepper';
@@ -98,6 +98,17 @@ const ACCOUNT_GROUP_LABELS = new Set([
 const UUID_LIKE_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
+const normalizeSearchText = (value) => String(value || '')
+  .replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+  .replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+  .replace(/[أإآ]/g, 'ا')
+  .replace(/ة/g, 'ه')
+  .replace(/ى/g, 'ي')
+  .replace(/[\u064B-\u065F\u0670]/g, '')
+  .replace(/[^\p{L}\p{N}]+/gu, ' ')
+  .trim()
+  .toLowerCase();
+const compactSearchText = (value) => normalizeSearchText(value).replace(/\s+/g, '');
 
 const getAccountPriorityRank = (account) => {
   const accountName = normalizeText(account?.name_ar || account?.name || account?.code || '');
@@ -318,6 +329,7 @@ const Operations = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [activeOperationsTab, setActiveOperationsTab] = useState('workshop');
+  const [operationsSearchQuery, setOperationsSearchQuery] = useState('');
   const [rakanPage, setRakanPage] = useState(1);
   const [workshopPage, setWorkshopPage] = useState(1);
   const [creditReminderDays, setCreditReminderDays] = useState(() => {
@@ -831,6 +843,72 @@ const Operations = () => {
   const operationsLoading = operationsQuery.isLoading || operationsQuery.isFetching;
   const visits = visitsQuery.data || [];
 
+  const vehicleSearchById = useMemo(() => {
+    const map = new Map();
+    (vehicles || []).forEach((vehicle) => {
+      const vehicleId = String(vehicle.id || vehicle._id || '').trim();
+      if (!vehicleId) return;
+      map.set(vehicleId, [
+        vehicle.fileNumber,
+        vehicle.file_number,
+        vehicle.customerFileNumber,
+        vehicle.customer_file_number,
+        vehicle.customerName,
+        vehicle.ownerName,
+        vehicle.plateNumber,
+        vehicle.plate_number,
+        vehicle.brand,
+        vehicle.model,
+        vehicle.year,
+        vehicle.status,
+        vehicleId,
+      ].filter(Boolean).join(' '));
+    });
+    return map;
+  }, [vehicles]);
+
+  const operationMatchesSearch = useCallback((op) => {
+    const normalizedQuery = normalizeSearchText(operationsSearchQuery);
+    const compactQuery = compactSearchText(operationsSearchQuery);
+    if (!normalizedQuery) return true;
+    const itemsText = Array.isArray(op.items)
+      ? op.items.map((it) => [it.name, it.customName, it.description, it.itemType].filter(Boolean).join(' ')).join(' ')
+      : '';
+    const vehicleId = String(op.vehicleId || op.vehicle_id || '').trim();
+    const haystack = [
+      op.id,
+      op._id,
+      op.invoiceNumber,
+      op.invoice_number,
+      op.operationNumber,
+      op.operation_number,
+      op.type,
+      op.source,
+      op.partnerName,
+      op.customerName,
+      op.supplierName,
+      op.partnerId,
+      op.vehiclePlate,
+      op.vehicle_plate,
+      op.vehicleBrand,
+      op.vehicle_brand,
+      op.vehicleModel,
+      op.vehicle_model,
+      op.visitNumber,
+      op.visitNumberDisplay,
+      op.accountName,
+      op.account_name,
+      op.notes,
+      op.total,
+      op.balance,
+      itemsText,
+      vehicleSearchById.get(vehicleId),
+    ].filter(Boolean).join(' ');
+    const normalizedHaystack = normalizeSearchText(haystack);
+    const compactHaystack = compactSearchText(haystack);
+    return normalizedHaystack.includes(normalizedQuery) || (compactQuery && compactHaystack.includes(compactQuery));
+  }, [operationsSearchQuery, vehicleSearchById]);
+
   const sortedOps = useMemo(() => {
     const arr = Array.isArray(ops) ? [...ops] : [];
     const getTs = (o) => {
@@ -859,22 +937,27 @@ const Operations = () => {
     return arr;
   }, [ops]);
 
+  const searchableOps = useMemo(
+    () => sortedOps.filter(operationMatchesSearch),
+    [sortedOps, operationMatchesSearch]
+  );
+
   const rakanOps = useMemo(
-    () => sortedOps.filter((op) => (
+    () => searchableOps.filter((op) => (
       rakanBizAccountIds.has(String(op.accountId || ''))
       || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
       || isRakanOperationTagged(op)
     )),
-    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
+    [searchableOps, rakanBizAccountIds, rakanChartAccountIds]
   );
 
   const workshopOps = useMemo(
-    () => sortedOps.filter((op) => !(
+    () => searchableOps.filter((op) => !(
       rakanBizAccountIds.has(String(op.accountId || ''))
       || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
       || isRakanOperationTagged(op)
     )),
-    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
+    [searchableOps, rakanBizAccountIds, rakanChartAccountIds]
   );
 
   const getCreditSummary = (opsList) => {
@@ -936,7 +1019,12 @@ const Operations = () => {
 
   useEffect(() => {
     setExpandedOperationId(null);
-  }, [activeOperationsTab, rakanPage, workshopPage]);
+  }, [activeOperationsTab, rakanPage, workshopPage, operationsSearchQuery]);
+
+  useEffect(() => {
+    setRakanPage(1);
+    setWorkshopPage(1);
+  }, [operationsSearchQuery]);
 
   const paginatedRakanOps = useMemo(() => {
     const start = (rakanPage - 1) * OPERATIONS_PAGE_SIZE;
@@ -3276,10 +3364,31 @@ const Operations = () => {
 
         {/* Recent Operations */}
         <div className="space-y-6" data-testid="operations-sections-wrapper">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-50">{t('operations.recentOperations')}</h2>
               <p className="text-sm text-slate-200/70 mt-1">{t('operations.subtitle') || ''}</p>
+            </div>
+            <div className="relative w-full lg:max-w-md">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                value={operationsSearchQuery}
+                onChange={(e) => setOperationsSearchQuery(e.target.value)}
+                placeholder="ابحث بالاسم، رقم الملف، رقم العملية، اللوحة أو البند"
+                className="w-full rounded-2xl border border-white/12 bg-white/10 py-3 pl-4 pr-10 text-sm text-slate-50 placeholder:text-slate-300/70 outline-none transition focus:border-sky-300/70 focus:bg-white/15"
+                data-testid="operations-search-input"
+              />
+              {operationsSearchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => setOperationsSearchQuery('')}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-2 py-0.5 text-xs text-slate-200 hover:bg-white/20"
+                  data-testid="operations-search-clear-button"
+                >
+                  مسح
+                </button>
+              ) : null}
             </div>
           </div>
 

@@ -1,0 +1,79 @@
+{
+  "summary": "Frontend-only verification completed for requested Dashboard/Operations/theme/search/sidebar changes on preview URL. Theme and mobile card shape passed, but critical data/search regressions remain in Dashboard and Operations rendering.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Dashboard vehicle grid",
+        "issue": "Dashboard shows 'لا توجد بيانات' and 0 vehicle cards even when API has vehicles and stats are non-zero in some runs.",
+        "selector": ".vehicle-card / [data-testid='dashboard-stat-total-vehicles-value']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "Operations recent operations list",
+        "issue": "Operations page shows 0 cards and search 7782 returns no cards despite /api/operations containing matching vehiclePlate/file data.",
+        "selector": "[data-testid='operations-active-tab-count'], [data-testid='operations-search-input']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "Dashboard custom cards/content area",
+        "issue": "Raw DOM-CHECK/page-description text still appears visibly on dashboard (outside sidebar recent-pages list).",
+        "selector": ".content-area (top visible injected text)",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Dashboard search by file number 1060",
+        "issue": "Search placeholder is correct, but search result does not show expected vehicle card/file label due empty rendered card list.",
+        "affected_selectors": [
+          "[data-testid='dashboard-search-input']",
+          "[data-testid^='dashboard-vehicle-file-number-']"
+        ]
+      },
+      {
+        "flow": "Operations search by 7782",
+        "issue": "Search field exists with correct placeholder, but no operation cards are rendered for matching data.",
+        "affected_selectors": [
+          "[data-testid='operations-search-input']",
+          "[data-testid^='operation-card-']",
+          "[data-testid='operations-active-tab-count']"
+        ]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/root/.emergent/automation_output/20260515_103934/console_20260515_103934.log",
+    "/root/.emergent/automation_output/20260515_104109/console_20260515_104109.log",
+    "/root/.emergent/automation_output/20260515_104211/console_20260515_104211.log"
+  ],
+  "action_items": [
+    "Fix Dashboard rendered list logic: vehicle cards should render when totalVehicles > 0 and filter=all, and search 1060 must show the corresponding card/file label.",
+    "Fix Operations list segmentation/rendering so matching operations (e.g., vehicle plate containing 7782) are visible and searchable in the active list.",
+    "Sanitize/clear stale customization/local content that still injects DOM-CHECK/page-description text into dashboard main area.",
+    "Re-test with same admin preview account after fix using search values 1060 and 7782."
+  ],
+  "critical_code_review_comments": [
+    "Operations.jsx likely misclassifies many records into rakanOps when account identifiers are empty/null; this can zero out workshopOps and hide cards.",
+    "Dashboard.jsx contains contradictory state in observed runs (stats non-zero while cards empty), indicating a filtering/rendering logic defect rather than pure API availability.",
+    "Layout page customization path can still surface raw injected labels in UI, so sanitization is incomplete beyond useRecentPages filtering."
+  ],
+  "updated_files": [
+    "/app/test_reports/iteration_214.json"
+  ],
+  "success_rate": {
+    "backend": "N/A (frontend-only scope)",
+    "frontend": "57% (4/7 requested checks passed)"
+  },
+  "seed_data_creation": "No seed data created.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Validated credentials from /app/memory/test_credentials.md (مدير/no password). Confirmed via browser fetch that /api/vehicles returned 119 and /api/operations returned 8 while UI intermittently rendered 0 cards on Dashboard/Operations. Theme/background, mobile square stat cards, placeholders, and sidebar recent-pages sanitization passed.",
+  "rca of the issue": "RCA (likely): (1) Operations list: workshop/rakan partitioning likely treats empty account IDs as rakan via set-membership on empty string, causing active workshop list to be empty; (2) Dashboard: rendered filteredVehicles becomes empty despite available data in some runs (observed mismatch between API data/stats and card rendering), indicating client-side filter/render defect or stale UI state race; (3) Raw DOM-CHECK labels are still injected through customization/local content path outside useRecentPages.",
+  "mocked_api": "NO MOCKED APIs",
+  "test_credentials": "Read from /app/memory/test_credentials.md: مدير (no password). /app/auth_testing.md missing at specified path."
+}

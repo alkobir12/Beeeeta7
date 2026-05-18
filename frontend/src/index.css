@@ -81,6 +81,62 @@ body[data-theme="dashPro"] {
   --shadow-color: rgba(15, 23, 42, 0.10);
 }
 
+body[data-theme="dashPro"] .vehicle-plate-pill,
+body[data-theme="dashPro"] .vehicle-plate-pill * {
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
+body[data-theme="dashPro"] .vehicle-file-number,
+body[data-theme="dashPro"] .vehicle-file-number * {
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
+body[data-theme="dashPro"] .vehicle-title-main,
+body[data-theme="dashPro"] .vehicle-title-main * {
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
+body[data-theme="dashPro"] .vehicle-card .text-slate-300,
+body[data-theme="dashPro"] .vehicle-card .text-slate-400,
+body[data-theme="dashPro"] .vehicle-card .text-slate-200,
+body[data-theme="dashPro"] .vehicle-card .text-slate-50 {
+  color: #111827 !important;
+}
+
+body[data-theme="dashPro"] [data-testid^="operation-card-"] {
+  color: #111827 !important;
+  text-shadow: none !important;
+}
+
+body[data-theme="dashPro"] [data-testid^="operation-card-"] .text-slate-50,
+body[data-theme="dashPro"] [data-testid^="operation-card-"] .text-slate-100,
+body[data-theme="dashPro"] [data-testid^="operation-card-"] .text-slate-200,
+body[data-theme="dashPro"] [data-testid^="operation-card-"] .text-slate-300,
+body[data-theme="dashPro"] [data-testid^="operation-card-"] .text-sky-100,
+body[data-theme="dashPro"] [data-testid^="operation-card-"] .text-cyan-100,
+body[data-theme="dashPro"] [data-testid^="operation-card-"] .text-amber-100,
+body[data-theme="dashPro"] [data-testid^="operation-card-"] .text-violet-100 {
+  color: #111827 !important;
+}
+
+body[data-theme="dashPro"] [data-testid^="operation-card-total-"] {
+  color: #000000 !important;
+  font-weight: 800 !important;
+}
+
+body[data-theme="dashPro"] [data-testid^="operation-card-vehicle-summary-"] {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+body[data-theme="dashPro"] [data-testid^="operation-card-account-name-"] {
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
 /* Theme-aware utility classes */
 body.light-mode .theme-bg { background-color: var(--bg-primary) !important; }
 body.light-mode .theme-bg-surface { background-color: var(--bg-surface) !important; }

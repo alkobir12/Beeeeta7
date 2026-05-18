@@ -3450,11 +3450,11 @@ const Operations = () => {
         <div className="space-y-6" data-testid="operations-sections-wrapper">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-50">{t('operations.recentOperations')}</h2>
-              <p className="text-sm text-slate-200/70 mt-1">{t('operations.subtitle') || ''}</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-950">{t('operations.recentOperations')}</h2>
+              <p className="text-sm text-slate-700 mt-1">{t('operations.subtitle') || ''}</p>
             </div>
             <div className="relative w-full lg:max-w-md">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
               <input
                 type="text"
                 value={operationsSearchQuery}
@@ -3462,14 +3462,14 @@ const Operations = () => {
                 onChange={handleOperationsSearchChange}
                 onInput={handleOperationsSearchChange}
                 placeholder="ابحث بالاسم، رقم الملف، رقم العملية، اللوحة أو البند"
-                className="w-full rounded-2xl border border-white/12 bg-white/10 py-3 pl-4 pr-10 text-sm text-slate-50 placeholder:text-slate-300/70 outline-none transition focus:border-sky-300/70 focus:bg-white/15"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-4 pr-10 text-sm text-slate-950 placeholder:text-slate-500 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
                 data-testid="operations-search-input"
               />
               {operationsSearchQuery ? (
                 <button
                   type="button"
                   onClick={() => setOperationsSearchQuery('')}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-2 py-0.5 text-xs text-slate-200 hover:bg-white/20"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-800 hover:bg-slate-200"
                   data-testid="operations-search-clear-button"
                 >
                   مسح
@@ -3507,10 +3507,10 @@ const Operations = () => {
           )}
 
           <div className="flex items-center justify-between" data-testid="operations-active-tab-summary">
-            <h3 className="text-lg font-bold text-slate-100" data-testid="operations-active-tab-title">
+            <h3 className="text-lg font-bold text-slate-950" data-testid="operations-active-tab-title">
               عمليات الورشة
             </h3>
-            <span className="text-xs px-2 py-1 rounded bg-white/10 text-slate-200" data-testid="operations-active-tab-count">
+            <span className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-900 font-bold" data-testid="operations-active-tab-count">
               {activeOpsTotalCount} عملية
             </span>
           </div>
@@ -3526,7 +3526,7 @@ const Operations = () => {
               <span className="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-100 border border-amber-400/35" data-testid="operations-integrity-duplicates">
                 تكرار محتمل: {integritySummary.duplicates || 0}
               </span>
-              <span className="text-slate-400" data-testid="operations-integrity-location-hint">
+              <span className="text-slate-700 font-semibold" data-testid="operations-integrity-location-hint">
                 كشف الربط يظهر هنا، وداخل كل عملية، وفي ملف المركبة.
               </span>
               {integrityLoading ? <span className="text-cyan-300">جاري التحقق...</span> : null}

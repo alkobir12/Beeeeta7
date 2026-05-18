@@ -419,9 +419,9 @@ const Dashboard = () => {
     bg: 'linear-gradient(180deg, #f6f7fb 0%, #eef3f8 48%, #f8fafc 100%)',
     cardBg: 'rgba(255,255,255,0.92)',
     cardBorder: 'rgba(15,23,42,0.08)',
-    textPrimary: '#172033',
-    textSecondary: '#516071',
-    textMuted: '#8794a6',
+    textPrimary: '#05070d',
+    textSecondary: '#243044',
+    textMuted: '#4b5565',
     inputBg: 'rgba(255,255,255,0.96)',
     inputBorder: 'rgba(15,23,42,0.10)',
     hoverBg: 'rgba(37,99,235,0.08)',
@@ -437,9 +437,9 @@ const Dashboard = () => {
     ? 'rgba(168,85,247,0.22)'
     : styles.cardBorder;
   const vehicleText = {
-    primary: isGlassPurpleTheme ? '#f8fafc' : styles.textPrimary,
-    secondary: isGlassPurpleTheme ? 'rgba(226,232,240,0.82)' : styles.textSecondary,
-    muted: isGlassPurpleTheme ? 'rgba(148,163,184,0.82)' : styles.textMuted,
+    primary: isGlassPurpleTheme ? '#f8fafc' : '#05070d',
+    secondary: isGlassPurpleTheme ? 'rgba(226,232,240,0.82)' : '#1f2937',
+    muted: isGlassPurpleTheme ? 'rgba(148,163,184,0.82)' : '#374151',
   };
 
   return (
@@ -818,7 +818,7 @@ const Dashboard = () => {
                   {/* شارة الحالة + ترويسة الكرت */}
                   <div className="flex items-center justify-between mb-4 px-1 pt-1">
                     <div className="flex items-center gap-2 text-xs sm:text-sm">
-                      <span className={`px-3 py-1 rounded-full border text-[11px] font-medium ${statusConfig?.color || 'bg-slate-800/60 text-slate-200 border-slate-700'}`}>
+                      <span className={`px-3 py-1 rounded-full border text-[11px] font-bold ${statusConfig?.color || 'bg-slate-100 text-slate-900 border-slate-300'}`}>
                         {statusConfig?.label || (vehicle.status || '-')}
                       </span>
                       <span className={`w-2 h-2 rounded-full ${vehicle.status === 'delivered' ? 'bg-gray-400' : vehicle.status === 'ready' ? 'bg-green-500' : vehicle.status === 'repair' ? 'bg-blue-500' : 'bg-orange-500'}`} />
@@ -841,8 +841,8 @@ const Dashboard = () => {
                   <div className="mb-4 space-y-3">
                     {/* رقم اللوحة بشكل واضح في المنتصف */}
                     <div className="flex justify-center">
-                      <span className="vehicle-plate-pill inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-slate-900/85 text-slate-50 text-base sm:text-lg font-bold border border-slate-700 shadow-inner">
-                        <Car size={16} className="opacity-80" />
+                      <span className="vehicle-plate-pill inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-white text-black text-base sm:text-lg font-extrabold border border-slate-300 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.35)]">
+                        <Car size={16} className="opacity-90 text-black" />
                         <span className="font-mono tracking-[0.35em] uppercase">
                           {vehicle.plateNumber || t('common.unknown')}
                         </span>
@@ -867,14 +867,14 @@ const Dashboard = () => {
                       {(vehicle.fileNumber || vehicle.file_number) && (
                         <span
                           className="vehicle-file-number text-base sm:text-xl font-semibold tracking-tight"
-                          style={{ color: vehicleText.primary }}
+                          style={{ color: '#000000' }}
                           data-testid={`dashboard-vehicle-file-number-${vehicle.id}`}
                         >
                           رقم ملف: {vehicle.fileNumber || vehicle.file_number}
                         </span>
                       )}
                       <span
-                        className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold border border-slate-200"
+                        className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-900 text-[11px] font-bold border border-slate-300"
                         data-testid={`vehicle-service-type-${vehicle.id}`}
                       >
                         نوع الخدمة: {serviceType}
@@ -890,11 +890,11 @@ const Dashboard = () => {
                   {/* صف الدخول / العميل - المنطقة الأساسية */}
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-slate-800/60 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
                         <Calendar size={15} className="text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-xs text-slate-400 font-medium mb-0.5">{t('dashboard.entryDateLabel')}</p>
+                        <p className="text-xs font-bold mb-0.5" style={{ color: vehicleText.muted }}>{t('dashboard.entryDateLabel')}</p>
                         <p className="font-bold text-sm" style={{ color: vehicleText.primary }}>
                           {vehicle.entryDate || vehicle.createdAt
                             ? new Date(vehicle.entryDate || vehicle.createdAt).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')
@@ -903,11 +903,11 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-slate-800/60 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
                         <User size={15} className="text-emerald-400" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs text-slate-400 font-medium mb-0.5">{t('dashboard.customerLabel')}</p>
+                        <p className="text-xs font-bold mb-0.5" style={{ color: vehicleText.muted }}>{t('dashboard.customerLabel')}</p>
                         <p className="font-bold text-sm truncate" style={{ color: vehicleText.primary }}>
                           {vehicle.customerName || '-'}
                         </p>
@@ -920,9 +920,9 @@ const Dashboard = () => {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Clock size={14} className="text-sky-400" />
-                        <span className="text-xs text-slate-300 font-medium">{t('dashboard.progressLabel')}</span>
+                        <span className="text-xs font-bold" style={{ color: vehicleText.secondary }}>{t('dashboard.progressLabel')}</span>
                       </div>
-                      <span className="font-bold text-base text-sky-100">{progress}%</span>
+                      <span className="font-extrabold text-base text-slate-950">{progress}%</span>
                     </div>
                     <div className="w-full h-2.5 rounded-full bg-slate-900/40 overflow-hidden">
                       <div

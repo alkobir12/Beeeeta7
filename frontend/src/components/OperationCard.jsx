@@ -386,8 +386,8 @@ export default function OperationCard({
     return cleaned.replace(/عملية من الزيارة\s+[0-9a-f]{6,}/ig, `عملية من الزيارة ${formatVisitNumber(visitDisplay, visitDisplay)}`);
   }, [operation.notes, visitDisplay]);
   const paymentBorder = hasPaymentStatus
-    ? (isCredit ? 'rgba(244,63,94,0.55)' : 'rgba(16,185,129,0.55)')
-    : cardBorder;
+    ? (isCredit ? 'rgba(217,119,6,0.45)' : 'rgba(5,150,105,0.45)')
+    : 'rgba(15,23,42,0.10)';
   const stop = (e) => e.stopPropagation();
 
   const integrityWarnings = Array.isArray(integrityStatus?.warnings) ? integrityStatus.warnings : [];
@@ -405,11 +405,11 @@ export default function OperationCard({
     <div
       className="dash-widget-shell"
       style={{
-        background: cardBackground,
+        background: 'linear-gradient(145deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%)',
         border: `1px solid ${paymentBorder}`,
         boxShadow: isExpanded
-          ? `0 22px 72px rgba(2,6,23,0.78), 0 0 0 1px ${paymentBorder}`
-          : '0 14px 44px rgba(2,6,23,0.56)',
+          ? `0 22px 60px rgba(15,23,42,0.16), 0 0 0 1px ${paymentBorder}`
+          : '0 14px 36px rgba(15,23,42,0.10)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         overflow: 'hidden',
@@ -438,13 +438,13 @@ export default function OperationCard({
                   : (t('operations.scopeVehicle') || 'مركبة')}
               </span>
               {operation.invoiceNumber ? (
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-white/5 text-slate-200 border border-white/10" data-testid={`operation-card-invoice-${operation.id}`}>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-950 border border-slate-200" data-testid={`operation-card-invoice-${operation.id}`}>
                   {operation.invoiceNumber}
                 </span>
               ) : null}
               {integrityStatus ? (
                 <span
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${hasIntegrityWarning ? 'bg-rose-500/15 text-rose-100 border-rose-400/35' : 'bg-emerald-500/15 text-emerald-100 border-emerald-400/35'}`}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${hasIntegrityWarning ? 'bg-rose-50 text-rose-950 border-rose-300' : 'bg-emerald-50 text-emerald-950 border-emerald-300'}`}
                   data-testid={`operation-card-integrity-pill-${operation.id}`}
                 >
                   {hasIntegrityWarning ? `⚠️ ${integrityWarnings.length} ملاحظة` : '✅ مترابطة'}
@@ -452,7 +452,7 @@ export default function OperationCard({
               ) : null}
               {hasPaymentStatus ? (
                 <span
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${isCredit ? 'bg-amber-500/15 text-amber-100 border-amber-400/35' : 'bg-emerald-500/15 text-emerald-100 border-emerald-400/35'}`}
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${isCredit ? 'bg-amber-50 text-amber-950 border-amber-300' : 'bg-emerald-50 text-emerald-950 border-emerald-300'}`}
                   data-testid={`operation-card-payment-status-pill-${operation.id}`}
                 >
                   {paymentStatusLabel}
@@ -461,61 +461,61 @@ export default function OperationCard({
             </div>
 
             <div className="mt-2.5 flex flex-col gap-1.5">
-              <div className="flex items-center gap-1.5 text-slate-50">
-                <FileText size={14} className="text-slate-200/80" />
+              <div className="flex items-center gap-1.5 text-slate-950">
+                <FileText size={14} className="text-slate-700" />
                 <span className="text-sm font-semibold break-words leading-tight" data-testid={`operation-card-partner-${operation.id}`}>
                   العميل/الطرف: {customerDisplay}
                 </span>
               </div>
 
-              <div className="flex items-center gap-1.5 text-sky-100/90 text-[11px]" data-testid={`operation-card-vehicle-summary-${operation.id}`}>
+              <div className="flex items-center gap-1.5 text-slate-950 text-[11px] font-bold" data-testid={`operation-card-vehicle-summary-${operation.id}`}>
                 <Car size={12} />
                 <span className="break-words">المركبة: {vehicleDisplay}</span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-1.5 text-slate-200/80 text-[11px] sm:text-xs" data-testid={`operation-card-meta-${operation.id}`}>
+              <div className="flex flex-wrap items-center gap-1.5 text-slate-700 text-[11px] sm:text-xs font-semibold" data-testid={`operation-card-meta-${operation.id}`}>
                 <CreditCard size={12} />
                 <span className="break-words">{paymentMethodLabel}</span>
-                <span className="mx-1 opacity-40">•</span>
+                <span className="mx-1 text-slate-400">•</span>
                 <span className="break-words">{formatDateTime(operation.date || operation.op_date || operation.createdAt, isRTL)}</span>
               </div>
 
               {hasPaymentStatus ? (
-                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-100/90" data-testid={`operation-card-payment-summary-${operation.id}`}>
+                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-900" data-testid={`operation-card-payment-summary-${operation.id}`}>
                   <span>الحالة: <span className="font-semibold">{paymentStatusLabel}</span></span>
                   <span>المدفوع: <span className="font-semibold tabular-nums">{totalPaid.toFixed(2)}</span></span>
                   <span>المتبقي: <span className="font-semibold tabular-nums">{remainingBalance.toFixed(2)}</span></span>
                 </div>
               ) : null}
 
-              <div className="text-[11px] text-slate-200/80 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-journal-entry-${operation.id}`}>
+              <div className="text-[11px] text-slate-800 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-journal-entry-${operation.id}`}>
                 {journalEntryText}
               </div>
 
-              <div className="text-[11px] text-cyan-100/90 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-account-name-${operation.id}`}>
+              <div className="text-[11px] text-slate-950 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-account-name-${operation.id}`}>
                 الحساب: <span className="font-semibold">{targetAccountName || '-'}</span>
-                {accountCode ? <span className="mx-1 text-cyan-300/80">({accountCode})</span> : null}
+                {accountCode ? <span className="mx-1 text-slate-700">({accountCode})</span> : null}
               </div>
 
-              <div className="text-[11px] text-amber-100/90 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-account-class-${operation.id}`}>
+              <div className="text-[11px] text-slate-900 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-account-class-${operation.id}`}>
                 التصنيف: <span className="font-semibold">{accountClassLabel}</span>
               </div>
 
-              <div className="text-[11px] text-violet-100/90 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-items-summary-${operation.id}`}>
+              <div className="text-[11px] text-slate-900 leading-relaxed whitespace-normal break-words" data-testid={`operation-card-items-summary-${operation.id}`}>
                 الصنف/البند: <span className="font-semibold">{itemsSummary}</span>
               </div>
             </div>
           </div>
 
           <div className="shrink-0 text-right">
-            <div className="text-lg sm:text-xl font-extrabold text-slate-50 tabular-nums" data-testid={`operation-card-total-${operation.id}`}>
+            <div className="text-lg sm:text-xl font-extrabold text-slate-950 tabular-nums" data-testid={`operation-card-total-${operation.id}`}>
               {Number(displayedWorkshopAmount).toFixed(2)}
             </div>
-            <div className="text-[10px] text-slate-200/70">إيراد الورشة • {t('common.currency') || ''}</div>
+            <div className="text-[10px] text-slate-600 font-semibold">إيراد الورشة • {t('common.currency') || ''}</div>
 
             <button
               type="button"
-              className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium bg-white/5 text-slate-200 border border-white/10 hover:bg-white/10"
+              className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-900 border border-slate-200 hover:bg-slate-200"
               onClick={(e) => {
                 stop(e);
                 setExpandedState(!isExpanded);
@@ -635,7 +635,7 @@ export default function OperationCard({
           {canDeleteOperation ? (
             <button
               type="button"
-              className="h-8 px-2.5 text-[11px] rounded-lg border border-rose-500/25 bg-rose-500/10 text-rose-200 hover:bg-rose-500/15 transition-colors"
+              className="h-8 px-2.5 text-[11px] rounded-lg border border-rose-300 bg-rose-50 text-rose-950 hover:bg-rose-100 transition-colors"
               onClick={() => onDelete(operation)}
               disabled={isDeleting}
               title={t('common.delete') || 'حذف'}
@@ -653,31 +653,31 @@ export default function OperationCard({
       {isExpanded ? (
         <div className="px-4 pb-4" data-testid={`operation-card-expanded-${operation.id}`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-3">
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
-              <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.customerName') || t('operations.partner_name') || 'العميل'}</div>
-              <div className="text-xs font-semibold text-slate-50 break-words">{customerDisplay}</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5">
+              <div className="text-[10px] text-slate-600 font-bold mb-1">{t('operations.customerName') || t('operations.partner_name') || 'العميل'}</div>
+              <div className="text-xs font-bold text-slate-950 break-words">{customerDisplay}</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
-              <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.operationType') || 'نوع العملية'}</div>
-              <div className="text-xs font-semibold text-slate-50 break-words">{typeLabel}</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5">
+              <div className="text-[10px] text-slate-600 font-bold mb-1">{t('operations.operationType') || 'نوع العملية'}</div>
+              <div className="text-xs font-bold text-slate-950 break-words">{typeLabel}</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
-              <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.operationDateLabel') || t('operations.date') || 'التاريخ'}</div>
-              <div className="text-xs font-semibold text-slate-50 break-words">{formatDateTime(operation.date || operation.op_date || operation.createdAt, isRTL)}</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5">
+              <div className="text-[10px] text-slate-600 font-bold mb-1">{t('operations.operationDateLabel') || t('operations.date') || 'التاريخ'}</div>
+              <div className="text-xs font-bold text-slate-950 break-words">{formatDateTime(operation.date || operation.op_date || operation.createdAt, isRTL)}</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-vehicle-expanded-${operation.id}`}>
-              <div className="text-[10px] text-slate-300/70 mb-1">المركبة</div>
-              <div className="text-xs font-semibold text-slate-50 break-words">{vehicleDisplay}</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5" data-testid={`operation-card-vehicle-expanded-${operation.id}`}>
+              <div className="text-[10px] text-slate-600 font-bold mb-1">المركبة</div>
+              <div className="text-xs font-bold text-slate-950 break-words">{vehicleDisplay}</div>
             </div>
             {integrityStatus ? (
-              <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-integrity-expanded-${operation.id}`}>
-                <div className="text-[10px] text-slate-300/70 mb-1">كشف الربط</div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5" data-testid={`operation-card-integrity-expanded-${operation.id}`}>
+                <div className="text-[10px] text-slate-600 font-bold mb-1">كشف الربط</div>
                 {!hasIntegrityWarning ? (
-                  <div className="text-xs font-semibold text-emerald-200">سليم • مرتبط باليومية والزيارة</div>
+                  <div className="text-xs font-bold text-emerald-800">سليم • مرتبط باليومية والزيارة</div>
                 ) : (
                   <div className="space-y-1">
                     {integrityWarnings.map((w, idx) => (
-                      <div key={`${operation.id}-integrity-warning-${idx}`} className="text-[11px] text-rose-200 break-words" data-testid={`operation-card-integrity-warning-${operation.id}-${idx}`}>
+                      <div key={`${operation.id}-integrity-warning-${idx}`} className="text-[11px] text-rose-800 font-semibold break-words" data-testid={`operation-card-integrity-warning-${operation.id}-${idx}`}>
                         • {integrityLabelMap[w] || w}
                       </div>
                     ))}
@@ -685,53 +685,53 @@ export default function OperationCard({
                 )}
               </div>
             ) : null}
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
-              <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.paymentMethod') || 'طريقة الدفع'}</div>
-              <div className="text-xs font-semibold text-slate-50 break-words">{paymentMethodLabel}</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5">
+              <div className="text-[10px] text-slate-600 font-bold mb-1">{t('operations.paymentMethod') || 'طريقة الدفع'}</div>
+              <div className="text-xs font-bold text-slate-950 break-words">{paymentMethodLabel}</div>
             </div>
             {hasPaymentStatus ? (
               <>
-                <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-payment-status-expanded-${operation.id}`}>
-                  <div className="text-[10px] text-slate-300/70 mb-1">حالة السداد</div>
-                  <div className="text-xs font-semibold text-slate-50 break-words">{paymentStatusLabel}</div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5" data-testid={`operation-card-payment-status-expanded-${operation.id}`}>
+                  <div className="text-[10px] text-slate-600 font-bold mb-1">حالة السداد</div>
+                  <div className="text-xs font-bold text-slate-950 break-words">{paymentStatusLabel}</div>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-total-paid-expanded-${operation.id}`}>
-                  <div className="text-[10px] text-slate-300/70 mb-1">المدفوع</div>
-                  <div className="text-xs font-semibold text-slate-50 break-words tabular-nums">{totalPaid.toFixed(2)}</div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5" data-testid={`operation-card-total-paid-expanded-${operation.id}`}>
+                  <div className="text-[10px] text-slate-600 font-bold mb-1">المدفوع</div>
+                  <div className="text-xs font-bold text-slate-950 break-words tabular-nums">{totalPaid.toFixed(2)}</div>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-balance-expanded-${operation.id}`}>
-                  <div className="text-[10px] text-slate-300/70 mb-1">المتبقي</div>
-                  <div className="text-xs font-semibold text-slate-50 break-words tabular-nums">{remainingBalance.toFixed(2)}</div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5" data-testid={`operation-card-balance-expanded-${operation.id}`}>
+                  <div className="text-[10px] text-slate-600 font-bold mb-1">المتبقي</div>
+                  <div className="text-xs font-bold text-slate-950 break-words tabular-nums">{remainingBalance.toFixed(2)}</div>
                 </div>
               </>
             ) : null}
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
-              <div className="text-[10px] text-slate-300/70 mb-1">{t('operations.account') || 'الحساب'}</div>
-              <div className="text-xs font-semibold text-slate-50 break-words">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5">
+              <div className="text-[10px] text-slate-600 font-bold mb-1">{t('operations.account') || 'الحساب'}</div>
+              <div className="text-xs font-bold text-slate-950 break-words">
                 {targetAccountName}
               </div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-account-class-expanded-${operation.id}`}>
-              <div className="text-[10px] text-slate-300/70 mb-1">التصنيف المحاسبي</div>
-              <div className="text-xs font-semibold text-slate-50 break-words">{accountClassLabel} {accountCode ? `(${accountCode})` : ''}</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5" data-testid={`operation-card-account-class-expanded-${operation.id}`}>
+              <div className="text-[10px] text-slate-600 font-bold mb-1">التصنيف المحاسبي</div>
+              <div className="text-xs font-bold text-slate-950 break-words">{accountClassLabel} {accountCode ? `(${accountCode})` : ''}</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
-              <div className="text-[10px] text-slate-300/70 mb-1">إيراد الورشة</div>
-              <div className="text-xs font-extrabold text-slate-50 tabular-nums">{Number(displayedWorkshopAmount).toFixed(2)} {t('common.currency') || ''}</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5">
+              <div className="text-[10px] text-slate-600 font-bold mb-1">إيراد الورشة</div>
+              <div className="text-xs font-extrabold text-slate-950 tabular-nums">{Number(displayedWorkshopAmount).toFixed(2)} {t('common.currency') || ''}</div>
             </div>
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2.5" data-testid={`operation-card-supplier-total-${operation.id}`}>
-              <div className="text-[10px] text-slate-300/70 mb-1">إجمالي بنود الموردين</div>
-              <div className="text-xs font-extrabold text-amber-200 tabular-nums">{Number(supplierItemsTotal).toFixed(2)} {t('common.currency') || ''}</div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5" data-testid={`operation-card-supplier-total-${operation.id}`}>
+              <div className="text-[10px] text-slate-600 font-bold mb-1">إجمالي بنود الموردين</div>
+              <div className="text-xs font-extrabold text-slate-950 tabular-nums">{Number(supplierItemsTotal).toFixed(2)} {t('common.currency') || ''}</div>
             </div>
           </div>
 
           {editing ? (
-            <div className="mb-3 bg-slate-950/55 rounded-xl border border-cyan-900/40 p-3 space-y-3" data-testid={`operation-card-edit-meta-${operation.id}`}>
-              <div className="text-xs font-semibold text-cyan-100">تعديل العميل/المورد والحساب</div>
+            <div className="mb-3 bg-sky-50 rounded-xl border border-sky-200 p-3 space-y-3" data-testid={`operation-card-edit-meta-${operation.id}`}>
+              <div className="text-xs font-bold text-sky-950">تعديل العميل/المورد والحساب</div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                 <div>
-                  <label className="text-[10px] text-slate-300/80 block mb-1">{isPurchaseOperation ? 'المورد' : 'العميل'}</label>
+                  <label className="text-[10px] text-slate-700 font-bold block mb-1">{isPurchaseOperation ? 'المورد' : 'العميل'}</label>
                   <input
                     list={`operation-card-party-list-${operation.id}`}
                     className="apple-input h-9 text-xs"
@@ -756,7 +756,7 @@ export default function OperationCard({
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-slate-300/80 block mb-1">الحساب</label>
+                  <label className="text-[10px] text-slate-700 font-bold block mb-1">الحساب</label>
                   <select
                     className="apple-input h-9 text-xs"
                     value={editMeta.accountCode || ''}
@@ -786,18 +786,18 @@ export default function OperationCard({
             </div>
           ) : null}
 
-          <div className="mb-3 bg-slate-950/50 rounded-xl px-3 py-2.5 border border-slate-800/70" data-testid={`operation-card-journal-entry-box-${operation.id}`}>
-            <div className="text-[10px] text-slate-300/80 mb-1 flex items-center gap-1">
+          <div className="mb-3 bg-blue-50 rounded-xl px-3 py-2.5 border border-blue-200" data-testid={`operation-card-journal-entry-box-${operation.id}`}>
+            <div className="text-[10px] text-blue-900 font-bold mb-1 flex items-center gap-1">
               <Landmark size={12} />
               <span>القيد المحاسبي</span>
             </div>
-            <div className="text-xs text-slate-50/95 whitespace-pre-wrap leading-relaxed">{journalEntryText}</div>
+            <div className="text-xs text-slate-950 font-semibold whitespace-pre-wrap leading-relaxed">{journalEntryText}</div>
           </div>
 
           {operation.scope === 'vehicle' && operation.vehicleId ? (
-            <div className="mb-3 bg-slate-950/50 rounded-xl px-3 py-2.5 border border-sky-800/50" data-testid={`operation-card-vehicle-details-${operation.id}`}>
-              <div className="text-[10px] text-sky-200/90 mb-1">تفاصيل المركبة المرتبطة</div>
-              <div className="text-xs text-slate-100 leading-relaxed whitespace-pre-wrap">
+            <div className="mb-3 bg-sky-50 rounded-xl px-3 py-2.5 border border-sky-200" data-testid={`operation-card-vehicle-details-${operation.id}`}>
+              <div className="text-[10px] text-sky-900 font-bold mb-1">تفاصيل المركبة المرتبطة</div>
+              <div className="text-xs text-slate-950 font-semibold leading-relaxed whitespace-pre-wrap">
                 {vehicle
                   ? `اللوحة: ${vehicle.plateNumber || vehicle.plate_number || operation.vehiclePlate || '-'} • ${vehicle.brand || operation.vehicleBrand || '-'} ${vehicle.model || operation.vehicleModel || ''} • العميل: ${vehicle.customerName || vehicle.ownerName || operation.customerName || '-'} • رقم الزيارة: ${formatVisitNumber(visitDisplay, visitDisplay)}`
                   : `${vehicleDisplay} • رقم الزيارة: ${formatVisitNumber(visitDisplay, visitDisplay)}`}
@@ -806,9 +806,9 @@ export default function OperationCard({
           ) : null}
 
           {operation.notes ? (
-            <div className="mb-3 bg-slate-950/50 rounded-xl px-3 py-2.5 border border-slate-800/70">
-              <div className="text-[10px] text-slate-300/80 mb-1">{t('common.notes') || 'ملاحظات'}</div>
-              <div className="text-xs text-slate-50/90 whitespace-pre-wrap leading-relaxed">{operationNotesDisplay}</div>
+            <div className="mb-3 bg-slate-50 rounded-xl px-3 py-2.5 border border-slate-200">
+              <div className="text-[10px] text-slate-600 font-bold mb-1">{t('common.notes') || 'ملاحظات'}</div>
+              <div className="text-xs text-slate-950 font-semibold whitespace-pre-wrap leading-relaxed">{operationNotesDisplay}</div>
               {paymentReceiptUrl ? (
                 <a
                   href={paymentReceiptUrl}
@@ -823,26 +823,26 @@ export default function OperationCard({
             </div>
           ) : null}
 
-          <div className="bg-slate-950/50 rounded-xl border border-slate-800/70 overflow-hidden">
-            <div className="px-3 py-2.5 flex items-center justify-between border-b border-slate-800/70">
-              <div className="text-xs font-semibold text-slate-50">{t('operations.items') || 'البنود'}</div>
-              <div className="text-[10px] text-slate-300/80 tabular-nums">
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="px-3 py-2.5 flex items-center justify-between border-b border-slate-200 bg-slate-50">
+              <div className="text-xs font-bold text-slate-950">{t('operations.items') || 'البنود'}</div>
+              <div className="text-[10px] text-slate-700 font-bold tabular-nums">
                 إيراد الورشة: {Number(displayedWorkshopAmount).toFixed(2)} {t('common.currency') || ''}
               </div>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
-                <thead className="text-[10px] text-slate-300/80">
+                <thead className="text-[10px] text-slate-700 bg-slate-50">
                   <tr>
-                    <th className="p-2 text-right font-medium">{t('vehicle.itemName') || t('operations.itemName') || 'البند'}</th>
-                    <th className="p-2 text-right font-medium w-[95px]">{t('operations.qty') || t('vehicle.quantity') || 'الكمية'}</th>
-                    <th className="p-2 text-right font-medium w-[105px]">{t('common.price') || t('operations.price') || 'السعر'}</th>
-                    <th className="p-2 text-right font-medium w-[110px]">{t('common.total') || 'الإجمالي'}</th>
+                    <th className="p-2 text-right font-bold">{t('vehicle.itemName') || t('operations.itemName') || 'البند'}</th>
+                    <th className="p-2 text-right font-bold w-[95px]">{t('operations.qty') || t('vehicle.quantity') || 'الكمية'}</th>
+                    <th className="p-2 text-right font-bold w-[105px]">{t('common.price') || t('operations.price') || 'السعر'}</th>
+                    <th className="p-2 text-right font-bold w-[110px]">{t('common.total') || 'الإجمالي'}</th>
                     {editing ? <th className="p-2 w-[60px]" /> : null}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-200">
                   {(itemsView || []).map((it, idx) => {
                     const lineTotal = Number(it.quantity || 1) * Number(it.price || 0);
                     return (
@@ -858,7 +858,7 @@ export default function OperationCard({
                               }}
                             />
                           ) : (
-                            <div className="text-slate-50/90 font-medium break-words">{it.name || it.description || '-'}</div>
+                            <div className="text-slate-950 font-semibold break-words">{it.name || it.description || '-'}</div>
                           )}
                         </td>
                         <td className="p-2">
@@ -873,7 +873,7 @@ export default function OperationCard({
                               }}
                             />
                           ) : (
-                            <div className="text-slate-50/80 tabular-nums">{Number(it.quantity || 1)}</div>
+                            <div className="text-slate-900 font-semibold tabular-nums">{Number(it.quantity || 1)}</div>
                           )}
                         </td>
                         <td className="p-2">
@@ -888,11 +888,11 @@ export default function OperationCard({
                               }}
                             />
                           ) : (
-                            <div className="text-slate-50/80 tabular-nums">{Number(it.price || 0).toFixed(2)}</div>
+                            <div className="text-slate-900 font-semibold tabular-nums">{Number(it.price || 0).toFixed(2)}</div>
                           )}
                         </td>
                         <td className="p-2">
-                          <div className="text-slate-50 tabular-nums font-semibold">{Number(lineTotal).toFixed(2)}</div>
+                          <div className="text-slate-950 tabular-nums font-bold">{Number(lineTotal).toFixed(2)}</div>
                         </td>
                         {editing ? (
                           <td className="p-2">
@@ -912,7 +912,7 @@ export default function OperationCard({
 
                   {(itemsView || []).length === 0 ? (
                     <tr>
-                      <td colSpan={editing ? 5 : 4} className="p-3 text-center text-slate-300/70 text-xs">
+                      <td colSpan={editing ? 5 : 4} className="p-3 text-center text-slate-600 font-semibold text-xs">
                         {t('operations.noItems') || t('operations.no_items') || '-'}
                       </td>
                     </tr>
@@ -922,7 +922,7 @@ export default function OperationCard({
             </div>
 
             {editing ? (
-              <div className="px-3 py-2 border-t border-slate-800/70 flex justify-end">
+              <div className="px-3 py-2 border-t border-slate-200 flex justify-end">
                 <button
                   type="button"
                   className="apple-button-secondary h-8 px-2.5 text-[11px]"
@@ -935,26 +935,26 @@ export default function OperationCard({
             ) : null}
           </div>
 
-          <div className="mt-3 bg-slate-950/50 rounded-xl border border-amber-900/40 overflow-hidden" data-testid={`operation-card-supplier-items-${operation.id}`}>
-            <div className="px-3 py-2.5 flex items-center justify-between border-b border-amber-900/30">
-              <div className="text-xs font-semibold text-amber-100">بنود الموردين (الاسم + السعر)</div>
-              <div className="text-[10px] text-amber-200/85 tabular-nums">
+          <div className="mt-3 bg-amber-50 rounded-xl border border-amber-200 overflow-hidden" data-testid={`operation-card-supplier-items-${operation.id}`}>
+            <div className="px-3 py-2.5 flex items-center justify-between border-b border-amber-200">
+              <div className="text-xs font-bold text-amber-950">بنود الموردين (الاسم + السعر)</div>
+              <div className="text-[10px] text-amber-900 font-bold tabular-nums">
                 الإجمالي: {Number(supplierItemsTotal).toFixed(2)} {t('common.currency') || ''}
               </div>
             </div>
 
             <div className="px-3 py-2.5 space-y-2">
               {supplierItems.length === 0 ? (
-                <div className="text-xs text-slate-300/70" data-testid={`operation-card-supplier-items-empty-${operation.id}`}>
+                <div className="text-xs text-slate-700 font-semibold" data-testid={`operation-card-supplier-items-empty-${operation.id}`}>
                   لا توجد بنود موردين في هذه العملية.
                 </div>
               ) : (
                 supplierItems.map((item, idx) => (
                   <div key={`${operation.id}-supplier-item-${idx}`} className="flex items-center justify-between gap-2 text-xs" data-testid={`operation-card-supplier-item-${operation.id}-${idx}`}>
-                    <div className="text-slate-100 font-medium break-words">
+                    <div className="text-slate-950 font-semibold break-words">
                       {item.name || item.description || '-'}
                     </div>
-                    <div className="text-amber-100 tabular-nums whitespace-nowrap">
+                    <div className="text-amber-950 font-bold tabular-nums whitespace-nowrap">
                       {Number(item.price || 0).toFixed(2)} × {Number(item.quantity || 1)} = {Number(item.lineTotal || 0).toFixed(2)} {t('common.currency') || ''}
                     </div>
                   </div>

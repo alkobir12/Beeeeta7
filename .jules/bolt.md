@@ -1,0 +1,3 @@
+## 2025-05-18 - [Optimization Pattern: Consolidate multiple array iterations]
+**Learning:** Consolidating multiple array iterations (e.g., multiple `.filter().length` calls) into a single $O(N)$ pass using `.reduce()` or `.forEach()` to calculate statistics significantly reduces processing time, especially on large datasets. Additionally, combining this with `useMemo` and `useCallback` for event handlers is crucial when parent components manage large lists to prevent unnecessary re-renders of the entire list when only a single item's state changes.
+**Action:** Always look for multiple filters/reduces on the same dataset and consolidate them. Use `useCallback` for all handlers passed to children and wrap list items in `React.memo`.

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, memo } from 'react';
 import {
   ChevronDown,
   ChevronUp,
@@ -64,7 +64,7 @@ const resolveTargetAccountName = (operation, chartAccount, businessAccount, t) =
   return t('operations.account') || 'الحساب';
 };
 
-export default function OperationCard({
+function OperationCard({
   operation,
   isRTL,
   t,
@@ -530,3 +530,5 @@ export default function OperationCard({
     </div>
   );
 }
+
+export default memo(OperationCard);

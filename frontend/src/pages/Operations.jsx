@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Plus, Trash2, FileText, CreditCard, User, Building2, Car, Clock, Camera, Upload } from 'lucide-react';
@@ -170,6 +170,24 @@ const Operations = () => {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
+
+  const handleConfirmCreditPayment = useCallback((o) => {
+    setConfirmTarget(o);
+    setConfirmOpen(true);
+  }, []);
+
+  const handleViewVehicle = useCallback((o) => {
+    if (!o?.vehicleId) return;
+    navigate(`/vehicle/${o.vehicleId}`);
+  }, [navigate]);
+
+  const handleExpandedChange = useCallback((id, next) => {
+    if (next) {
+      setExpandedOperationId(id);
+    } else {
+      setExpandedOperationId((prev) => (prev === id ? null : prev));
+    }
+  }, []);
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -444,84 +462,82 @@ const Operations = () => {
   const operationsLoading = operationsQuery.isLoading || operationsQuery.isFetching;
   const visits = visitsQuery.data || [];
 
-  const sortedOps = useMemo(() => {
-    const arr = Array.isArray(ops) ? [...ops] : [];
-    const getTs = (o) => {
-      try {
-        return new Date(
-          o.date
-          || o.op_date
-          || o.createdAt
-          || o.created_at
-          || o.updatedAt
-          || o.updated_at
-          || 0
-        ).getTime() || 0;
-      } catch {
-        return 0;
-      }
-    };
-    // Smart order (CEO view): newest first, then higher absolute total
-    arr.sort((a, b) => {
-      const dt = getTs(b) - getTs(a);
-      if (dt !== 0) return dt;
-      const at = Math.abs(Number(b.total || 0)) - Math.abs(Number(a.total || 0));
-      if (at !== 0) return at;
-      return String(b.id || b._id || '').localeCompare(String(a.id || a._id || ''));
-    });
-    return arr;
-  }, [ops]);
+  const operationsProcessed = useMemo(() => {
+    const rawOps = Array.isArray(ops) ? ops : [];
+    const rOps = [];
+    const wOps = [];
+    const rCredit = { total: 0, overdue: 0 };
+    const wCredit = { total: 0, overdue: 0 };
 
-  const rakanOps = useMemo(
-    () => sortedOps.filter((op) => (
-      rakanBizAccountIds.has(String(op.accountId || ''))
-      || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
-      || isRakanOperationTagged(op)
-    )),
-    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
-  );
-
-  const workshopOps = useMemo(
-    () => sortedOps.filter((op) => !(
-      rakanBizAccountIds.has(String(op.accountId || ''))
-      || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
-      || isRakanOperationTagged(op)
-    )),
-    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
-  );
-
-  const getCreditSummary = (opsList) => {
-    const now = new Date();
+    const nowTs = Date.now();
     const msDay = 1000 * 60 * 60 * 24;
-    return opsList.reduce(
-      (acc, op) => {
-        const paymentStatus = (op.paymentStatus || op.payment_status || '').toString().toLowerCase();
-        const paymentMethod = (op.paymentMethod || op.payment_method || '').toString().toLowerCase();
-        const isCredit = paymentStatus === 'unpaid' || paymentMethod === 'credit';
-        if (!isCredit) return acc;
-        acc.total += 1;
-        const opDate = new Date(op.date || op.op_date || op.createdAt || op.created_at || 0);
-        if (!Number.isNaN(opDate.getTime())) {
-          const diffDays = Math.floor((now - opDate) / msDay);
-          if (diffDays >= creditReminderDays) {
-            acc.overdue += 1;
+
+    const allProcessed = rawOps.map(op => {
+      const ts = new Date(
+        op.date
+        || op.op_date
+        || op.createdAt
+        || op.created_at
+        || op.updatedAt
+        || op.updated_at
+        || 0
+      ).getTime() || 0;
+
+      const absTotal = Math.abs(Number(op.total || 0));
+      const opId = String(op.id || op._id || '');
+
+      const isRakan = rakanBizAccountIds.has(String(op.accountId || ''))
+        || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
+        || isRakanOperationTagged(op);
+
+      const paymentStatus = (op.paymentStatus || op.payment_status || '').toString().toLowerCase();
+      const paymentMethod = (op.paymentMethod || op.payment_method || '').toString().toLowerCase();
+      const isCredit = paymentStatus === 'unpaid' || paymentMethod === 'credit';
+
+      const processedOp = { ...op, _ts: ts, _absTotal: absTotal, _opId: opId };
+
+      if (isRakan) {
+        rOps.push(processedOp);
+        if (isCredit) {
+          rCredit.total += 1;
+          if (ts > 0 && Math.floor((nowTs - ts) / msDay) >= creditReminderDays) {
+            rCredit.overdue += 1;
           }
         }
-        return acc;
-      },
-      { total: 0, overdue: 0 }
-    );
-  };
+      } else {
+        wOps.push(processedOp);
+        if (isCredit) {
+          wCredit.total += 1;
+          if (ts > 0 && Math.floor((nowTs - ts) / msDay) >= creditReminderDays) {
+            wCredit.overdue += 1;
+          }
+        }
+      }
+      return processedOp;
+    });
 
-  const workshopCreditSummary = useMemo(
-    () => getCreditSummary(workshopOps),
-    [workshopOps, creditReminderDays]
-  );
+    const sortFn = (a, b) => {
+      const dt = b._ts - a._ts;
+      if (dt !== 0) return dt;
+      const at = b._absTotal - a._absTotal;
+      if (at !== 0) return at;
+      return b._opId.localeCompare(a._opId);
+    };
 
-  const rakanCreditSummary = useMemo(
-    () => getCreditSummary(rakanOps),
-    [rakanOps, creditReminderDays]
-  );
+    rOps.sort(sortFn);
+    wOps.sort(sortFn);
+    const sortedAll = [...allProcessed].sort(sortFn);
+
+    return {
+      rakanOps: rOps,
+      workshopOps: wOps,
+      rakanCreditSummary: rCredit,
+      workshopCreditSummary: wCredit,
+      sortedOps: sortedAll
+    };
+  }, [ops, rakanBizAccountIds, rakanChartAccountIds, creditReminderDays]);
+
+  const { rakanOps, workshopOps, rakanCreditSummary, workshopCreditSummary, sortedOps } = operationsProcessed;
 
   const rakanTotalPages = useMemo(
     () => Math.max(1, Math.ceil(rakanOps.length / OPERATIONS_PAGE_SIZE)),
@@ -862,7 +878,7 @@ const Operations = () => {
   });
 
 
-  const handleUpdateOperationItems = async (opId, items) => {
+  const handleUpdateOperationItems = useCallback(async (opId, items) => {
     try {
       setSaveOpId(opId);
 
@@ -886,7 +902,7 @@ const Operations = () => {
     } finally {
       setSaveOpId(null);
     }
-  };
+  }, [workshopId, updateOperationMutation]);
 
   const resolvePartnerPhone = (operation) => {
     const partnerId = operation?.partnerId || operation?.customerId || operation?.supplierId;
@@ -952,7 +968,7 @@ const Operations = () => {
     };
   };
 
-  const openPrintDialogForOperation = (operation) => {
+  const openPrintDialogForOperation = useCallback((operation) => {
     const opType = (operation?.type || '').toLowerCase();
     const label = ['purchase', 'expense', 'out'].includes(opType) ? 'فاتورة شراء' : 'فاتورة مبيعات';
     const phone = resolvePartnerPhone(operation);
@@ -962,13 +978,13 @@ const Operations = () => {
       payloadBuilder: () => buildOperationPayload(operation),
     });
     setPrintDialogOpen(true);
-  };
+  }, [customers, suppliers]);
 
-  const requestDeleteOperation = (op) => {
+  const requestDeleteOperation = useCallback((op) => {
     if (!op?.id) return;
     setDeleteTarget(op);
     setDeleteConfirmOpen(true);
-  };
+  }, []);
 
   const confirmDeleteOperation = async () => {
     if (!deleteTarget?.id) return;
@@ -2146,27 +2162,12 @@ const Operations = () => {
                     isSaving={saveOpId === op.id}
                     isDeleting={deleteOpId === op.id}
                     expanded={expandedOperationId === (op.id || opRenderKey)}
-                    onExpandedChange={(next) => {
-                      if (next) {
-                        setExpandedOperationId(op.id || opRenderKey);
-                      } else {
-                        setExpandedOperationId((prev) => (prev === op.id || prev === opRenderKey ? null : prev));
-                      }
-                    }}
-                    onPrint={(o) => {
-                      if (!o?.id) return;
-                      openPrintDialogForOperation(o);
-                    }}
-                    onViewVehicle={(o) => {
-                      if (!o?.vehicleId) return;
-                      navigate(`/vehicle/${o.vehicleId}`);
-                    }}
-                    onConfirmCreditPayment={(o) => {
-                      setConfirmTarget(o);
-                      setConfirmOpen(true);
-                    }}
-                    onDelete={(o) => requestDeleteOperation(o)}
-                    onUpdateItems={(opId, items) => handleUpdateOperationItems(opId, items)}
+                    onExpandedChange={(next) => handleExpandedChange(op.id || opRenderKey, next)}
+                    onPrint={openPrintDialogForOperation}
+                    onViewVehicle={handleViewVehicle}
+                    onConfirmCreditPayment={handleConfirmCreditPayment}
+                    onDelete={requestDeleteOperation}
+                    onUpdateItems={handleUpdateOperationItems}
                   />
                   );
                 })}

@@ -64,7 +64,7 @@ const resolveTargetAccountName = (operation, chartAccount, businessAccount, t) =
   return t('operations.account') || 'الحساب';
 };
 
-export default function OperationCard({
+const OperationCard = ({
   operation,
   isRTL,
   t,
@@ -80,7 +80,7 @@ export default function OperationCard({
   isDeleting,
   expanded,
   onExpandedChange,
-}) {
+}) => {
   const isControlled = typeof expanded === 'boolean' && typeof onExpandedChange === 'function';
   const [internalExpanded, setInternalExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -529,4 +529,6 @@ export default function OperationCard({
       ) : null}
     </div>
   );
-}
+};
+
+export default React.memo(OperationCard);

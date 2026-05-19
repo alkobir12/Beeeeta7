@@ -1,0 +1,3 @@
+## 2024-05-19 - [Consolidated Data Processing and Stable References]
+**Learning:** Multiple separate passes over a list (filter, sort, reduce) can be significantly optimized by combining them into a single $O(N)$ pass. Pre-calculating sort keys (like timestamps from date strings) prevents expensive repeated conversions during the $O(N \log N)$ sort phase. Memoizing list items with `React.memo` and stabilizing parent event handlers with `useCallback` is essential for maintaining UI performance as lists grow.
+**Action:** Always check for redundant array iterations in `useMemo` hooks and ensure child components in large lists are memoized with stable prop references.

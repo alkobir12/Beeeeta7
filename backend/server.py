@@ -410,7 +410,7 @@ async def validation_exception_handler(request, exc):
 # Configure via env to support custom domains + emergent host during deployment.
 cors_origins_raw = os.environ.get(
     "CORS_ORIGINS",
-    "https://alkobir.com,https://www.alkobir.com,http://localhost:3000",
+    "https://fixsa.online,https://www.fixsa.online,http://localhost:3000",
 )
 allow_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()]
 

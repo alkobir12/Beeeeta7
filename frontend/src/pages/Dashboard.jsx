@@ -221,13 +221,13 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+
+  useEffect(() => {
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
+    }
+  }, [expandedVehicleId]);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
   const [vehicleSummaries, setVehicleSummaries] = useState({});
@@ -250,19 +250,6 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
-
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
-
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
         normalizeCustomerName(entry.customer),
@@ -270,44 +257,74 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
-      (sum, key) => sum + (arLookup.get(key) || 0),
-      0
-    );
+    const initialStats = {
+      inProgress: 0,
+      ready: 0,
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+      dashboardReceivables: 0,
+    };
+
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
+
+    const computed = dashboardVehicles.reduce((acc, vehicle) => {
+      const status = vehicle.status;
+      const isInProgress = inProgressStatuses.has(status);
+
+      if (isInProgress) {
+        acc.inProgress++;
+        const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') acc.ready++;
+      if (status === 'waiting_for_parts') acc.waitingParts++;
+      if (status === 'diagnosis') acc.diagnosis++;
+      if (status === 'delivering') acc.delivering++;
+      if (['ready', 'delivering'].includes(status)) acc.readyForHandover++;
+
+      const custKey = normalizeCustomerName(vehicle.customerName);
+      if (custKey && !dashboardCustomerKeys.has(custKey)) {
+        dashboardCustomerKeys.add(custKey);
+        acc.dashboardReceivables += (arLookup.get(custKey) || 0);
+      }
+
+      return acc;
+    }, initialStats);
 
     return {
+      ...computed,
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
-      dashboardReceivables,
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
-  const filteredVehicles = dashboardVehicles.filter(vehicle => {
-    const matchesSearch = 
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || 
-                         vehicle.status === filterStatus ||
-                         (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
+  const filteredVehicles = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return dashboardVehicles.filter(vehicle => {
+      const matchesSearch =
+        vehicle.customerName?.toLowerCase().includes(query) ||
+        vehicle.plateNumber?.toLowerCase().includes(query) ||
+        vehicle.brand?.toLowerCase().includes(query) ||
+        vehicle.model?.toLowerCase().includes(query);
 
-    // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
-    const matchesStatusFixed = filterStatus === 'approved'
-      ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
-      : matchesStatus;
-    return matchesSearch && matchesStatusFixed;
-  });
+      const matchesStatus = filterStatus === 'all' ||
+                           vehicle.status === filterStatus ||
+                           (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
+
+      // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
+      const matchesStatusFixed = filterStatus === 'approved'
+        ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
+        : matchesStatus;
+      return matchesSearch && matchesStatusFixed;
+    });
+  }, [dashboardVehicles, searchQuery, filterStatus]);
 
   const getStatusConfigForVehicle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.diagnosis;
 
@@ -763,12 +780,6 @@ const Dashboard = () => {
                             {vehicle.year}
                           </span>
                         )}
-                      <span
-                        className="px-2.5 py-0.5 rounded-full bg-slate-800/50 text-slate-200 text-[11px] font-semibold"
-                        data-testid={`vehicle-service-type-${vehicle.id}`}
-                      >
-                        نوع الخدمة: {serviceType}
-                      </span>
                       </div>
                       {isUrgent && (
                         <span className="px-2.5 py-0.5 rounded-full bg-red-500/15 text-red-400 text-[11px] font-bold border border-red-500/30">

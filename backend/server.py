@@ -546,9 +546,32 @@ async def create_vehicle(vehicle_data: VehicleCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _get_visit_items(visit):
+    """Helper to parse items from visit notes consistently."""
+    notes = visit.get("notes")
+    if not notes:
+        return []
+    try:
+        parsed = json.loads(notes) if isinstance(notes, str) else notes
+        if isinstance(parsed, dict):
+            if "items" in parsed and isinstance(parsed["items"], list):
+                return parsed["items"]
+            # Support legacy services/parts keys
+            combined = []
+            if "services" in parsed and isinstance(parsed["services"], list):
+                combined.extend(parsed["services"])
+            if "parts" in parsed and isinstance(parsed["parts"], list):
+                combined.extend(parsed["parts"])
+            return combined
+    except:
+        pass
+    return []
+
+
 @api_router.get("/vehicles", response_model=List[Vehicle])
 async def get_vehicles():
     if DB_PROVIDER == "supabase":
+        # supabase_service.vehicles_list already calculates summaries efficiently
         rows = supabase_service.vehicles_list()
         # Ensure status has a default value if None
         for r in rows:
@@ -558,12 +581,47 @@ async def get_vehicles():
 
     if DB_PROVIDER == "memory":
         rows = _mem_read("vehicles")
-        # Ensure status has a default value if None
+        visits = _mem_read("vehicle_visits")
+
+        # Group visits by vehicleId for efficiency O(N+M)
+        visits_by_vehicle = {}
+        for vis in visits:
+            vid = vis.get("vehicleId")
+            if vid:
+                if vid not in visits_by_vehicle:
+                    visits_by_vehicle[vid] = []
+                visits_by_vehicle[vid].append(vis)
+
+        # Ensure status has a default value if None and add summary fields
         for r in rows:
             if r.get("status") is None:
                 r["status"] = "diagnosis"
+
+            v_id = r.get("id")
+            v_visits = visits_by_vehicle.get(v_id, [])
+            r["visitsCount"] = len(v_visits)
+
+            sorted_v_visits = sorted(
+                v_visits,
+                key=lambda x: x.get("entryDate") or x.get("createdAt") or "",
+                reverse=True
+            )
+
+            in_progress = next((vis for vis in sorted_v_visits if vis.get("status") == "in_progress"), None)
+            with_items = next((vis for vis in sorted_v_visits if _get_visit_items(vis)), None)
+            current_visit = in_progress or with_items or (sorted_v_visits[0] if sorted_v_visits else None)
+
+            items = _get_visit_items(current_visit) if current_visit else []
+            # Improved null-safety for calculations
+            est_total = sum(float(it.get("quantity") or 1) * float(it.get("price") or 0) for it in items)
+            r["estimatedTotal"] = est_total
+
+            service_names = [it.get("name") or it.get("description") for it in items if it.get("name") or it.get("description")]
+            r["serviceType"] = "، ".join(service_names[:3]) if service_names else "غير محدد"
+
         return [Vehicle(**r) for r in rows]
 
+    # MongoDB Implementation
     # استخدام Projection وحد للحفاظ على الأداء في الإنتاج
     vehicles = (
         await db.vehicles.find({}, {"_id": 0})
@@ -571,23 +629,44 @@ async def get_vehicles():
         .limit(200)
         .to_list(200)
     )
-    # Ensure status has a default value if None and calculate estimatedTotal
+
+    # Batch fetch visits for all returned vehicles
+    vehicle_ids = [v["id"] for v in vehicles]
+    all_visits = await db.vehicle_visits.find({"vehicleId": {"$in": vehicle_ids}}, {"_id": 0}).to_list(1000)
+
+    visits_by_vehicle = {}
+    for visit in all_visits:
+        vid = visit["vehicleId"]
+        if vid not in visits_by_vehicle:
+            visits_by_vehicle[vid] = []
+        visits_by_vehicle[vid].append(visit)
+
+    # Ensure status has a default value if None and calculate summaries
     for v in vehicles:
         if v.get("status") is None:
             v["status"] = "diagnosis"
-        
-        # Calculate estimatedTotal from parts/services
-        estimated_total = 0
-        if v.get("parts") and isinstance(v.get("parts"), list):
-            for part in v["parts"]:
-                if isinstance(part, dict):
-                    # Sum up price * quantity for each part
-                    price = part.get("price", 0) or 0
-                    quantity = part.get("quantity", 1) or 1
-                    estimated_total += price * quantity
-        
-        v["estimatedTotal"] = estimated_total
-    
+
+        v_visits = visits_by_vehicle.get(v["id"], [])
+        v["visitsCount"] = len(v_visits)
+
+        sorted_v_visits = sorted(
+            v_visits,
+            key=lambda x: (x.get("entryDate").isoformat() if hasattr(x.get("entryDate"), "isoformat") else x.get("entryDate")) or "",
+            reverse=True
+        )
+
+        in_progress = next((vis for vis in sorted_v_visits if vis.get("status") == "in_progress"), None)
+        with_items = next((vis for vis in sorted_v_visits if _get_visit_items(vis)), None)
+        current_visit = in_progress or with_items or (sorted_v_visits[0] if sorted_v_visits else None)
+
+        items = _get_visit_items(current_visit) if current_visit else []
+        # Improved null-safety for calculations
+        est_total = sum(float(it.get("quantity") or 1) * float(it.get("price") or 0) for it in items)
+        v["estimatedTotal"] = est_total
+
+        service_names = [it.get("name") or it.get("description") for it in items if it.get("name") or it.get("description")]
+        v["serviceType"] = "، ".join(service_names[:3]) if service_names else "غير محدد"
+
     return [Vehicle(**v) for v in vehicles]
 
 

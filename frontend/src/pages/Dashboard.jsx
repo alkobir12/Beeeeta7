@@ -91,6 +91,7 @@ const Dashboard = () => {
       const today = new Date().toISOString().slice(0, 10);
 
       // Load core data first (vehicles + technicians). Finance AR is heavy; load it lazily.
+      // Optimization: Vehicles now include summary data, so no N+1 calls needed!
       const [vehiclesRes, techniciansRes] = await Promise.all([
         vehicleAPI.getAll(),
         technicianAPI.getAll(),
@@ -134,104 +135,13 @@ const Dashboard = () => {
         setIsRefreshing(false);
       }
     }
-  }, [t, toast]);
-
-  const parseVisitItems = (notes) => {
-    if (!notes) return [];
-    try {
-      if (typeof notes === 'string') {
-        const parsed = JSON.parse(notes);
-        if (Array.isArray(parsed.items)) return parsed.items;
-        if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
-          return [...(parsed.services || []), ...(parsed.parts || [])];
-        }
-        return [];
-      }
-      if (typeof notes === 'object') {
-        if (Array.isArray(notes.items)) return notes.items;
-        if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
-          return [...(notes.services || []), ...(notes.parts || [])];
-        }
-        return [];
-      }
-    } catch (e) {
-      return [];
-    }
-    return [];
-  };
-
-  const getVisitItems = (visit) => {
-    if (!visit) return [];
-    if (Array.isArray(visit.items) && visit.items.length) return visit.items;
-    if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
-    return parseVisitItems(visit.notes);
-  };
-
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
+  }, [t, toast, API_URL, WORKSHOP_ID]);
 
   const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
-
-  const loadVehicleSummary = async (vehicleId) => {
-    if (!vehicleId) return;
-    if (vehicleSummaries[vehicleId] || vehicleSummaryLoading[vehicleId]) return;
-    setVehicleSummaryLoading((prev) => ({ ...prev, [vehicleId]: true }));
-    try {
-      const res = await axios.get(`${API_URL}/vehicles/${vehicleId}/visits`);
-      const visits = res.data || [];
-      const visitsCount = visits.length;
-      const sortedVisits = [...visits].sort(
-        (a, b) => new Date(b.entryDate || b.entry_date || b.created_at || 0) - new Date(a.entryDate || a.entry_date || a.created_at || 0)
-      );
-      const inProgress = sortedVisits.find((v) => v.status === 'in_progress');
-      const withItems = sortedVisits.find((v) => getVisitItems(v).length);
-      const currentVisit = inProgress || withItems || sortedVisits[0];
-      const items = getVisitItems(currentVisit);
-      const estimatedTotal = items.reduce((sum, item) => {
-        const qty = Number(item.quantity || 1);
-        const price = Number(item.price || 0);
-        return sum + qty * price;
-      }, 0);
-
-      setVehicleSummaries((prev) => ({
-        ...prev,
-        [vehicleId]: {
-          visitsCount,
-          estimatedTotal,
-          serviceType: getServiceTypeLabel(items),
-        }
-      }));
-    } catch (e) {
-      setVehicleSummaries((prev) => ({
-        ...prev,
-        [vehicleId]: {
-          visitsCount: 0,
-          estimatedTotal: 0,
-          serviceType: 'غير محدد',
-        }
-      }));
-    } finally {
-      setVehicleSummaryLoading((prev) => ({ ...prev, [vehicleId]: false }));
-    }
-  };
-
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
-  const [vehicleSummaries, setVehicleSummaries] = useState({});
-  const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
 
   const dashboardVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status !== 'delivered'),
@@ -675,10 +585,12 @@ const Dashboard = () => {
               const statusConfig = getStatusConfigForVehicle(vehicle.status);
               const progress = typeof vehicle.progress === 'number' ? vehicle.progress : 65;
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
-              const summary = vehicleSummaries[vehicle.id] || {};
-              const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
-              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+
+              // Optimized: Using data pre-calculated by backend
+              const visitsCount = vehicle.visitsCount ?? 0;
+              const estimatedTotal = vehicle.estimatedTotal ?? 0;
+              const serviceType = vehicle.serviceType || 'غير محدد';
+
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

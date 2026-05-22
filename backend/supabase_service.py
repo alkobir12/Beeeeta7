@@ -4,6 +4,7 @@ Handles Supabase database interactions
 """
 
 import os
+import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pathlib import Path
@@ -82,6 +83,9 @@ def to_camel_vehicle(dbrow: Dict[str, Any]) -> Dict[str, Any]:
         "technicianId": dbrow.get("technician_id"),
         "technicianName": dbrow.get("technician_name"),
         "notes": dbrow.get("notes"),
+        "visitsCount": dbrow.get("visitsCount") or 0,
+        "estimatedTotal": dbrow.get("estimatedTotal") or 0,
+        "serviceType": dbrow.get("serviceType") or "غير محدد",
     }
 
 
@@ -145,7 +149,86 @@ class SupabaseService:
             .order("entry_date", desc=True)
             .execute()
         )
-        return [to_camel_vehicle(r) for r in (res.data or [])]
+        vehicles = res.data or []
+        if not vehicles:
+            return []
+
+        # Optimization: Fetch all visits for these vehicles in one query to avoid N+1
+        vehicle_ids = [v["id"] for v in vehicles]
+        visits_res = (
+            self.client.table("vehicle_visits")
+            .select("id, vehicle_id, notes, status, entry_date, created_at")
+            .in_("vehicle_id", vehicle_ids)
+            .execute()
+        )
+        all_visits = visits_res.data or []
+
+        # Group visits by vehicle_id
+        visits_by_vehicle = {}
+        for visit in all_visits:
+            vid = visit["vehicle_id"]
+            if vid not in visits_by_vehicle:
+                visits_by_vehicle[vid] = []
+            visits_by_vehicle[vid].append(visit)
+
+        # Helper to parse items from visit notes
+        def get_visit_items(visit):
+            notes = visit.get("notes")
+            if not notes:
+                return []
+            try:
+                if isinstance(notes, str):
+                    parsed = json.loads(notes)
+                else:
+                    parsed = notes
+
+                if isinstance(parsed, dict):
+                    if "items" in parsed and isinstance(parsed["items"], list):
+                        return parsed["items"]
+                    # Support legacy services/parts keys
+                    combined = []
+                    if "services" in parsed and isinstance(parsed["services"], list):
+                        combined.extend(parsed["services"])
+                    if "parts" in parsed and isinstance(parsed["parts"], list):
+                        combined.extend(parsed["parts"])
+                    return combined
+            except:
+                pass
+            return []
+
+        # Calculate summaries for each vehicle
+        for v in vehicles:
+            v_visits = visits_by_vehicle.get(v["id"], [])
+            v["visitsCount"] = len(v_visits)
+
+            # Sort visits by date descending
+            sorted_visits = sorted(
+                v_visits,
+                key=lambda x: x.get("entry_date") or x.get("created_at") or "",
+                reverse=True
+            )
+
+            # Find the most relevant visit for summary
+            in_progress = next((vis for vis in sorted_visits if vis.get("status") == "in_progress"), None)
+            with_items = next((vis for vis in sorted_visits if get_visit_items(vis)), None)
+            current_visit = in_progress or with_items or (sorted_visits[0] if sorted_visits else None)
+
+            items = get_visit_items(current_visit) if current_visit else []
+
+            # Calculate estimated total
+            est_total = 0
+            for item in items:
+                qty = float(item.get("quantity") or 1)
+                price = float(item.get("price") or 0)
+                est_total += qty * price
+
+            v["estimatedTotal"] = est_total
+
+            # Get service type label
+            service_names = [item.get("name") or item.get("description") for item in items if item.get("name") or item.get("description")]
+            v["serviceType"] = "، ".join(service_names[:3]) if service_names else "غير محدد"
+
+        return [to_camel_vehicle(r) for r in vehicles]
 
     def vehicles_create(self, api_doc: Dict[str, Any]) -> Dict[str, Any]:
         if self.mock_mode:

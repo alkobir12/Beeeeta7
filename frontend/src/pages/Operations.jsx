@@ -472,56 +472,50 @@ const Operations = () => {
     return arr;
   }, [ops]);
 
-  const rakanOps = useMemo(
-    () => sortedOps.filter((op) => (
-      rakanBizAccountIds.has(String(op.accountId || ''))
-      || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
-      || isRakanOperationTagged(op)
-    )),
-    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
-  );
-
-  const workshopOps = useMemo(
-    () => sortedOps.filter((op) => !(
-      rakanBizAccountIds.has(String(op.accountId || ''))
-      || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
-      || isRakanOperationTagged(op)
-    )),
-    [sortedOps, rakanBizAccountIds, rakanChartAccountIds]
-  );
-
-  const getCreditSummary = (opsList) => {
+  // Optimization: Consolidate multiple O(N) passes into a single O(N) pass
+  const { rakanOps, workshopOps, rakanCreditSummary, workshopCreditSummary } = useMemo(() => {
+    const rOps = [];
+    const wOps = [];
+    const rCredit = { total: 0, overdue: 0 };
+    const wCredit = { total: 0, overdue: 0 };
     const now = new Date();
     const msDay = 1000 * 60 * 60 * 24;
-    return opsList.reduce(
-      (acc, op) => {
-        const paymentStatus = (op.paymentStatus || op.payment_status || '').toString().toLowerCase();
-        const paymentMethod = (op.paymentMethod || op.payment_method || '').toString().toLowerCase();
-        const isCredit = paymentStatus === 'unpaid' || paymentMethod === 'credit';
-        if (!isCredit) return acc;
-        acc.total += 1;
+
+    sortedOps.forEach((op) => {
+      const isRakan = rakanBizAccountIds.has(String(op.accountId || ''))
+        || rakanChartAccountIds.has(String(op.accountingAccountId || op.accountId || ''))
+        || isRakanOperationTagged(op);
+
+      if (isRakan) {
+        rOps.push(op);
+      } else {
+        wOps.push(op);
+      }
+
+      const paymentStatus = (op.paymentStatus || op.payment_status || '').toString().toLowerCase();
+      const paymentMethod = (op.paymentMethod || op.payment_method || '').toString().toLowerCase();
+      const isCredit = paymentStatus === 'unpaid' || paymentMethod === 'credit';
+
+      if (isCredit) {
+        const targetSummary = isRakan ? rCredit : wCredit;
+        targetSummary.total += 1;
         const opDate = new Date(op.date || op.op_date || op.createdAt || op.created_at || 0);
         if (!Number.isNaN(opDate.getTime())) {
           const diffDays = Math.floor((now - opDate) / msDay);
           if (diffDays >= creditReminderDays) {
-            acc.overdue += 1;
+            targetSummary.overdue += 1;
           }
         }
-        return acc;
-      },
-      { total: 0, overdue: 0 }
-    );
-  };
+      }
+    });
 
-  const workshopCreditSummary = useMemo(
-    () => getCreditSummary(workshopOps),
-    [workshopOps, creditReminderDays]
-  );
-
-  const rakanCreditSummary = useMemo(
-    () => getCreditSummary(rakanOps),
-    [rakanOps, creditReminderDays]
-  );
+    return {
+      rakanOps: rOps,
+      workshopOps: wOps,
+      rakanCreditSummary: rCredit,
+      workshopCreditSummary: wCredit,
+    };
+  }, [sortedOps, rakanBizAccountIds, rakanChartAccountIds, creditReminderDays]);
 
   const rakanTotalPages = useMemo(
     () => Math.max(1, Math.ceil(rakanOps.length / OPERATIONS_PAGE_SIZE)),

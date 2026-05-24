@@ -1,0 +1,3 @@
+## 2026-05-24 - Dashboard N+1 and Multi-pass Optimization
+**Learning:** In applications where a core list (like vehicles) grows indefinitely, using that list as a trigger for side-effect data fetching (like summary APIs) creates a significant "N+1" network bottleneck as archived records accumulate. Additionally, redundant array iterations for statistics calculation (multiple .filter().length calls) waste CPU cycles on every re-render.
+**Action:** Filter lists to active subsets before using them in side effects or statistics calculations. Consolidate multiple statistics into a single O(N) pass using .reduce().

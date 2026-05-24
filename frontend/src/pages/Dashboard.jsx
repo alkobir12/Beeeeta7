@@ -221,23 +221,28 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
   const [vehicleSummaries, setVehicleSummaries] = useState({});
   const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
 
+  // Optimization: Filter vehicles once for the dashboard view
   const dashboardVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status !== 'delivered'),
     [vehicles]
   );
 
+  // Optimization: Only load summaries for active (non-delivered) vehicles
+  // This significantly reduces N+1 network calls as the archive grows.
+  useEffect(() => {
+    if (dashboardVehicles.length) {
+      dashboardVehicles.forEach((v) => loadVehicleSummary(v.id));
+    }
+  }, [dashboardVehicles]);
+
+  // Optimization: Calculate all dashboard stats in a single O(N) pass
+  // instead of multiple redundant filter/length iterations.
   const stats = useMemo(() => {
     const inProgressStatuses = new Set([
       'diagnosis',
@@ -250,18 +255,18 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
+    const initialStats = {
+      inProgress: 0,
+      ready: 0,
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+      dashboardReceivables: 0,
+    };
 
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
 
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
@@ -270,24 +275,39 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
-      (sum, key) => sum + (arLookup.get(key) || 0),
-      0
-    );
+    const result = dashboardVehicles.reduce((acc, vehicle) => {
+      const status = vehicle.status;
+      const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+      const customerKey = normalizeCustomerName(vehicle.customerName);
+
+      if (inProgressStatuses.has(status)) {
+        acc.inProgress++;
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') acc.ready++;
+      if (status === 'waiting_for_parts') acc.waitingParts++;
+      if (status === 'diagnosis') acc.diagnosis++;
+      if (status === 'delivering') acc.delivering++;
+      if (['ready', 'delivering'].includes(status)) acc.readyForHandover++;
+
+      if (customerKey) {
+        if (!dashboardCustomerKeys.has(customerKey)) {
+          dashboardCustomerKeys.add(customerKey);
+          acc.dashboardReceivables += (arLookup.get(customerKey) || 0);
+        }
+      }
+
+      return acc;
+    }, initialStats);
 
     return {
+      ...result,
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
-      dashboardReceivables,
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 

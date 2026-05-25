@@ -35,7 +35,8 @@ const Dashboard = () => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const isMountedRef = useRef(true);
   
-  const STATUS_CONFIG = {
+  // ⚡ Bolt: Memoize STATUS_CONFIG to prevent unnecessary object creation on every render
+  const STATUS_CONFIG = useMemo(() => ({
     diagnosis: { label: t('status.diagnosis'), color: 'text-orange-400 bg-orange-500/10 border border-orange-500/20', iconColor: 'text-orange-400' },
     quotation: { label: t('status.quotation'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
     approved: { label: t('status.approved'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
@@ -47,7 +48,7 @@ const Dashboard = () => {
     delivered: { label: t('status.delivered'), color: 'text-gray-400 bg-gray-500/10 border border-gray-500/20', iconColor: 'text-gray-400' },
     waiting_for_parts: { label: t('status.waiting_for_parts'), color: 'text-amber-300 bg-amber-500/10 border border-amber-500/20', iconColor: 'text-amber-300' },
     delivering: { label: t('status.delivering'), color: 'text-teal-300 bg-teal-500/10 border border-teal-500/20', iconColor: 'text-teal-300' }
-  };
+  }), [t]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -167,18 +168,18 @@ const Dashboard = () => {
     return parseVisitItems(visit.notes);
   };
 
-  const getServiceTypeLabel = (items = []) => {
+  const getServiceTypeLabel = useCallback((items = []) => {
     const names = items
       .map((item) => item.name || item.description)
       .filter(Boolean)
       .slice(0, 3);
     if (!names.length) return 'غير محدد';
     return names.join('، ');
-  };
+  }, []);
 
   const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
 
-  const loadVehicleSummary = async (vehicleId) => {
+  const loadVehicleSummary = useCallback(async (vehicleId) => {
     if (!vehicleId) return;
     if (vehicleSummaries[vehicleId] || vehicleSummaryLoading[vehicleId]) return;
     setVehicleSummaryLoading((prev) => ({ ...prev, [vehicleId]: true }));
@@ -219,13 +220,15 @@ const Dashboard = () => {
     } finally {
       setVehicleSummaryLoading((prev) => ({ ...prev, [vehicleId]: false }));
     }
-  };
+  }, [API_URL, vehicleSummaries, vehicleSummaryLoading, getServiceTypeLabel]);
 
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    // ⚡ Bolt: Only fetch summaries for active vehicles on the dashboard to reduce N+1 API calls.
+    // This avoids fetching details for 'delivered' vehicles which are filtered out anyway.
+    if (dashboardVehicles.length) {
+      dashboardVehicles.forEach((v) => loadVehicleSummary(v.id));
     }
-  }, [vehicles]);
+  }, [dashboardVehicles, loadVehicleSummary]);
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
@@ -239,6 +242,8 @@ const Dashboard = () => {
   );
 
   const stats = useMemo(() => {
+    // ⚡ Bolt: Consolidate multiple statistics calculations into a single O(N) pass over dashboardVehicles.
+    // This reduces iterations from ~8 separate .filter().length calls to just one loop.
     const inProgressStatuses = new Set([
       'diagnosis',
       'in_progress',
@@ -250,18 +255,36 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
+    const res = {
+      inProgress: 0,
+      ready: 0,
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+      busyTechnicianKeys: new Set(),
+      dashboardCustomerKeys: new Set(),
+    };
 
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
+    dashboardVehicles.forEach(vehicle => {
+      const status = vehicle.status;
+      const isInProgress = inProgressStatuses.has(status);
+
+      if (isInProgress) {
+        res.inProgress++;
+        const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+        if (techKey) res.busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') res.ready++;
+      if (status === 'waiting_for_parts') res.waitingParts++;
+      if (status === 'diagnosis') res.diagnosis++;
+      if (status === 'delivering') res.delivering++;
+      if (['ready', 'delivering'].includes(status)) res.readyForHandover++;
+
+      const custName = normalizeCustomerName(vehicle.customerName);
+      if (custName) res.dashboardCustomerKeys.add(custName);
+    });
 
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
@@ -270,44 +293,48 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
+    const dashboardReceivables = [...res.dashboardCustomerKeys].reduce(
       (sum, key) => sum + (arLookup.get(key) || 0),
       0
     );
 
     return {
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      inProgress: res.inProgress,
+      ready: res.ready,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
-      busyTechnicians: busyTechnicianKeys.size,
-      freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
+      waitingParts: res.waitingParts,
+      diagnosis: res.diagnosis,
+      delivering: res.delivering,
+      readyForHandover: res.readyForHandover,
+      busyTechnicians: res.busyTechnicianKeys.size,
+      freeTechnicians: Math.max(technicians.length - res.busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
       dashboardReceivables,
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
-  const filteredVehicles = dashboardVehicles.filter(vehicle => {
-    const matchesSearch = 
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || 
-                         vehicle.status === filterStatus ||
-                         (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
+  // ⚡ Bolt: Memoize the filtered vehicles list to avoid re-calculating search and status filters on every render.
+  const filteredVehicles = useMemo(() => {
+    const search = searchQuery.toLowerCase();
+    return dashboardVehicles.filter(vehicle => {
+      const matchesSearch = !search ||
+        (vehicle.customerName?.toLowerCase().includes(search)) ||
+        (vehicle.plateNumber?.toLowerCase().includes(search)) ||
+        (vehicle.brand?.toLowerCase().includes(search)) ||
+        (vehicle.model?.toLowerCase().includes(search));
 
-    // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
-    const matchesStatusFixed = filterStatus === 'approved'
-      ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
-      : matchesStatus;
-    return matchesSearch && matchesStatusFixed;
-  });
+      const matchesStatus = filterStatus === 'all' ||
+                           vehicle.status === filterStatus ||
+                           (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
+
+      // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
+      const matchesStatusFixed = filterStatus === 'approved'
+        ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
+        : matchesStatus;
+      return matchesSearch && matchesStatusFixed;
+    });
+  }, [dashboardVehicles, searchQuery, filterStatus]);
 
   const getStatusConfigForVehicle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.diagnosis;
 
@@ -320,7 +347,8 @@ const Dashboard = () => {
   }
 
   // Theme-based styles (Glass / Purple)
-  const styles = {
+  // ⚡ Bolt: Memoize styles to prevent redundant object creation and child re-renders.
+  const styles = useMemo(() => ({
     bg: isLight ? 'radial-gradient(1200px circle at 20% 10%, rgba(168,85,247,0.18), transparent 45%), radial-gradient(900px circle at 80% 20%, rgba(99,102,241,0.16), transparent 50%), linear-gradient(180deg, #0b1020 0%, #0b1020 40%, #070a14 100%)' : '#0b1120',
     cardBg: isLight ? 'rgba(255,255,255,0.06)' : '#1e293b',
     cardBorder: isLight ? 'rgba(168,85,247,0.18)' : '#334155',
@@ -331,7 +359,7 @@ const Dashboard = () => {
     inputBorder: isLight ? 'rgba(255,255,255,0.10)' : '#334155',
     hoverBg: isLight ? 'rgba(255,255,255,0.08)' : '#334155',
     statCardBg: isLight ? 'rgba(255,255,255,0.06)' : 'rgba(30, 41, 59, 0.8)',
-  };
+  }), [isLight]);
 
   // ألوان خاصة لكروت المركبات لتشبه الكرت الأزرق في الصورة
   const isGlassPurpleTheme = true;

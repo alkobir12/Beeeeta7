@@ -22,6 +22,9 @@ const Dashboard = () => {
   const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+  const [vehicleSummaries, setVehicleSummaries] = useState({});
+  const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
   const API_URL = (
     process.env.NODE_ENV === 'production'
       ? '/api'
@@ -30,6 +33,48 @@ const Dashboard = () => {
   const WORKSHOP_ID = process.env.REACT_APP_WORKSHOP_ID;
   const [totalAR, setTotalAR] = useState(0);
   const [arCustomers, setArCustomers] = useState([]);
+
+  const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+
+  const parseVisitItems = (notes) => {
+    if (!notes) return [];
+    try {
+      if (typeof notes === 'string') {
+        const parsed = JSON.parse(notes);
+        if (Array.isArray(parsed.items)) return parsed.items;
+        if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
+          return [...(parsed.services || []), ...(parsed.parts || [])];
+        }
+        return [];
+      }
+      if (typeof notes === 'object') {
+        if (Array.isArray(notes.items)) return notes.items;
+        if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
+          return [...(notes.services || []), ...(notes.parts || [])];
+        }
+        return [];
+      }
+    } catch (e) {
+      return [];
+    }
+    return [];
+  };
+
+  const getVisitItems = (visit) => {
+    if (!visit) return [];
+    if (Array.isArray(visit.items) && visit.items.length) return visit.items;
+    if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
+    return parseVisitItems(visit.notes);
+  };
+
+  const getServiceTypeLabel = (items = []) => {
+    const names = items
+      .map((item) => item.name || item.description)
+      .filter(Boolean)
+      .slice(0, 3);
+    if (!names.length) return 'غير محدد';
+    return names.join('، ');
+  };
 
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showQuickActions, setShowQuickActions] = useState(false);
@@ -136,48 +181,6 @@ const Dashboard = () => {
     }
   }, [t, toast]);
 
-  const parseVisitItems = (notes) => {
-    if (!notes) return [];
-    try {
-      if (typeof notes === 'string') {
-        const parsed = JSON.parse(notes);
-        if (Array.isArray(parsed.items)) return parsed.items;
-        if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
-          return [...(parsed.services || []), ...(parsed.parts || [])];
-        }
-        return [];
-      }
-      if (typeof notes === 'object') {
-        if (Array.isArray(notes.items)) return notes.items;
-        if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
-          return [...(notes.services || []), ...(notes.parts || [])];
-        }
-        return [];
-      }
-    } catch (e) {
-      return [];
-    }
-    return [];
-  };
-
-  const getVisitItems = (visit) => {
-    if (!visit) return [];
-    if (Array.isArray(visit.items) && visit.items.length) return visit.items;
-    if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
-    return parseVisitItems(visit.notes);
-  };
-
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
-
-  const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
-
   const loadVehicleSummary = async (vehicleId) => {
     if (!vehicleId) return;
     if (vehicleSummaries[vehicleId] || vehicleSummaryLoading[vehicleId]) return;
@@ -222,16 +225,13 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
     }
-  }, [vehicles]);
+  }, [expandedVehicleId]);
 
-  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
-  const [vehicleSummaries, setVehicleSummaries] = useState({});
-  const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
 
   const dashboardVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status !== 'delivered'),
@@ -250,19 +250,6 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
-
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
-
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
         normalizeCustomerName(entry.customer),
@@ -270,22 +257,53 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
+    // Optimization: Consolidate multiple array iterations into a single O(N) pass
+    const acc = {
+      inProgress: 0,
+      ready: 0,
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+      busyTechnicianKeys: new Set(),
+      dashboardCustomerKeys: new Set()
+    };
+
+    dashboardVehicles.forEach(vehicle => {
+      const { status, customerName, technicianId, technicianName } = vehicle;
+
+      const normCustomer = normalizeCustomerName(customerName);
+      if (normCustomer) acc.dashboardCustomerKeys.add(normCustomer);
+
+      if (inProgressStatuses.has(status)) {
+        acc.inProgress++;
+        const techKey = String(technicianId || technicianName || '').trim();
+        if (techKey) acc.busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') acc.ready++;
+      if (status === 'waiting_for_parts') acc.waitingParts++;
+      if (status === 'diagnosis') acc.diagnosis++;
+      if (status === 'delivering') acc.delivering++;
+      if (status === 'ready' || status === 'delivering') acc.readyForHandover++;
+    });
+
+    const dashboardReceivables = [...acc.dashboardCustomerKeys].reduce(
       (sum, key) => sum + (arLookup.get(key) || 0),
       0
     );
 
     return {
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      inProgress: acc.inProgress,
+      ready: acc.ready,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
-      busyTechnicians: busyTechnicianKeys.size,
-      freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
+      waitingParts: acc.waitingParts,
+      diagnosis: acc.diagnosis,
+      delivering: acc.delivering,
+      readyForHandover: acc.readyForHandover,
+      busyTechnicians: acc.busyTechnicianKeys.size,
+      freeTechnicians: Math.max(technicians.length - acc.busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
       dashboardReceivables,
     };
@@ -675,10 +693,21 @@ const Dashboard = () => {
               const statusConfig = getStatusConfigForVehicle(vehicle.status);
               const progress = typeof vehicle.progress === 'number' ? vehicle.progress : 65;
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
+
+              // Optimization: Use locally available data as fallback while lazy-loading full summary
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
-              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+
+              const fallbackItems = [...(vehicle.services || []), ...(vehicle.parts || [])];
+              const fallbackEstimatedTotal = fallbackItems.reduce((sum, item) => {
+                const qty = Number(item?.quantity || item?.qty || 1);
+                const price = Number(item?.price || 0);
+                return sum + (qty * price);
+              }, 0);
+
+              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? fallbackEstimatedTotal;
+              const serviceType = summary.serviceType || getServiceTypeLabel(fallbackItems);
+
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

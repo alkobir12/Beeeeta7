@@ -9,6 +9,20 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
 
+// BOLT OPTIMIZATION: Move helper outside component to avoid re-allocation on every render.
+const getServiceTypeLabel = (services, parts) => {
+  const s = Array.isArray(services) ? services : [];
+  const p = Array.isArray(parts) ? parts : [];
+  const items = [...s, ...p];
+  if (!items.length) return 'غير محدد';
+  const names = items
+    .map((item) => item.name || item.description)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!names.length) return 'غير محدد';
+  return names.join('، ');
+};
+
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
@@ -109,9 +123,9 @@ const Dashboard = () => {
           })
           .then((arRes) => {
             if (!isMountedRef.current) return;
-            const arTotal = Number(arRes?.data?.data?.total_ar || 0);
+            const fetchedTotalAR = Number(arRes?.data?.data?.total_ar || 0);
             const customersList = arRes?.data?.data?.customers || [];
-            setTotalAR(arTotal);
+            setTotalAR(fetchedTotalAR);
             setArCustomers(customersList);
           })
           .catch(() => {
@@ -167,14 +181,6 @@ const Dashboard = () => {
     return parseVisitItems(visit.notes);
   };
 
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
 
   const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
 
@@ -193,6 +199,9 @@ const Dashboard = () => {
       const withItems = sortedVisits.find((v) => getVisitItems(v).length);
       const currentVisit = inProgress || withItems || sortedVisits[0];
       const items = getVisitItems(currentVisit);
+      // BOLT OPTIMIZATION: Extract parts and services for label helper
+      const visitParts = currentVisit?.parts || [];
+      const visitServices = currentVisit?.services || [];
       const estimatedTotal = items.reduce((sum, item) => {
         const qty = Number(item.quantity || 1);
         const price = Number(item.price || 0);
@@ -204,7 +213,7 @@ const Dashboard = () => {
         [vehicleId]: {
           visitsCount,
           estimatedTotal,
-          serviceType: getServiceTypeLabel(items),
+          serviceType: getServiceTypeLabel(visitServices, visitParts),
         }
       }));
     } catch (e) {
@@ -221,13 +230,16 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+
+  // BOLT OPTIMIZATION: Implement lazy loading for vehicle summaries.
+  // Instead of fetching summaries for all vehicles on mount (N+1 bottleneck),
+  // we only fetch details when a specific vehicle card is expanded.
+  useEffect(() => {
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
+    }
+  }, [expandedVehicleId]);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
   const [vehicleSummaries, setVehicleSummaries] = useState({});
@@ -250,18 +262,40 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
+    // BOLT OPTIMIZATION: Consolidate multiple O(N) traversals into a single .reduce() pass
+    // to improve performance when dealing with large lists of active vehicles.
+    const initialStats = {
+      inProgress: 0,
+      ready: 0,
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+    };
 
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
+
+    const result = dashboardVehicles.reduce((acc, vehicle) => {
+      const status = vehicle.status;
+
+      if (inProgressStatuses.has(status)) {
+        acc.inProgress++;
+        const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') acc.ready++;
+      if (status === 'waiting_for_parts') acc.waitingParts++;
+      if (status === 'diagnosis') acc.diagnosis++;
+      if (status === 'delivering') acc.delivering++;
+      if (['ready', 'delivering'].includes(status)) acc.readyForHandover++;
+
+      const custKey = normalizeCustomerName(vehicle.customerName);
+      if (custKey) dashboardCustomerKeys.add(custKey);
+
+      return acc;
+    }, initialStats);
 
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
@@ -276,14 +310,9 @@ const Dashboard = () => {
     );
 
     return {
+      ...result,
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
@@ -291,12 +320,15 @@ const Dashboard = () => {
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
+  // BOLT OPTIMIZATION: Memoize lowercase search query to avoid redundant string operations in filter loop
+  const lowercaseSearch = useMemo(() => searchQuery.toLowerCase(), [searchQuery]);
+
   const filteredVehicles = dashboardVehicles.filter(vehicle => {
     const matchesSearch = 
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
+      vehicle.customerName?.toLowerCase().includes(lowercaseSearch) ||
+      vehicle.plateNumber?.toLowerCase().includes(lowercaseSearch) ||
+      vehicle.brand?.toLowerCase().includes(lowercaseSearch) ||
+      vehicle.model?.toLowerCase().includes(lowercaseSearch);
     
     const matchesStatus = filterStatus === 'all' || 
                          vehicle.status === filterStatus ||
@@ -678,7 +710,9 @@ const Dashboard = () => {
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
               const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+              // BOLT OPTIMIZATION: Use locally available data as a fallback for the Service Type label
+              // while detailed async summary data is being lazy-loaded.
+              const serviceType = summary.serviceType || getServiceTypeLabel(vehicle.services, vehicle.parts);
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

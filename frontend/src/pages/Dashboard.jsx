@@ -221,11 +221,6 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
@@ -678,7 +673,8 @@ const Dashboard = () => {
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
               const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+              // Use locally available vehicle.parts as a fallback while lazy-loading summary
+              const serviceType = summary.serviceType || getServiceTypeLabel(vehicle.parts) || 'غير محدد';
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}
@@ -705,7 +701,13 @@ const Dashboard = () => {
                       return;
                     }
                     // التوسيع/الطي يكون بالضغط فقط لتجنب التعليق
-                    setExpandedVehicleId(prev => prev === vehicle.id ? null : vehicle.id);
+                    setExpandedVehicleId(prev => {
+                      const isExpanding = prev !== vehicle.id;
+                      if (isExpanding) {
+                        loadVehicleSummary(vehicle.id);
+                      }
+                      return isExpanding ? vehicle.id : null;
+                    });
                   }}
                 >
                   {/* النقاط الرأسية أعلى اليسار */}

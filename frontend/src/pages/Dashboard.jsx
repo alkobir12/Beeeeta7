@@ -221,12 +221,6 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
@@ -705,6 +699,11 @@ const Dashboard = () => {
                       return;
                     }
                     // التوسيع/الطي يكون بالضغط فقط لتجنب التعليق
+                    // Bolt: Implementation of lazy loading - fetch summary only when expanding
+                    const isExpanding = expandedVehicleId !== vehicle.id;
+                    if (isExpanding) {
+                      loadVehicleSummary(vehicle.id);
+                    }
                     setExpandedVehicleId(prev => prev === vehicle.id ? null : vehicle.id);
                   }}
                 >

@@ -221,13 +221,19 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+
+  /**
+   * ⚡ BOLT OPTIMIZATION: Lazy-load vehicle summaries.
+   * Instead of fetching visits for all vehicles on initial load (N+1 bottleneck),
+   * we only fetch details when a vehicle card is expanded.
+   * Expected Impact: Reduces initial dashboard API calls from O(N) to O(1).
+   */
+  useEffect(() => {
+    if (expandedVehicleId && !vehicleSummaries[expandedVehicleId] && !vehicleSummaryLoading[expandedVehicleId]) {
+      loadVehicleSummary(expandedVehicleId);
+    }
+  }, [expandedVehicleId, vehicleSummaries, vehicleSummaryLoading]);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
   const [vehicleSummaries, setVehicleSummaries] = useState({});
@@ -678,7 +684,13 @@ const Dashboard = () => {
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
               const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+
+              // Use vehicle.parts as a fallback for serviceType while summary is loading
+              const serviceTypeFallback = (vehicle.parts && Array.isArray(vehicle.parts))
+                ? getServiceTypeLabel(vehicle.parts)
+                : 'غير محدد';
+
+              const serviceType = summary.serviceType || serviceTypeFallback;
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

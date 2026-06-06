@@ -9,6 +9,17 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
 
+const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+
+const getServiceTypeLabel = (items = []) => {
+  const names = items
+    .map((item) => item.name || item.description)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!names.length) return 'غير محدد';
+  return names.join('، ');
+};
+
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
@@ -167,17 +178,6 @@ const Dashboard = () => {
     return parseVisitItems(visit.notes);
   };
 
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
-
-  const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
-
   const loadVehicleSummary = async (vehicleId) => {
     if (!vehicleId) return;
     if (vehicleSummaries[vehicleId] || vehicleSummaryLoading[vehicleId]) return;
@@ -221,11 +221,12 @@ const Dashboard = () => {
     }
   };
 
+  // Lazy load vehicle summary only when expanded to solve N+1 API call bottleneck
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
     }
-  }, [vehicles]);
+  }, [expandedVehicleId]);
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
@@ -250,18 +251,35 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
+    const dashboardCustomerKeys = new Set();
+    const busyTechnicianKeys = new Set();
 
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
+    const counters = {
+      inProgress: 0,
+      ready: 0,
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+    };
+
+    dashboardVehicles.forEach((vehicle) => {
+      const status = vehicle.status;
+      if (inProgressStatuses.has(status)) {
+        counters.inProgress++;
+        const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') counters.ready++;
+      if (status === 'waiting_for_parts') counters.waitingParts++;
+      if (status === 'diagnosis') counters.diagnosis++;
+      if (status === 'delivering') counters.delivering++;
+      if (status === 'ready' || status === 'delivering') counters.readyForHandover++;
+
+      const custName = normalizeCustomerName(vehicle.customerName);
+      if (custName) dashboardCustomerKeys.add(custName);
+    });
 
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
@@ -270,20 +288,15 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
+    const dashboardReceivables = Array.from(dashboardCustomerKeys).reduce(
       (sum, key) => sum + (arLookup.get(key) || 0),
       0
     );
 
     return {
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      ...counters,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
@@ -677,8 +690,20 @@ const Dashboard = () => {
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
-              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+
+              // Use vehicle.estimatedTotal from backend if available, otherwise calculate from vehicle.parts
+              const initialEstimatedTotal = vehicle.estimatedTotal || (vehicle.parts || []).reduce((sum, part) => {
+                const price = Number(part.price || 0);
+                const qty = Number(part.quantity || 1);
+                return sum + (price * qty);
+              }, 0);
+              const estimatedTotal = summary.estimatedTotal ?? initialEstimatedTotal;
+
+              // Use vehicle.parts as a fallback for serviceType
+              const initialServiceType = vehicle.parts && vehicle.parts.length > 0
+                ? getServiceTypeLabel(vehicle.parts)
+                : 'غير محدد';
+              const serviceType = summary.serviceType || initialServiceType;
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

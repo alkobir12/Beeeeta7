@@ -9,6 +9,62 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
 
+const getStatusConfig = (t) => ({
+  diagnosis: { label: t('status.diagnosis'), color: 'text-orange-400 bg-orange-500/10 border border-orange-500/20', iconColor: 'text-orange-400' },
+  quotation: { label: t('status.quotation'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
+  approved: { label: t('status.approved'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
+  waiting_approval: { label: t('status.waiting_approval'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
+  repair: { label: t('status.repair'), color: 'text-blue-400 bg-blue-500/10 border border-blue-500/20', iconColor: 'text-blue-400' },
+  in_progress: { label: t('status.in_progress'), color: 'text-blue-400 bg-blue-500/10 border border-blue-500/20', iconColor: 'text-blue-400' },
+  quality_check: { label: t('status.quality_check'), color: 'text-purple-400 bg-purple-500/10 border border-purple-500/20', iconColor: 'text-purple-400' },
+  ready: { label: t('status.ready'), color: 'text-green-400 bg-green-500/10 border border-green-500/20', iconColor: 'text-green-400' },
+  delivered: { label: t('status.delivered'), color: 'text-gray-400 bg-gray-500/10 border border-gray-500/20', iconColor: 'text-gray-400' },
+  waiting_for_parts: { label: t('status.waiting_for_parts'), color: 'text-amber-300 bg-amber-500/10 border border-amber-500/20', iconColor: 'text-amber-300' },
+  delivering: { label: t('status.delivering'), color: 'text-teal-300 bg-teal-500/10 border border-teal-500/20', iconColor: 'text-teal-300' }
+});
+
+const parseVisitItems = (notes) => {
+  if (!notes) return [];
+  try {
+    if (typeof notes === 'string') {
+      const parsed = JSON.parse(notes);
+      if (Array.isArray(parsed.items)) return parsed.items;
+      if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
+        return [...(parsed.services || []), ...(parsed.parts || [])];
+      }
+      return [];
+    }
+    if (typeof notes === 'object') {
+      if (Array.isArray(notes.items)) return notes.items;
+      if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
+        return [...(notes.services || []), ...(notes.parts || [])];
+      }
+      return [];
+    }
+  } catch (e) {
+    return [];
+  }
+  return [];
+};
+
+const getVisitItems = (visit) => {
+  if (!visit) return [];
+  if (Array.isArray(visit.items) && visit.items.length) return visit.items;
+  if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
+  return parseVisitItems(visit.notes);
+};
+
+const getServiceTypeLabel = (items = []) => {
+  const names = items
+    .map((item) => item.name || item.description)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!names.length) return 'غير محدد';
+  return names.join('، ');
+};
+
+const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
@@ -35,19 +91,7 @@ const Dashboard = () => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const isMountedRef = useRef(true);
   
-  const STATUS_CONFIG = {
-    diagnosis: { label: t('status.diagnosis'), color: 'text-orange-400 bg-orange-500/10 border border-orange-500/20', iconColor: 'text-orange-400' },
-    quotation: { label: t('status.quotation'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
-    approved: { label: t('status.approved'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
-    waiting_approval: { label: t('status.waiting_approval'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
-    repair: { label: t('status.repair'), color: 'text-blue-400 bg-blue-500/10 border border-blue-500/20', iconColor: 'text-blue-400' },
-    in_progress: { label: t('status.in_progress'), color: 'text-blue-400 bg-blue-500/10 border border-blue-500/20', iconColor: 'text-blue-400' },
-    quality_check: { label: t('status.quality_check'), color: 'text-purple-400 bg-purple-500/10 border border-purple-500/20', iconColor: 'text-purple-400' },
-    ready: { label: t('status.ready'), color: 'text-green-400 bg-green-500/10 border border-green-500/20', iconColor: 'text-green-400' },
-    delivered: { label: t('status.delivered'), color: 'text-gray-400 bg-gray-500/10 border border-gray-500/20', iconColor: 'text-gray-400' },
-    waiting_for_parts: { label: t('status.waiting_for_parts'), color: 'text-amber-300 bg-amber-500/10 border border-amber-500/20', iconColor: 'text-amber-300' },
-    delivering: { label: t('status.delivering'), color: 'text-teal-300 bg-teal-500/10 border border-teal-500/20', iconColor: 'text-teal-300' }
-  };
+  const statusConfig = useMemo(() => getStatusConfig(t), [t]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -136,47 +180,6 @@ const Dashboard = () => {
     }
   }, [t, toast]);
 
-  const parseVisitItems = (notes) => {
-    if (!notes) return [];
-    try {
-      if (typeof notes === 'string') {
-        const parsed = JSON.parse(notes);
-        if (Array.isArray(parsed.items)) return parsed.items;
-        if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
-          return [...(parsed.services || []), ...(parsed.parts || [])];
-        }
-        return [];
-      }
-      if (typeof notes === 'object') {
-        if (Array.isArray(notes.items)) return notes.items;
-        if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
-          return [...(notes.services || []), ...(notes.parts || [])];
-        }
-        return [];
-      }
-    } catch (e) {
-      return [];
-    }
-    return [];
-  };
-
-  const getVisitItems = (visit) => {
-    if (!visit) return [];
-    if (Array.isArray(visit.items) && visit.items.length) return visit.items;
-    if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
-    return parseVisitItems(visit.notes);
-  };
-
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
-
-  const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
 
   const loadVehicleSummary = async (vehicleId) => {
     if (!vehicleId) return;
@@ -221,17 +224,17 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
   const [vehicleSummaries, setVehicleSummaries] = useState({});
   const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
+
+  useEffect(() => {
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
+    }
+  }, [expandedVehicleId]);
 
   const dashboardVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status !== 'delivered'),
@@ -250,25 +253,40 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
-
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
-
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
         normalizeCustomerName(entry.customer),
         Number(entry.balance || 0),
       ])
     );
+
+    const counts = {
+      inProgress: 0,
+      ready: 0,
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+    };
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
+
+    dashboardVehicles.forEach((vehicle) => {
+      const { status } = vehicle;
+      if (inProgressStatuses.has(status)) {
+        counts.inProgress++;
+        const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+      if (status === 'ready') counts.ready++;
+      if (status === 'waiting_for_parts') counts.waitingParts++;
+      if (status === 'diagnosis') counts.diagnosis++;
+      if (status === 'delivering') counts.delivering++;
+      if (['ready', 'delivering'].includes(status)) counts.readyForHandover++;
+
+      const custName = normalizeCustomerName(vehicle.customerName);
+      if (custName) dashboardCustomerKeys.add(custName);
+    });
 
     const dashboardReceivables = [...dashboardCustomerKeys].reduce(
       (sum, key) => sum + (arLookup.get(key) || 0),
@@ -277,13 +295,8 @@ const Dashboard = () => {
 
     return {
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      ...counts,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
@@ -291,25 +304,28 @@ const Dashboard = () => {
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
-  const filteredVehicles = dashboardVehicles.filter(vehicle => {
-    const matchesSearch = 
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredVehicles = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    return dashboardVehicles.filter(vehicle => {
+      const matchesSearch =
+        vehicle.customerName?.toLowerCase().includes(query) ||
+        vehicle.plateNumber?.toLowerCase().includes(query) ||
+        vehicle.brand?.toLowerCase().includes(query) ||
+        vehicle.model?.toLowerCase().includes(query);
     
     const matchesStatus = filterStatus === 'all' || 
                          vehicle.status === filterStatus ||
                          (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
 
-    // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
-    const matchesStatusFixed = filterStatus === 'approved'
-      ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
-      : matchesStatus;
-    return matchesSearch && matchesStatusFixed;
-  });
+      // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
+      const matchesStatusFixed = filterStatus === 'approved'
+        ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
+        : matchesStatus;
+      return matchesSearch && matchesStatusFixed;
+    });
+  }, [dashboardVehicles, searchQuery, filterStatus]);
 
-  const getStatusConfigForVehicle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.diagnosis;
+  const getStatusConfigForVehicle = (status) => statusConfig[status] || statusConfig.diagnosis;
 
   if (loading) {
     return (

@@ -1739,21 +1739,19 @@ async def get_stats():
         first_day = datetime(now.year, now.month, 1)
 
         if DB_PROVIDER == "supabase":
-            # Get transactions for current month
-            transactions = supabase_service.transactions_list()
+            # Get transactions for current month with server-side filtering
+            transactions = supabase_service.transactions_list(start_date=first_day.isoformat())
 
-            # Calculate monthly stats
+            # Calculate monthly stats (data is already filtered by date)
             monthly_income = sum(
                 t.get("amount", 0)
                 for t in transactions
                 if t.get("type") == "income"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
             )
             monthly_expenses = sum(
                 t.get("amount", 0)
                 for t in transactions
                 if t.get("type") == "expense"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
             )
 
             # Get vehicle stats

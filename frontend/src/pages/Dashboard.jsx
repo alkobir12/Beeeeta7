@@ -9,6 +9,48 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
 
+const parseVisitItems = (notes) => {
+  if (!notes) return [];
+  try {
+    if (typeof notes === 'string') {
+      const parsed = JSON.parse(notes);
+      if (Array.isArray(parsed.items)) return parsed.items;
+      if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
+        return [...(parsed.services || []), ...(parsed.parts || [])];
+      }
+      return [];
+    }
+    if (typeof notes === 'object') {
+      if (Array.isArray(notes.items)) return notes.items;
+      if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
+        return [...(notes.services || []), ...(notes.parts || [])];
+      }
+      return [];
+    }
+  } catch (e) {
+    return [];
+  }
+  return [];
+};
+
+const getVisitItems = (visit) => {
+  if (!visit) return [];
+  if (Array.isArray(visit.items) && visit.items.length) return visit.items;
+  if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
+  return parseVisitItems(visit.notes);
+};
+
+const getServiceTypeLabel = (items = []) => {
+  const names = items
+    .map((item) => item.name || item.description)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!names.length) return 'غير محدد';
+  return names.join('، ');
+};
+
+const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
@@ -136,47 +178,12 @@ const Dashboard = () => {
     }
   }, [t, toast]);
 
-  const parseVisitItems = (notes) => {
-    if (!notes) return [];
-    try {
-      if (typeof notes === 'string') {
-        const parsed = JSON.parse(notes);
-        if (Array.isArray(parsed.items)) return parsed.items;
-        if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
-          return [...(parsed.services || []), ...(parsed.parts || [])];
-        }
-        return [];
-      }
-      if (typeof notes === 'object') {
-        if (Array.isArray(notes.items)) return notes.items;
-        if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
-          return [...(notes.services || []), ...(notes.parts || [])];
-        }
-        return [];
-      }
-    } catch (e) {
-      return [];
-    }
-    return [];
-  };
 
-  const getVisitItems = (visit) => {
-    if (!visit) return [];
-    if (Array.isArray(visit.items) && visit.items.length) return visit.items;
-    if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
-    return parseVisitItems(visit.notes);
-  };
-
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
-
-  const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+  const [expandedStatWidget, setExpandedStatWidget] = useState(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const [vehicleSummaries, setVehicleSummaries] = useState({});
+  const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
 
   const loadVehicleSummary = async (vehicleId) => {
     if (!vehicleId) return;
@@ -222,16 +229,11 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    // Lazy load vehicle summaries only when a card is expanded
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
     }
-  }, [vehicles]);
-
-  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
-  const [expandedStatWidget, setExpandedStatWidget] = useState(null);
-  const [isHovering, setIsHovering] = useState(false);
-  const [vehicleSummaries, setVehicleSummaries] = useState({});
-  const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
+  }, [expandedVehicleId]);
 
   const dashboardVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status !== 'delivered'),
@@ -250,25 +252,41 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
-
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
-
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
         normalizeCustomerName(entry.customer),
         Number(entry.balance || 0),
       ])
     );
+
+    let inProgress = 0;
+    let ready = 0;
+    let waitingParts = 0;
+    let diagnosis = 0;
+    let delivering = 0;
+    let readyForHandover = 0;
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
+
+    // Single pass $O(N)$ optimization for dashboard statistics
+    dashboardVehicles.forEach((vehicle) => {
+      const status = vehicle.status;
+
+      if (inProgressStatuses.has(status)) {
+        inProgress++;
+        const techId = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+        if (techId) busyTechnicianKeys.add(techId);
+      }
+
+      if (status === 'ready') ready++;
+      if (status === 'waiting_for_parts') waitingParts++;
+      if (status === 'diagnosis') diagnosis++;
+      if (status === 'delivering') delivering++;
+      if (status === 'ready' || status === 'delivering') readyForHandover++;
+
+      const custName = normalizeCustomerName(vehicle.customerName);
+      if (custName) dashboardCustomerKeys.add(custName);
+    });
 
     const dashboardReceivables = [...dashboardCustomerKeys].reduce(
       (sum, key) => sum + (arLookup.get(key) || 0),
@@ -277,13 +295,13 @@ const Dashboard = () => {
 
     return {
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      inProgress,
+      ready,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
+      waitingParts,
+      diagnosis,
+      delivering,
+      readyForHandover,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
@@ -677,8 +695,11 @@ const Dashboard = () => {
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
+              // Use vehicle.estimatedTotal as a fallback while lazy loading the detailed summary
               const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+              // Use vehicle.parts as a fallback for service type while lazy loading
+              const serviceTypeFallback = vehicle.parts && vehicle.parts.length ? getServiceTypeLabel(vehicle.parts) : 'غير محدد';
+              const serviceType = summary.serviceType || serviceTypeFallback;
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

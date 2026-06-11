@@ -35,7 +35,8 @@ const Dashboard = () => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const isMountedRef = useRef(true);
   
-  const STATUS_CONFIG = {
+  // Memoize status config to avoid re-renders
+  const STATUS_CONFIG = useMemo(() => ({
     diagnosis: { label: t('status.diagnosis'), color: 'text-orange-400 bg-orange-500/10 border border-orange-500/20', iconColor: 'text-orange-400' },
     quotation: { label: t('status.quotation'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
     approved: { label: t('status.approved'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
@@ -47,7 +48,7 @@ const Dashboard = () => {
     delivered: { label: t('status.delivered'), color: 'text-gray-400 bg-gray-500/10 border border-gray-500/20', iconColor: 'text-gray-400' },
     waiting_for_parts: { label: t('status.waiting_for_parts'), color: 'text-amber-300 bg-amber-500/10 border border-amber-500/20', iconColor: 'text-amber-300' },
     delivering: { label: t('status.delivering'), color: 'text-teal-300 bg-teal-500/10 border border-teal-500/20', iconColor: 'text-teal-300' }
-  };
+  }), [t]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -222,10 +223,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
     }
-  }, [vehicles]);
+  }, [expandedVehicleId]);
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
@@ -250,19 +251,6 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
-
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
-
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
         normalizeCustomerName(entry.customer),
@@ -270,24 +258,51 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
-      (sum, key) => sum + (arLookup.get(key) || 0),
-      0
-    );
+    // Initial values
+    const acc = {
+      inProgress: 0,
+      ready: 0,
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+      dashboardReceivables: 0,
+    };
+
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
+
+    // Single-pass iteration for all vehicle-based statistics
+    dashboardVehicles.forEach((vehicle) => {
+      const status = vehicle.status;
+      const isInProgress = inProgressStatuses.has(status);
+
+      if (isInProgress) {
+        acc.inProgress++;
+        const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') acc.ready++;
+      if (status === 'waiting_for_parts') acc.waitingParts++;
+      if (status === 'diagnosis') acc.diagnosis++;
+      if (status === 'delivering') acc.delivering++;
+      if (status === 'ready' || status === 'delivering') acc.readyForHandover++;
+
+      const custKey = normalizeCustomerName(vehicle.customerName);
+      if (custKey && !dashboardCustomerKeys.has(custKey)) {
+        dashboardCustomerKeys.add(custKey);
+        acc.dashboardReceivables += (arLookup.get(custKey) || 0);
+      }
+    });
 
     return {
+      ...acc,
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
-      dashboardReceivables,
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
@@ -677,8 +692,19 @@ const Dashboard = () => {
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
-              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+
+              // Calculate fallback estimatedTotal using locally available data
+              const localEstimatedTotal = (vehicle.parts || []).reduce((sum, item) => {
+                const qty = Number(item.quantity || 1);
+                const price = Number(item.price || 0);
+                return sum + qty * price;
+              }, 0);
+
+              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? localEstimatedTotal ?? 0;
+
+              // Fallback to locally available data if summary hasn't loaded yet
+              const serviceTypeFallback = getServiceTypeLabel([...(vehicle.services || []), ...(vehicle.parts || [])]);
+              const serviceType = summary.serviceType || (serviceTypeFallback !== 'غير محدد' ? serviceTypeFallback : 'غير محدد');
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

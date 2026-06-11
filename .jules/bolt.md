@@ -1,0 +1,3 @@
+## 2026-06-03 - [Date Boundary & Lazy Loading Fallbacks]
+**Learning:** When pushing filtering logic to the database layer for periodic statistics (e.g., monthly), using `lte` on the first day of the following month includes that day's data, leading to incorrect totals. Also, lazy-loading details on expansion improves performance but requires robust local fallbacks to maintain UI consistency.
+**Action:** Always use `lt` (less than) for the end-of-period boundary if it points to the start of the next period. Ensure locally available data (like `vehicle.parts`) is used to calculate fallback stats in the UI while async data loads.

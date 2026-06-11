@@ -1739,22 +1739,27 @@ async def get_stats():
         first_day = datetime(now.year, now.month, 1)
 
         if DB_PROVIDER == "supabase":
-            # Get transactions for current month
-            transactions = supabase_service.transactions_list()
+            # Get transactions for current month only (server-side filtering)
+            start_of_month = f"{now.year}-{now.month:02d}-01"
+            # next month's first day
+            if now.month == 12:
+                end_of_month = f"{now.year + 1}-01-01"
+            else:
+                end_of_month = f"{now.year}-{now.month + 1:02d}-01"
 
-            # Calculate monthly stats
-            monthly_income = sum(
-                t.get("amount", 0)
-                for t in transactions
-                if t.get("type") == "income"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
+            transactions = supabase_service.transactions_list(
+                start_date=start_of_month,
+                end_date=end_of_month
             )
-            monthly_expenses = sum(
-                t.get("amount", 0)
-                for t in transactions
-                if t.get("type") == "expense"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
-            )
+
+            # Calculate monthly stats from pre-filtered list
+            monthly_income = 0
+            monthly_expenses = 0
+            for t in transactions:
+                if t.get("type") == "income":
+                    monthly_income += t.get("amount", 0)
+                elif t.get("type") == "expense":
+                    monthly_expenses += t.get("amount", 0)
 
             # Get vehicle stats
             vehicles = supabase_service.vehicles_list()

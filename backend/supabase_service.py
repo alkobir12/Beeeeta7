@@ -908,7 +908,11 @@ class SupabaseService:
 
     # -------------------- Transactions --------------------
     def transactions_list(
-        self, type: Optional[str] = None, account_id: Optional[str] = None
+        self,
+        type: Optional[str] = None,
+        account_id: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         if self.mock_mode:
             return []
@@ -917,6 +921,12 @@ class SupabaseService:
             q = q.eq("type", type)
         if account_id:
             q = q.eq("account_id", account_id)
+        if start_date:
+            q = q.gte("date", start_date)
+        if end_date:
+            # Use lt (less than) instead of lte to exclude the boundary day
+            # This is correct when end_date is the first day of the following month
+            q = q.lt("date", end_date)
         res = q.order("date", desc=True).execute()
         rows = res.data or []
         return [

@@ -1,0 +1,3 @@
+## 2025-02-11 - [Optimized Dashboard & Fixed N+1 Bottleneck]
+**Learning:** Hoisting stateless helpers and configuration factories outside React components, combined with $O(N)$ stats aggregation, significantly reduces render-time overhead. Solving N+1 API calls via lazy-loading on expansion is the most effective way to handle detail-heavy list views without sacrificing initial load performance.
+**Action:** Always check for repeated `.filter()` or `.map()` calls on the same dataset and consolidate them into a single pass. Trigger detailed data fetches on user interaction (like expansion) rather than at the list level.

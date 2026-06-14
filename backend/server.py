@@ -1739,38 +1739,37 @@ async def get_stats():
         first_day = datetime(now.year, now.month, 1)
 
         if DB_PROVIDER == "supabase":
-            # Get transactions for current month
-            transactions = supabase_service.transactions_list()
+            # Push filtering to DB: Fetch only current month transactions and necessary columns
+            start_date = first_day.strftime("%Y-%m-%d")
+            # Calculate the first day of next month for end_date
+            if now.month == 12:
+                next_month = datetime(now.year + 1, 1, 1)
+            else:
+                next_month = datetime(now.year, now.month + 1, 1)
+            end_date = next_month.strftime("%Y-%m-%d")
 
-            # Calculate monthly stats
-            monthly_income = sum(
-                t.get("amount", 0)
-                for t in transactions
-                if t.get("type") == "income"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
-            )
-            monthly_expenses = sum(
-                t.get("amount", 0)
-                for t in transactions
-                if t.get("type") == "expense"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
+            transactions = supabase_service.transactions_list(
+                start_date=start_date,
+                end_date=end_date,
+                columns="amount,type,date"
             )
 
-            # Get vehicle stats
-            vehicles = supabase_service.vehicles_list()
-            active_vehicles = len(
-                [
-                    v
-                    for v in vehicles
-                    if v.get("status") not in ["delivered", "cancelled"]
-                ]
-            )
+            # Efficiently calculate monthly stats in one pass
+            monthly_income = 0
+            monthly_expenses = 0
+            for t in transactions:
+                amount = t.get("amount") or 0
+                if t.get("type") == "income":
+                    monthly_income += amount
+                elif t.get("type") == "expense":
+                    monthly_expenses += amount
 
-            # Get customer count
-            customers = supabase_service.customers_list()
+            # Get counts directly from DB instead of fetching all records
+            active_vehicles = supabase_service.vehicles_count_active()
+            total_customers = supabase_service.customers_count()
 
             return {
-                "totalCustomers": len(customers),
+                "totalCustomers": total_customers,
                 "activeVehicles": active_vehicles,
                 "thisMonth": {
                     "income": monthly_income,

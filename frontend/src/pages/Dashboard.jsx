@@ -222,10 +222,13 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    // Lazy load summary only when a vehicle is expanded
+    if (expandedVehicleId && !vehicleSummaries[expandedVehicleId] && !vehicleSummaryLoading[expandedVehicleId]) {
+      loadVehicleSummary(expandedVehicleId);
     }
-  }, [vehicles]);
+    // We only want to trigger this when the expanded vehicle changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandedVehicleId]);
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
@@ -250,19 +253,6 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
-
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
-
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
         normalizeCustomerName(entry.customer),
@@ -270,20 +260,52 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
-      (sum, key) => sum + (arLookup.get(key) || 0),
-      0
-    );
+    // Initial values
+    let inProgressCount = 0;
+    let readyCount = 0;
+    let waitingPartsCount = 0;
+    let diagnosisCount = 0;
+    let deliveringCount = 0;
+    let readyForHandoverCount = 0;
+    let dashboardReceivables = 0;
+
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
+
+    // Single pass $O(N)$ optimization over dashboard vehicles
+    dashboardVehicles.forEach((vehicle) => {
+      const status = vehicle.status;
+      const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+      const customerKey = normalizeCustomerName(vehicle.customerName);
+
+      if (inProgressStatuses.has(status)) {
+        inProgressCount++;
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') readyCount++;
+      if (status === 'waiting_for_parts') waitingPartsCount++;
+      if (status === 'diagnosis') diagnosisCount++;
+      if (status === 'delivering') deliveringCount++;
+      if (['ready', 'delivering'].includes(status)) readyForHandoverCount++;
+
+      if (customerKey) {
+        if (!dashboardCustomerKeys.has(customerKey)) {
+          dashboardCustomerKeys.add(customerKey);
+          dashboardReceivables += (arLookup.get(customerKey) || 0);
+        }
+      }
+    });
 
     return {
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      inProgress: inProgressCount,
+      ready: readyCount,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
+      waitingParts: waitingPartsCount,
+      diagnosis: diagnosisCount,
+      delivering: deliveringCount,
+      readyForHandover: readyForHandoverCount,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
@@ -291,12 +313,13 @@ const Dashboard = () => {
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
+  const query = searchQuery.toLowerCase();
   const filteredVehicles = dashboardVehicles.filter(vehicle => {
     const matchesSearch = 
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
+      vehicle.customerName?.toLowerCase().includes(query) ||
+      vehicle.plateNumber?.toLowerCase().includes(query) ||
+      vehicle.brand?.toLowerCase().includes(query) ||
+      vehicle.model?.toLowerCase().includes(query);
     
     const matchesStatus = filterStatus === 'all' || 
                          vehicle.status === filterStatus ||
@@ -677,8 +700,18 @@ const Dashboard = () => {
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
-              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+
+              // Optimize perceived performance: Use local vehicle.parts as fallback
+              const localServiceType = (vehicle.parts && vehicle.parts.length)
+                ? getServiceTypeLabel(vehicle.parts)
+                : 'غير محدد';
+
+              const localEstimatedTotal = vehicle.estimatedTotal ?? (
+                (vehicle.parts || []).reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 1)), 0)
+              );
+
+              const estimatedTotal = summary.estimatedTotal ?? localEstimatedTotal;
+              const serviceType = summary.serviceType || localServiceType;
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

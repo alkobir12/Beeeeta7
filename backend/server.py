@@ -550,10 +550,25 @@ async def create_vehicle(vehicle_data: VehicleCreate):
 async def get_vehicles():
     if DB_PROVIDER == "supabase":
         rows = supabase_service.vehicles_list()
-        # Ensure status has a default value if None
+        # Ensure status has a default value if None and calculate estimatedTotal
         for r in rows:
             if r.get("status") is None:
                 r["status"] = "diagnosis"
+
+            # Calculate estimatedTotal from parts/services
+            estimated_total = 0.0
+            parts = r.get("parts") or []
+            if isinstance(parts, list):
+                for part in parts:
+                    if isinstance(part, dict):
+                        try:
+                            price = float(part.get("price", 0) or 0)
+                            quantity = float(part.get("quantity", 1) or 1)
+                            estimated_total += price * quantity
+                        except (ValueError, TypeError):
+                            continue
+            r["estimatedTotal"] = estimated_total
+
         return [Vehicle(**r) for r in rows]
 
     if DB_PROVIDER == "memory":
@@ -1737,40 +1752,36 @@ async def get_stats():
         # Get current month data
         now = datetime.utcnow()
         first_day = datetime(now.year, now.month, 1)
+        if now.month == 12:
+            next_month = datetime(now.year + 1, 1, 1)
+        else:
+            next_month = datetime(now.year, now.month + 1, 1)
 
         if DB_PROVIDER == "supabase":
-            # Get transactions for current month
-            transactions = supabase_service.transactions_list()
+            # Efficiently fetch filtered data from Supabase
+            transactions = supabase_service.transactions_list(
+                start_date=first_day.isoformat(),
+                end_date=next_month.isoformat()
+            )
 
-            # Calculate monthly stats
+            # Monthly stats (now already filtered by date range at DB level)
             monthly_income = sum(
                 t.get("amount", 0)
                 for t in transactions
                 if t.get("type") == "income"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
             )
             monthly_expenses = sum(
                 t.get("amount", 0)
                 for t in transactions
                 if t.get("type") == "expense"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
             )
 
-            # Get vehicle stats
-            vehicles = supabase_service.vehicles_list()
-            active_vehicles = len(
-                [
-                    v
-                    for v in vehicles
-                    if v.get("status") not in ["delivered", "cancelled"]
-                ]
-            )
-
-            # Get customer count
-            customers = supabase_service.customers_list()
+            # Efficiently get counts from Supabase
+            active_vehicles = supabase_service.vehicles_count_active()
+            total_customers = supabase_service.customers_count()
 
             return {
-                "totalCustomers": len(customers),
+                "totalCustomers": total_customers,
                 "activeVehicles": active_vehicles,
                 "thisMonth": {
                     "income": monthly_income,

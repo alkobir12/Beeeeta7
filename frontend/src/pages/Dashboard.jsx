@@ -35,7 +35,8 @@ const Dashboard = () => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const isMountedRef = useRef(true);
   
-  const STATUS_CONFIG = {
+  // Memoize status config to avoid recreation on each render
+  const STATUS_CONFIG = useMemo(() => ({
     diagnosis: { label: t('status.diagnosis'), color: 'text-orange-400 bg-orange-500/10 border border-orange-500/20', iconColor: 'text-orange-400' },
     quotation: { label: t('status.quotation'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
     approved: { label: t('status.approved'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
@@ -47,7 +48,7 @@ const Dashboard = () => {
     delivered: { label: t('status.delivered'), color: 'text-gray-400 bg-gray-500/10 border border-gray-500/20', iconColor: 'text-gray-400' },
     waiting_for_parts: { label: t('status.waiting_for_parts'), color: 'text-amber-300 bg-amber-500/10 border border-amber-500/20', iconColor: 'text-amber-300' },
     delivering: { label: t('status.delivering'), color: 'text-teal-300 bg-teal-500/10 border border-teal-500/20', iconColor: 'text-teal-300' }
-  };
+  }), [t]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -221,11 +222,12 @@ const Dashboard = () => {
     }
   };
 
+  // Lazy load summary ONLY for the expanded vehicle
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
     }
-  }, [vehicles]);
+  }, [expandedVehicleId]);
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
@@ -250,18 +252,35 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
+    // Calculate all stats in a single pass O(N) for better performance
+    let inProgressCount = 0;
+    let readyCount = 0;
+    let waitingPartsCount = 0;
+    let diagnosisCount = 0;
+    let deliveringCount = 0;
+    let readyForHandoverCount = 0;
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
 
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
+    dashboardVehicles.forEach(vehicle => {
+      const status = vehicle.status;
+      const isInProgress = inProgressStatuses.has(status);
+
+      if (isInProgress) {
+        inProgressCount++;
+        const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') readyCount++;
+      if (status === 'waiting_for_parts') waitingPartsCount++;
+      if (status === 'diagnosis') diagnosisCount++;
+      if (status === 'delivering') deliveringCount++;
+      if (status === 'ready' || status === 'delivering') readyForHandoverCount++;
+
+      const custName = normalizeCustomerName(vehicle.customerName);
+      if (custName) dashboardCustomerKeys.add(custName);
+    });
 
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
@@ -270,20 +289,20 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
-      (sum, key) => sum + (arLookup.get(key) || 0),
-      0
-    );
+    let dashboardReceivables = 0;
+    dashboardCustomerKeys.forEach(key => {
+      dashboardReceivables += (arLookup.get(key) || 0);
+    });
 
     return {
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      inProgress: inProgressCount,
+      ready: readyCount,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
+      waitingParts: waitingPartsCount,
+      diagnosis: diagnosisCount,
+      delivering: deliveringCount,
+      readyForHandover: readyForHandoverCount,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
@@ -291,23 +310,26 @@ const Dashboard = () => {
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
-  const filteredVehicles = dashboardVehicles.filter(vehicle => {
-    const matchesSearch = 
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || 
-                         vehicle.status === filterStatus ||
-                         (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
+  const filteredVehicles = useMemo(() => {
+    const lowerQuery = searchQuery.toLowerCase();
+    return dashboardVehicles.filter(vehicle => {
+      const matchesSearch =
+        vehicle.customerName?.toLowerCase().includes(lowerQuery) ||
+        vehicle.plateNumber?.toLowerCase().includes(lowerQuery) ||
+        vehicle.brand?.toLowerCase().includes(lowerQuery) ||
+        vehicle.model?.toLowerCase().includes(lowerQuery);
 
-    // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
-    const matchesStatusFixed = filterStatus === 'approved'
-      ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
-      : matchesStatus;
-    return matchesSearch && matchesStatusFixed;
-  });
+      const matchesStatus = filterStatus === 'all' ||
+                           vehicle.status === filterStatus ||
+                           (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
+
+      // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
+      const matchesStatusFixed = filterStatus === 'approved'
+        ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
+        : matchesStatus;
+      return matchesSearch && matchesStatusFixed;
+    });
+  }, [dashboardVehicles, searchQuery, filterStatus]);
 
   const getStatusConfigForVehicle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.diagnosis;
 
@@ -677,8 +699,28 @@ const Dashboard = () => {
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
-              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+
+              // Calculate fallback values from locally available data only if summary is missing
+              let estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal;
+              let serviceType = summary.serviceType;
+
+              if (estimatedTotal === undefined || estimatedTotal === null || !serviceType) {
+                const parts = vehicle.parts || [];
+                if (estimatedTotal === undefined || estimatedTotal === null) {
+                  estimatedTotal = parts.reduce((sum, part) => {
+                    const price = Number(part.price || 0);
+                    const quantity = Number(part.quantity || 1);
+                    return sum + (price * quantity);
+                  }, 0);
+                }
+                if (!serviceType) {
+                  serviceType = parts
+                    .map(p => p.name || p.description)
+                    .filter(Boolean)
+                    .slice(0, 3)
+                    .join('، ') || 'غير محدد';
+                }
+              }
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

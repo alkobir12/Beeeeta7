@@ -550,18 +550,42 @@ async def create_vehicle(vehicle_data: VehicleCreate):
 async def get_vehicles():
     if DB_PROVIDER == "supabase":
         rows = supabase_service.vehicles_list()
-        # Ensure status has a default value if None
+        # Ensure status has a default value if None and calculate estimatedTotal
         for r in rows:
             if r.get("status") is None:
                 r["status"] = "diagnosis"
+
+            # Calculate estimatedTotal from parts/services
+            estimated_total = 0.0
+            parts = r.get("parts")
+            if parts and isinstance(parts, list):
+                for part in parts:
+                    if isinstance(part, dict):
+                        price = float(part.get("price") or 0.0)
+                        quantity = float(part.get("quantity") or 1.0)
+                        estimated_total += price * quantity
+            r["estimatedTotal"] = estimated_total
+
         return [Vehicle(**r) for r in rows]
 
     if DB_PROVIDER == "memory":
         rows = _mem_read("vehicles")
-        # Ensure status has a default value if None
+        # Ensure status has a default value if None and calculate estimatedTotal
         for r in rows:
             if r.get("status") is None:
                 r["status"] = "diagnosis"
+
+            # Calculate estimatedTotal from parts/services
+            estimated_total = 0.0
+            parts = r.get("parts")
+            if parts and isinstance(parts, list):
+                for part in parts:
+                    if isinstance(part, dict):
+                        price = float(part.get("price") or 0.0)
+                        quantity = float(part.get("quantity") or 1.0)
+                        estimated_total += price * quantity
+            r["estimatedTotal"] = estimated_total
+
         return [Vehicle(**r) for r in rows]
 
     # استخدام Projection وحد للحفاظ على الأداء في الإنتاج

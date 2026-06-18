@@ -451,6 +451,22 @@ logger = logging.getLogger(__name__)
 
 
 # ============ Helper Functions ============
+def calculate_estimated_total(v_dict):
+    # Calculate estimatedTotal from parts/services
+    estimated_total = 0
+    if v_dict.get("parts") and isinstance(v_dict.get("parts"), list):
+        for part in v_dict["parts"]:
+            if isinstance(part, dict):
+                # Sum up price * quantity for each part
+                try:
+                    price = float(part.get("price", 0) or 0)
+                    quantity = float(part.get("quantity", 1) or 1)
+                    estimated_total += price * quantity
+                except (ValueError, TypeError):
+                    continue
+    return estimated_total
+
+
 def generate_tracking_link():
     return f"TRK-{str(uuid.uuid4())[:8].upper()}"
 
@@ -554,6 +570,7 @@ async def get_vehicles():
         for r in rows:
             if r.get("status") is None:
                 r["status"] = "diagnosis"
+            r["estimatedTotal"] = calculate_estimated_total(r)
         return [Vehicle(**r) for r in rows]
 
     if DB_PROVIDER == "memory":
@@ -562,6 +579,7 @@ async def get_vehicles():
         for r in rows:
             if r.get("status") is None:
                 r["status"] = "diagnosis"
+            r["estimatedTotal"] = calculate_estimated_total(r)
         return [Vehicle(**r) for r in rows]
 
     # استخدام Projection وحد للحفاظ على الأداء في الإنتاج
@@ -575,18 +593,7 @@ async def get_vehicles():
     for v in vehicles:
         if v.get("status") is None:
             v["status"] = "diagnosis"
-        
-        # Calculate estimatedTotal from parts/services
-        estimated_total = 0
-        if v.get("parts") and isinstance(v.get("parts"), list):
-            for part in v["parts"]:
-                if isinstance(part, dict):
-                    # Sum up price * quantity for each part
-                    price = part.get("price", 0) or 0
-                    quantity = part.get("quantity", 1) or 1
-                    estimated_total += price * quantity
-        
-        v["estimatedTotal"] = estimated_total
+        v["estimatedTotal"] = calculate_estimated_total(v)
     
     return [Vehicle(**v) for v in vehicles]
 

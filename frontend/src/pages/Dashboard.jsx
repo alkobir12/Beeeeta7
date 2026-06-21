@@ -221,13 +221,14 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+
+  useEffect(() => {
+    if (expandedVehicleId && !vehicleSummaries[expandedVehicleId]) {
+      loadVehicleSummary(expandedVehicleId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandedVehicleId]);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
   const [vehicleSummaries, setVehicleSummaries] = useState({});
@@ -291,25 +292,28 @@ const Dashboard = () => {
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
-  const filteredVehicles = dashboardVehicles.filter(vehicle => {
-    const matchesSearch = 
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredVehicles = useMemo(() => {
+    const lowerQuery = searchQuery.toLowerCase();
+    return dashboardVehicles.filter(vehicle => {
+      const matchesSearch =
+        vehicle.customerName?.toLowerCase().includes(lowerQuery) ||
+        vehicle.plateNumber?.toLowerCase().includes(lowerQuery) ||
+        vehicle.brand?.toLowerCase().includes(lowerQuery) ||
+        vehicle.model?.toLowerCase().includes(lowerQuery);
     
     const matchesStatus = filterStatus === 'all' || 
                          vehicle.status === filterStatus ||
                          (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
 
-    // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
-    const matchesStatusFixed = filterStatus === 'approved'
-      ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
-      : matchesStatus;
-    return matchesSearch && matchesStatusFixed;
-  });
+      // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
+      const matchesStatusFixed = filterStatus === 'approved'
+        ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
+        : matchesStatus;
+      return matchesSearch && matchesStatusFixed;
+    });
+  }, [dashboardVehicles, searchQuery, filterStatus]);
 
-  const getStatusConfigForVehicle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.diagnosis;
+  const getStatusConfigForVehicle = useCallback((status) => STATUS_CONFIG[status] || STATUS_CONFIG.diagnosis, []);
 
   if (loading) {
     return (
@@ -677,8 +681,24 @@ const Dashboard = () => {
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
-              const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+
+              // Fallback: Calculate estimatedTotal from vehicle.parts if detailed summary not yet loaded
+              let estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal;
+              if (estimatedTotal === undefined && Array.isArray(vehicle.parts)) {
+                estimatedTotal = vehicle.parts.reduce((sum, item) => {
+                  const qty = Number(item.quantity || 1);
+                  const price = Number(item.price || 0);
+                  return sum + qty * price;
+                }, 0);
+              }
+              estimatedTotal = estimatedTotal ?? 0;
+
+              // Fallback: Get serviceType from vehicle.parts
+              let serviceType = summary.serviceType;
+              if (!serviceType && Array.isArray(vehicle.parts)) {
+                serviceType = getServiceTypeLabel(vehicle.parts);
+              }
+              serviceType = serviceType || 'غير محدد';
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

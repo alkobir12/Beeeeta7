@@ -451,6 +451,20 @@ logger = logging.getLogger(__name__)
 
 
 # ============ Helper Functions ============
+def calculate_estimated_total(vehicle_dict: dict) -> float:
+    """Helper to calculate estimated total from parts/services in a vehicle dictionary."""
+    estimated_total = 0
+    parts = vehicle_dict.get("parts")
+    if parts and isinstance(parts, list):
+        for part in parts:
+            if isinstance(part, dict):
+                # Sum up price * quantity for each part
+                price = part.get("price", 0) or 0
+                quantity = part.get("quantity", 1) or 1
+                estimated_total += price * quantity
+    return estimated_total
+
+
 def generate_tracking_link():
     return f"TRK-{str(uuid.uuid4())[:8].upper()}"
 
@@ -550,18 +564,22 @@ async def create_vehicle(vehicle_data: VehicleCreate):
 async def get_vehicles():
     if DB_PROVIDER == "supabase":
         rows = supabase_service.vehicles_list()
-        # Ensure status has a default value if None
+        # Ensure status has a default value if None and calculate estimatedTotal
         for r in rows:
             if r.get("status") is None:
                 r["status"] = "diagnosis"
+            if r.get("estimatedTotal") is None:
+                r["estimatedTotal"] = calculate_estimated_total(r)
         return [Vehicle(**r) for r in rows]
 
     if DB_PROVIDER == "memory":
         rows = _mem_read("vehicles")
-        # Ensure status has a default value if None
+        # Ensure status has a default value if None and calculate estimatedTotal
         for r in rows:
             if r.get("status") is None:
                 r["status"] = "diagnosis"
+            if r.get("estimatedTotal") is None:
+                r["estimatedTotal"] = calculate_estimated_total(r)
         return [Vehicle(**r) for r in rows]
 
     # استخدام Projection وحد للحفاظ على الأداء في الإنتاج
@@ -575,18 +593,8 @@ async def get_vehicles():
     for v in vehicles:
         if v.get("status") is None:
             v["status"] = "diagnosis"
-        
-        # Calculate estimatedTotal from parts/services
-        estimated_total = 0
-        if v.get("parts") and isinstance(v.get("parts"), list):
-            for part in v["parts"]:
-                if isinstance(part, dict):
-                    # Sum up price * quantity for each part
-                    price = part.get("price", 0) or 0
-                    quantity = part.get("quantity", 1) or 1
-                    estimated_total += price * quantity
-        
-        v["estimatedTotal"] = estimated_total
+        if v.get("estimatedTotal") is None:
+            v["estimatedTotal"] = calculate_estimated_total(v)
     
     return [Vehicle(**v) for v in vehicles]
 
@@ -1737,40 +1745,40 @@ async def get_stats():
         # Get current month data
         now = datetime.utcnow()
         first_day = datetime(now.year, now.month, 1)
+        # Calculate next month for upper boundary (lt filtering)
+        if now.month == 12:
+            next_month = datetime(now.year + 1, 1, 1)
+        else:
+            next_month = datetime(now.year, now.month + 1, 1)
 
         if DB_PROVIDER == "supabase":
-            # Get transactions for current month
-            transactions = supabase_service.transactions_list()
+            # Push filtering and counting to database layer for better performance
+            start_date_iso = first_day.isoformat()
+            end_date_iso = next_month.isoformat()
 
-            # Calculate monthly stats
-            monthly_income = sum(
-                t.get("amount", 0)
-                for t in transactions
-                if t.get("type") == "income"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
-            )
-            monthly_expenses = sum(
-                t.get("amount", 0)
-                for t in transactions
-                if t.get("type") == "expense"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
+            # 1. Get transaction stats directly from DB using date filtering
+            transactions = supabase_service.transactions_list(
+                start_date=start_date_iso,
+                end_date=end_date_iso
             )
 
-            # Get vehicle stats
-            vehicles = supabase_service.vehicles_list()
-            active_vehicles = len(
-                [
-                    v
-                    for v in vehicles
-                    if v.get("status") not in ["delivered", "cancelled"]
-                ]
-            )
+            monthly_income = 0
+            monthly_expenses = 0
+            for t in transactions:
+                amount = t.get("amount", 0)
+                if t.get("type") == "income":
+                    monthly_income += amount
+                elif t.get("type") == "expense":
+                    monthly_expenses += amount
 
-            # Get customer count
-            customers = supabase_service.customers_list()
+            # 2. Get active vehicle count efficiently (no full rows fetched)
+            active_vehicles = supabase_service.vehicles_count_active()
+
+            # 3. Get total customer count efficiently
+            total_customers = supabase_service.customers_count()
 
             return {
-                "totalCustomers": len(customers),
+                "totalCustomers": total_customers,
                 "activeVehicles": active_vehicles,
                 "thisMonth": {
                     "income": monthly_income,

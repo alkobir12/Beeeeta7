@@ -187,6 +187,18 @@ class SupabaseService:
         self.client.table("vehicles").delete().eq("id", vid).execute()
         return True
 
+    def vehicles_count_active(self) -> int:
+        """Count active vehicles (not delivered/cancelled) directly in Supabase."""
+        if self.mock_mode or not self.client:
+            return 0
+        try:
+            # Use count="exact" for efficient record counting without fetching full rows
+            res = self.client.table("vehicles").select("id", count="exact").neq("status", "delivered").neq("status", "cancelled").execute()
+            return res.count if res.count is not None else 0
+        except Exception as e:
+            print(f"Error counting active vehicles: {e}")
+            return 0
+
     # -------------------- Technicians --------------------
     def technicians_list(self) -> List[Dict[str, Any]]:
         if self.mock_mode:
@@ -615,6 +627,17 @@ class SupabaseService:
         self.client.table("customers").delete().eq("id", cid).execute()
         return True
 
+    def customers_count(self) -> int:
+        """Count total customers directly in Supabase."""
+        if self.mock_mode or not self.client:
+            return 0
+        try:
+            res = self.client.table("customers").select("id", count="exact").execute()
+            return res.count if res.count is not None else 0
+        except Exception as e:
+            print(f"Error counting customers: {e}")
+            return 0
+
     def invoices_create(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         if self.mock_mode:
             return payload
@@ -908,7 +931,11 @@ class SupabaseService:
 
     # -------------------- Transactions --------------------
     def transactions_list(
-        self, type: Optional[str] = None, account_id: Optional[str] = None
+        self,
+        type: Optional[str] = None,
+        account_id: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         if self.mock_mode:
             return []
@@ -917,6 +944,11 @@ class SupabaseService:
             q = q.eq("type", type)
         if account_id:
             q = q.eq("account_id", account_id)
+        if start_date:
+            q = q.gte("date", start_date)
+        if end_date:
+            q = q.lt("date", end_date)
+
         res = q.order("date", desc=True).execute()
         rows = res.data or []
         return [

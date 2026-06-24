@@ -9,6 +9,49 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
 
+// Stateless helpers moved outside component for performance
+const parseVisitItems = (notes) => {
+  if (!notes) return [];
+  try {
+    if (typeof notes === 'string') {
+      const parsed = JSON.parse(notes);
+      if (Array.isArray(parsed.items)) return parsed.items;
+      if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
+        return [...(parsed.services || []), ...(parsed.parts || [])];
+      }
+      return [];
+    }
+    if (typeof notes === 'object') {
+      if (Array.isArray(notes.items)) return notes.items;
+      if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
+        return [...(notes.services || []), ...(notes.parts || [])];
+      }
+      return [];
+    }
+  } catch (e) {
+    return [];
+  }
+  return [];
+};
+
+const getVisitItems = (visit) => {
+  if (!visit) return [];
+  if (Array.isArray(visit.items) && visit.items.length) return visit.items;
+  if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
+  return parseVisitItems(visit.notes);
+};
+
+const getServiceTypeLabel = (items = []) => {
+  const names = items
+    .map((item) => item.name || item.description)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!names.length) return 'غير محدد';
+  return names.join('، ');
+};
+
+const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
@@ -136,47 +179,6 @@ const Dashboard = () => {
     }
   }, [t, toast]);
 
-  const parseVisitItems = (notes) => {
-    if (!notes) return [];
-    try {
-      if (typeof notes === 'string') {
-        const parsed = JSON.parse(notes);
-        if (Array.isArray(parsed.items)) return parsed.items;
-        if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
-          return [...(parsed.services || []), ...(parsed.parts || [])];
-        }
-        return [];
-      }
-      if (typeof notes === 'object') {
-        if (Array.isArray(notes.items)) return notes.items;
-        if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
-          return [...(notes.services || []), ...(notes.parts || [])];
-        }
-        return [];
-      }
-    } catch (e) {
-      return [];
-    }
-    return [];
-  };
-
-  const getVisitItems = (visit) => {
-    if (!visit) return [];
-    if (Array.isArray(visit.items) && visit.items.length) return visit.items;
-    if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
-    return parseVisitItems(visit.notes);
-  };
-
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
-
-  const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
 
   const loadVehicleSummary = async (vehicleId) => {
     if (!vehicleId) return;
@@ -222,10 +224,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
     }
-  }, [vehicles]);
+  }, [expandedVehicleId]);
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
@@ -250,18 +252,34 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
 
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
+    let inProgress = 0;
+    let ready = 0;
+    let waitingParts = 0;
+    let diagnosis = 0;
+    let delivering = 0;
+    let readyForHandover = 0;
+
+    dashboardVehicles.forEach((vehicle) => {
+      const status = vehicle.status;
+
+      if (inProgressStatuses.has(status)) {
+        inProgress++;
+        const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') ready++;
+      if (status === 'waiting_for_parts') waitingParts++;
+      if (status === 'diagnosis') diagnosis++;
+      if (status === 'delivering') delivering++;
+      if (status === 'ready' || status === 'delivering') readyForHandover++;
+
+      const customerKey = normalizeCustomerName(vehicle.customerName);
+      if (customerKey) dashboardCustomerKeys.add(customerKey);
+    });
 
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
@@ -277,13 +295,13 @@ const Dashboard = () => {
 
     return {
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      inProgress,
+      ready,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
+      waitingParts,
+      diagnosis,
+      delivering,
+      readyForHandover,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
@@ -291,12 +309,13 @@ const Dashboard = () => {
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
+  const lowerQuery = searchQuery.toLowerCase();
   const filteredVehicles = dashboardVehicles.filter(vehicle => {
     const matchesSearch = 
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
+      vehicle.customerName?.toLowerCase().includes(lowerQuery) ||
+      vehicle.plateNumber?.toLowerCase().includes(lowerQuery) ||
+      vehicle.brand?.toLowerCase().includes(lowerQuery) ||
+      vehicle.model?.toLowerCase().includes(lowerQuery);
     
     const matchesStatus = filterStatus === 'all' || 
                          vehicle.status === filterStatus ||

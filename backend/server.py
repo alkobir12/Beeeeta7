@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import logging
-from typing import List, Optional
+from typing import List, Optional, Any
 from datetime import datetime, timedelta, timezone
 import uuid
 import json
@@ -451,6 +451,20 @@ logger = logging.getLogger(__name__)
 
 
 # ============ Helper Functions ============
+def calculate_estimated_total(parts: List[Any]) -> float:
+    """Calculates the estimated total for a vehicle from its parts and services list."""
+    total = 0.0
+    if not parts or not isinstance(parts, list):
+        return total
+    for item in parts:
+        if isinstance(item, dict):
+            # Support both 'price'/'quantity' and 'amount'
+            price = float(item.get("price", 0) or 0)
+            qty = float(item.get("quantity", item.get("qty", 1)) or 1)
+            total += price * qty
+    return total
+
+
 def generate_tracking_link():
     return f"TRK-{str(uuid.uuid4())[:8].upper()}"
 
@@ -550,18 +564,20 @@ async def create_vehicle(vehicle_data: VehicleCreate):
 async def get_vehicles():
     if DB_PROVIDER == "supabase":
         rows = supabase_service.vehicles_list()
-        # Ensure status has a default value if None
+        # Ensure status has a default value if None and calculate estimatedTotal
         for r in rows:
             if r.get("status") is None:
                 r["status"] = "diagnosis"
+            r["estimatedTotal"] = calculate_estimated_total(r.get("parts", []))
         return [Vehicle(**r) for r in rows]
 
     if DB_PROVIDER == "memory":
         rows = _mem_read("vehicles")
-        # Ensure status has a default value if None
+        # Ensure status has a default value if None and calculate estimatedTotal
         for r in rows:
             if r.get("status") is None:
                 r["status"] = "diagnosis"
+            r["estimatedTotal"] = calculate_estimated_total(r.get("parts", []))
         return [Vehicle(**r) for r in rows]
 
     # استخدام Projection وحد للحفاظ على الأداء في الإنتاج
@@ -575,19 +591,8 @@ async def get_vehicles():
     for v in vehicles:
         if v.get("status") is None:
             v["status"] = "diagnosis"
-        
-        # Calculate estimatedTotal from parts/services
-        estimated_total = 0
-        if v.get("parts") and isinstance(v.get("parts"), list):
-            for part in v["parts"]:
-                if isinstance(part, dict):
-                    # Sum up price * quantity for each part
-                    price = part.get("price", 0) or 0
-                    quantity = part.get("quantity", 1) or 1
-                    estimated_total += price * quantity
-        
-        v["estimatedTotal"] = estimated_total
-    
+        v["estimatedTotal"] = calculate_estimated_total(v.get("parts", []))
+
     return [Vehicle(**v) for v in vehicles]
 
 

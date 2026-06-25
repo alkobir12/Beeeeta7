@@ -9,6 +9,15 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
 
+const getServiceTypeLabel = (items = []) => {
+  const names = items
+    .map((item) => item.name || item.description)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!names.length) return 'غير محدد';
+  return names.join('، ');
+};
+
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
@@ -167,15 +176,6 @@ const Dashboard = () => {
     return parseVisitItems(visit.notes);
   };
 
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
-
   const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
 
   const loadVehicleSummary = async (vehicleId) => {
@@ -222,10 +222,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
     }
-  }, [vehicles]);
+  }, [expandedVehicleId]);
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
@@ -767,7 +767,7 @@ const Dashboard = () => {
                         className="px-2.5 py-0.5 rounded-full bg-slate-800/50 text-slate-200 text-[11px] font-semibold"
                         data-testid={`vehicle-service-type-${vehicle.id}`}
                       >
-                        نوع الخدمة: {serviceType}
+                        نوع الخدمة: {serviceType || getServiceTypeLabel(vehicle.parts || [])}
                       </span>
                       </div>
                       {isUrgent && (

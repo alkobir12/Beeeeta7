@@ -20,6 +20,7 @@ class VehicleBase(BaseModel):
     technicianId: Optional[str] = None
     technicianName: Optional[str] = None
     notes: Optional[str] = None
+    parts: List[Any] = []
 
 
 class VehicleCreate(VehicleBase):
@@ -35,7 +36,6 @@ class Vehicle(VehicleBase):
     completionDate: Optional[datetime] = None
     trackingLink: str
     images: List[str] = []  # URLs للصور
-    parts: List[Any] = []  # بنود مرتبطة (خدمات/قطع) أو IDs
     estimatedTotal: Optional[float] = None  # المبلغ التقديري المحسوب من البنود
 
     class Config:

@@ -9,6 +9,17 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
 
+const getServiceTypeLabel = (items = []) => {
+  const names = items
+    .map((item) => item.name || item.description)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!names.length) return 'غير محدد';
+  return names.join('، ');
+};
+
+const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
@@ -167,17 +178,6 @@ const Dashboard = () => {
     return parseVisitItems(visit.notes);
   };
 
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
-
-  const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
-
   const loadVehicleSummary = async (vehicleId) => {
     if (!vehicleId) return;
     if (vehicleSummaries[vehicleId] || vehicleSummaryLoading[vehicleId]) return;
@@ -222,10 +222,11 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
     }
-  }, [vehicles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandedVehicleId]);
 
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
@@ -250,19 +251,6 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
-
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
-
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
         normalizeCustomerName(entry.customer),
@@ -270,24 +258,47 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
-      (sum, key) => sum + (arLookup.get(key) || 0),
-      0
-    );
+    // Initial values
+    const s = {
+      totalVehicles: dashboardVehicles.length,
+      inProgress: 0,
+      ready: 0,
+      technicians: technicians.length,
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+      dashboardReceivables: 0,
+    };
+
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
+
+    // Single pass for performance
+    dashboardVehicles.forEach((v) => {
+      if (inProgressStatuses.has(v.status)) {
+        s.inProgress++;
+        const techKey = String(v.technicianId || v.technicianName || '').trim();
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+      if (v.status === 'ready') s.ready++;
+      if (v.status === 'waiting_for_parts') s.waitingParts++;
+      if (v.status === 'diagnosis') s.diagnosis++;
+      if (v.status === 'delivering') s.delivering++;
+      if (['ready', 'delivering'].includes(v.status)) s.readyForHandover++;
+
+      const custKey = normalizeCustomerName(v.customerName);
+      if (custKey && !dashboardCustomerKeys.has(custKey)) {
+        dashboardCustomerKeys.add(custKey);
+        s.dashboardReceivables += (arLookup.get(custKey) || 0);
+      }
+    });
 
     return {
-      totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
-      technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
+      ...s,
       busyTechnicians: busyTechnicianKeys.size,
       freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
       waitingPayment: totalAR,
-      dashboardReceivables,
     };
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
@@ -677,8 +688,10 @@ const Dashboard = () => {
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
+              // Use pre-calculated estimatedTotal from vehicle object as fallback
               const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+              // Use vehicle.parts as fallback for label before detailed summary loads
+              const serviceType = summary.serviceType || (vehicle.parts?.length ? getServiceTypeLabel(vehicle.parts) : 'غير محدد');
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

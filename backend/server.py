@@ -1739,38 +1739,32 @@ async def get_stats():
         first_day = datetime(now.year, now.month, 1)
 
         if DB_PROVIDER == "supabase":
-            # Get transactions for current month
-            transactions = supabase_service.transactions_list()
+            # Get transactions for current month efficiently
+            start_date = first_day.isoformat()
+            if now.month == 12:
+                next_month = datetime(now.year + 1, 1, 1)
+            else:
+                next_month = datetime(now.year, now.month + 1, 1)
+            end_date = next_month.isoformat()
 
-            # Calculate monthly stats
+            transactions = supabase_service.transactions_list(
+                start_date=start_date, end_date=end_date
+            )
+
+            # Calculate monthly stats from pre-filtered list
             monthly_income = sum(
-                t.get("amount", 0)
-                for t in transactions
-                if t.get("type") == "income"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
+                t.get("amount", 0) for t in transactions if t.get("type") == "income"
             )
             monthly_expenses = sum(
-                t.get("amount", 0)
-                for t in transactions
-                if t.get("type") == "expense"
-                and t.get("date", "").startswith(f"{now.year}-{now.month:02d}")
+                t.get("amount", 0) for t in transactions if t.get("type") == "expense"
             )
 
-            # Get vehicle stats
-            vehicles = supabase_service.vehicles_list()
-            active_vehicles = len(
-                [
-                    v
-                    for v in vehicles
-                    if v.get("status") not in ["delivered", "cancelled"]
-                ]
-            )
-
-            # Get customer count
-            customers = supabase_service.customers_list()
+            # Get optimized vehicle and customer counts
+            active_vehicles = supabase_service.vehicles_count_active()
+            total_customers = supabase_service.customers_count()
 
             return {
-                "totalCustomers": len(customers),
+                "totalCustomers": total_customers,
                 "activeVehicles": active_vehicles,
                 "thisMonth": {
                     "income": monthly_income,

@@ -147,6 +147,24 @@ class SupabaseService:
         )
         return [to_camel_vehicle(r) for r in (res.data or [])]
 
+    def vehicles_count_active(self) -> int:
+        """Fetch count of active vehicles (not delivered or cancelled) efficiently."""
+        if self.mock_mode:
+            return 0
+        try:
+            # We fetch only the 'id' column and use head=True to get only the count
+            res = (
+                self.client.table("vehicles")
+                .select("id", count="exact")
+                .not_.in_("status", ["delivered", "cancelled"])
+                .limit(0)  # Don't return any rows
+                .execute()
+            )
+            return res.count if res.count is not None else 0
+        except Exception as e:
+            print(f"Supabase active vehicles count error: {e}")
+            return 0
+
     def vehicles_create(self, api_doc: Dict[str, Any]) -> Dict[str, Any]:
         if self.mock_mode:
             return api_doc
@@ -450,6 +468,22 @@ class SupabaseService:
         }
 
     # -------------------- Customers --------------------
+    def customers_count(self) -> int:
+        """Fetch total customer count efficiently."""
+        if self.mock_mode:
+            return 0
+        try:
+            res = (
+                self.client.table("customers")
+                .select("id", count="exact")
+                .limit(0)
+                .execute()
+            )
+            return res.count if res.count is not None else 0
+        except Exception as e:
+            print(f"Supabase customers count error: {e}")
+            return 0
+
     def customers_list(self, search: Optional[str] = None) -> List[Dict[str, Any]]:
         if self.mock_mode:
             return []
@@ -908,7 +942,11 @@ class SupabaseService:
 
     # -------------------- Transactions --------------------
     def transactions_list(
-        self, type: Optional[str] = None, account_id: Optional[str] = None
+        self,
+        type: Optional[str] = None,
+        account_id: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         if self.mock_mode:
             return []
@@ -917,6 +955,10 @@ class SupabaseService:
             q = q.eq("type", type)
         if account_id:
             q = q.eq("account_id", account_id)
+        if start_date:
+            q = q.gte("date", start_date)
+        if end_date:
+            q = q.lt("date", end_date)
         res = q.order("date", desc=True).execute()
         rows = res.data or []
         return [

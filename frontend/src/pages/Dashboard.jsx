@@ -9,6 +9,49 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
 
+// --- Stateless Helper Functions Moved to Module Level ---
+const parseVisitItems = (notes) => {
+  if (!notes) return [];
+  try {
+    if (typeof notes === 'string') {
+      const parsed = JSON.parse(notes);
+      if (Array.isArray(parsed.items)) return parsed.items;
+      if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
+        return [...(parsed.services || []), ...(parsed.parts || [])];
+      }
+      return [];
+    }
+    if (typeof notes === 'object') {
+      if (Array.isArray(notes.items)) return notes.items;
+      if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
+        return [...(notes.services || []), ...(notes.parts || [])];
+      }
+      return [];
+    }
+  } catch (e) {
+    return [];
+  }
+  return [];
+};
+
+const getVisitItems = (visit) => {
+  if (!visit) return [];
+  if (Array.isArray(visit.items) && visit.items.length) return visit.items;
+  if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
+  return parseVisitItems(visit.notes);
+};
+
+const getServiceTypeLabel = (items = []) => {
+  const names = items
+    .map((item) => item.name || item.description)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!names.length) return 'غير محدد';
+  return names.join('، ');
+};
+
+const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
@@ -136,48 +179,6 @@ const Dashboard = () => {
     }
   }, [t, toast]);
 
-  const parseVisitItems = (notes) => {
-    if (!notes) return [];
-    try {
-      if (typeof notes === 'string') {
-        const parsed = JSON.parse(notes);
-        if (Array.isArray(parsed.items)) return parsed.items;
-        if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
-          return [...(parsed.services || []), ...(parsed.parts || [])];
-        }
-        return [];
-      }
-      if (typeof notes === 'object') {
-        if (Array.isArray(notes.items)) return notes.items;
-        if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
-          return [...(notes.services || []), ...(notes.parts || [])];
-        }
-        return [];
-      }
-    } catch (e) {
-      return [];
-    }
-    return [];
-  };
-
-  const getVisitItems = (visit) => {
-    if (!visit) return [];
-    if (Array.isArray(visit.items) && visit.items.length) return visit.items;
-    if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
-    return parseVisitItems(visit.notes);
-  };
-
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
-
-  const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
-
   const loadVehicleSummary = async (vehicleId) => {
     if (!vehicleId) return;
     if (vehicleSummaries[vehicleId] || vehicleSummaryLoading[vehicleId]) return;
@@ -221,17 +222,17 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
-    }
-  }, [vehicles]);
-
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const [expandedStatWidget, setExpandedStatWidget] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
   const [vehicleSummaries, setVehicleSummaries] = useState({});
   const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
+
+  useEffect(() => {
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
+    }
+  }, [expandedVehicleId]);
 
   const dashboardVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status !== 'delivered'),
@@ -250,19 +251,6 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
-
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
-
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
         normalizeCustomerName(entry.customer),
@@ -270,44 +258,73 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
-      (sum, key) => sum + (arLookup.get(key) || 0),
-      0
-    );
-
-    return {
+    const s = {
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      inProgress: 0,
+      ready: 0,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
-      busyTechnicians: busyTechnicianKeys.size,
-      freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+      busyTechnicians: 0,
+      freeTechnicians: 0,
       waitingPayment: totalAR,
-      dashboardReceivables,
+      dashboardReceivables: 0,
     };
+
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
+
+    dashboardVehicles.forEach((vehicle) => {
+      const status = vehicle.status;
+      const isInProgress = inProgressStatuses.has(status);
+
+      if (isInProgress) {
+        s.inProgress++;
+        const techKey = String(vehicle.technicianId || vehicle.technicianName || '').trim();
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') s.ready++;
+      if (status === 'waiting_for_parts') s.waitingParts++;
+      if (status === 'diagnosis') s.diagnosis++;
+      if (status === 'delivering') s.delivering++;
+      if (['ready', 'delivering'].includes(status)) s.readyForHandover++;
+
+      const custKey = normalizeCustomerName(vehicle.customerName);
+      if (custKey && !dashboardCustomerKeys.has(custKey)) {
+        dashboardCustomerKeys.add(custKey);
+        s.dashboardReceivables += (arLookup.get(custKey) || 0);
+      }
+    });
+
+    s.busyTechnicians = busyTechnicianKeys.size;
+    s.freeTechnicians = Math.max(technicians.length - s.busyTechnicians, 0);
+
+    return s;
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
-  const filteredVehicles = dashboardVehicles.filter(vehicle => {
-    const matchesSearch = 
-      vehicle.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredVehicles = useMemo(() => {
+    const lowerQuery = searchQuery.toLowerCase();
+    return dashboardVehicles.filter(vehicle => {
+      const matchesSearch =
+        vehicle.customerName?.toLowerCase().includes(lowerQuery) ||
+        vehicle.plateNumber?.toLowerCase().includes(lowerQuery) ||
+        vehicle.brand?.toLowerCase().includes(lowerQuery) ||
+        vehicle.model?.toLowerCase().includes(lowerQuery);
     
     const matchesStatus = filterStatus === 'all' || 
                          vehicle.status === filterStatus ||
                          (filterStatus === 'ready' && (vehicle.status === 'ready' || vehicle.status === 'delivered'));
 
-    // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
-    const matchesStatusFixed = filterStatus === 'approved'
-      ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
-      : matchesStatus;
-    return matchesSearch && matchesStatusFixed;
-  });
+      // عند اختيار "approved" نعرض أيضاً "quotation" (بعض البيانات القديمة محفوظة بهذا الاسم)
+      const matchesStatusFixed = filterStatus === 'approved'
+        ? (vehicle.status === 'approved' || vehicle.status === 'quotation' || vehicle.status === 'waiting_approval')
+        : matchesStatus;
+      return matchesSearch && matchesStatusFixed;
+    });
+  }, [dashboardVehicles, searchQuery, filterStatus]);
 
   const getStatusConfigForVehicle = (status) => STATUS_CONFIG[status] || STATUS_CONFIG.diagnosis;
 
@@ -677,8 +694,12 @@ const Dashboard = () => {
               const isUrgent = vehicle.priority === 'urgent' || vehicle.isUrgent;
               const summary = vehicleSummaries[vehicle.id] || {};
               const visitsCount = summary.visitsCount ?? vehicle.visitsCount ?? 0;
+
+              // Fallback to vehicle.estimatedTotal if summary not loaded yet
               const estimatedTotal = summary.estimatedTotal ?? vehicle.estimatedTotal ?? 0;
-              const serviceType = summary.serviceType || 'غير محدد';
+
+              // Fallback to vehicle.parts if summary not loaded yet
+              const serviceType = summary.serviceType || (vehicle.parts?.length ? getServiceTypeLabel(vehicle.parts) : 'غير محدد');
               return (
                 <div
                   key={`vehicle-${vehicle.id}`}

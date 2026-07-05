@@ -54,6 +54,7 @@ def to_snake_vehicle(api: Dict[str, Any]) -> Dict[str, Any]:
         "technician_id": clean_uuid(api.get("technicianId")),
         "technician_name": api.get("technicianName"),
         "notes": api.get("notes"),
+        "estimated_total": api.get("estimatedTotal"),
     }
 
 
@@ -82,6 +83,7 @@ def to_camel_vehicle(dbrow: Dict[str, Any]) -> Dict[str, Any]:
         "technicianId": dbrow.get("technician_id"),
         "technicianName": dbrow.get("technician_name"),
         "notes": dbrow.get("notes"),
+        "estimatedTotal": dbrow.get("estimated_total"),
     }
 
 

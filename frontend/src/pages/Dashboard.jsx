@@ -9,6 +9,49 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { resolveBackendBase } from '../utils/backendBase';
 
+// Helper functions hoisted to module level to prevent redundant re-allocation on each render.
+const parseVisitItems = (notes) => {
+  if (!notes) return [];
+  try {
+    if (typeof notes === 'string') {
+      const parsed = JSON.parse(notes);
+      if (Array.isArray(parsed.items)) return parsed.items;
+      if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
+        return [...(parsed.services || []), ...(parsed.parts || [])];
+      }
+      return [];
+    }
+    if (typeof notes === 'object') {
+      if (Array.isArray(notes.items)) return notes.items;
+      if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
+        return [...(notes.services || []), ...(notes.parts || [])];
+      }
+      return [];
+    }
+  } catch (e) {
+    return [];
+  }
+  return [];
+};
+
+const getVisitItems = (visit) => {
+  if (!visit) return [];
+  if (Array.isArray(visit.items) && visit.items.length) return visit.items;
+  if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
+  return parseVisitItems(visit.notes);
+};
+
+const getServiceTypeLabel = (items = []) => {
+  const names = items
+    .map((item) => item.name || item.description)
+    .filter(Boolean)
+    .slice(0, 3);
+  if (!names.length) return 'غير محدد';
+  return names.join('، ');
+};
+
+const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
   const { themeName } = useTheme();
@@ -33,9 +76,15 @@ const Dashboard = () => {
 
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
+  const [expandedStatWidget, setExpandedStatWidget] = useState(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const [vehicleSummaries, setVehicleSummaries] = useState({});
+  const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
   const isMountedRef = useRef(true);
   
-  const STATUS_CONFIG = {
+  // Memoize STATUS_CONFIG to prevent re-allocation while keeping it reactive to translations.
+  const STATUS_CONFIG = useMemo(() => ({
     diagnosis: { label: t('status.diagnosis'), color: 'text-orange-400 bg-orange-500/10 border border-orange-500/20', iconColor: 'text-orange-400' },
     quotation: { label: t('status.quotation'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
     approved: { label: t('status.approved'), color: 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/20', iconColor: 'text-yellow-400' },
@@ -47,36 +96,7 @@ const Dashboard = () => {
     delivered: { label: t('status.delivered'), color: 'text-gray-400 bg-gray-500/10 border border-gray-500/20', iconColor: 'text-gray-400' },
     waiting_for_parts: { label: t('status.waiting_for_parts'), color: 'text-amber-300 bg-amber-500/10 border border-amber-500/20', iconColor: 'text-amber-300' },
     delivering: { label: t('status.delivering'), color: 'text-teal-300 bg-teal-500/10 border border-teal-500/20', iconColor: 'text-teal-300' }
-  };
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    fetchData(true); // Initial load with loading indicator
-    
-    // Background refresh when returning to dashboard
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isMountedRef.current) {
-        fetchData(false); // Background refresh without loading indicator
-      }
-    };
-    
-    // Listen for vehicle updates from other pages
-    const handleVehicleUpdated = () => {
-      console.log('🔄 Vehicle updated - background refresh');
-      if (isMountedRef.current) {
-        fetchData(false);
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('vehicleUpdated', handleVehicleUpdated);
-    
-    return () => {
-      isMountedRef.current = false;
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('vehicleUpdated', handleVehicleUpdated);
-    };
-  }, []);
+  }), [t]);
 
   const fetchData = useCallback(async (showLoading = false) => {
     if (!isMountedRef.current) return;
@@ -134,49 +154,36 @@ const Dashboard = () => {
         setIsRefreshing(false);
       }
     }
-  }, [t, toast]);
+  }, [t, toast, API_URL, WORKSHOP_ID]);
 
-  const parseVisitItems = (notes) => {
-    if (!notes) return [];
-    try {
-      if (typeof notes === 'string') {
-        const parsed = JSON.parse(notes);
-        if (Array.isArray(parsed.items)) return parsed.items;
-        if (Array.isArray(parsed.services) || Array.isArray(parsed.parts)) {
-          return [...(parsed.services || []), ...(parsed.parts || [])];
-        }
-        return [];
+  useEffect(() => {
+    isMountedRef.current = true;
+    fetchData(true); // Initial load with loading indicator
+
+    // Background refresh when returning to dashboard
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isMountedRef.current) {
+        fetchData(false); // Background refresh without loading indicator
       }
-      if (typeof notes === 'object') {
-        if (Array.isArray(notes.items)) return notes.items;
-        if (Array.isArray(notes.services) || Array.isArray(notes.parts)) {
-          return [...(notes.services || []), ...(notes.parts || [])];
-        }
-        return [];
+    };
+
+    // Listen for vehicle updates from other pages
+    const handleVehicleUpdated = () => {
+      console.log('🔄 Vehicle updated - background refresh');
+      if (isMountedRef.current) {
+        fetchData(false);
       }
-    } catch (e) {
-      return [];
-    }
-    return [];
-  };
+    };
 
-  const getVisitItems = (visit) => {
-    if (!visit) return [];
-    if (Array.isArray(visit.items) && visit.items.length) return visit.items;
-    if (Array.isArray(visit.lineItems) && visit.lineItems.length) return visit.lineItems;
-    return parseVisitItems(visit.notes);
-  };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('vehicleUpdated', handleVehicleUpdated);
 
-  const getServiceTypeLabel = (items = []) => {
-    const names = items
-      .map((item) => item.name || item.description)
-      .filter(Boolean)
-      .slice(0, 3);
-    if (!names.length) return 'غير محدد';
-    return names.join('، ');
-  };
-
-  const normalizeCustomerName = (value) => (value || '').toString().trim().toLowerCase();
+    return () => {
+      isMountedRef.current = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('vehicleUpdated', handleVehicleUpdated);
+    };
+  }, [fetchData]);
 
   const loadVehicleSummary = async (vehicleId) => {
     if (!vehicleId) return;
@@ -221,17 +228,13 @@ const Dashboard = () => {
     }
   };
 
+  // Lazy load summary only when a vehicle card is expanded to prevent N+1 API calls on dashboard load.
   useEffect(() => {
-    if (vehicles.length) {
-      vehicles.forEach((v) => loadVehicleSummary(v.id));
+    if (expandedVehicleId) {
+      loadVehicleSummary(expandedVehicleId);
     }
-  }, [vehicles]);
-
-  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
-  const [expandedStatWidget, setExpandedStatWidget] = useState(null);
-  const [isHovering, setIsHovering] = useState(false);
-  const [vehicleSummaries, setVehicleSummaries] = useState({});
-  const [vehicleSummaryLoading, setVehicleSummaryLoading] = useState({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandedVehicleId]);
 
   const dashboardVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status !== 'delivered'),
@@ -250,19 +253,6 @@ const Dashboard = () => {
       'waiting_for_parts',
     ]);
 
-    const busyTechnicianKeys = new Set(
-      dashboardVehicles
-        .filter((vehicle) => inProgressStatuses.has(vehicle.status))
-        .map((vehicle) => String(vehicle.technicianId || vehicle.technicianName || '').trim())
-        .filter(Boolean)
-    );
-
-    const dashboardCustomerKeys = new Set(
-      dashboardVehicles
-        .map((vehicle) => normalizeCustomerName(vehicle.customerName))
-        .filter(Boolean)
-    );
-
     const arLookup = new Map(
       (arCustomers || []).map((entry) => [
         normalizeCustomerName(entry.customer),
@@ -270,25 +260,52 @@ const Dashboard = () => {
       ])
     );
 
-    const dashboardReceivables = [...dashboardCustomerKeys].reduce(
-      (sum, key) => sum + (arLookup.get(key) || 0),
-      0
-    );
-
-    return {
+    const result = {
       totalVehicles: dashboardVehicles.length,
-      inProgress: dashboardVehicles.filter((vehicle) => inProgressStatuses.has(vehicle.status)).length,
-      ready: dashboardVehicles.filter((vehicle) => vehicle.status === 'ready').length,
+      inProgress: 0,
+      ready: 0,
       technicians: technicians.length,
-      waitingParts: dashboardVehicles.filter((vehicle) => vehicle.status === 'waiting_for_parts').length,
-      diagnosis: dashboardVehicles.filter((vehicle) => vehicle.status === 'diagnosis').length,
-      delivering: dashboardVehicles.filter((vehicle) => vehicle.status === 'delivering').length,
-      readyForHandover: dashboardVehicles.filter((vehicle) => ['ready', 'delivering'].includes(vehicle.status)).length,
-      busyTechnicians: busyTechnicianKeys.size,
-      freeTechnicians: Math.max(technicians.length - busyTechnicianKeys.size, 0),
+      waitingParts: 0,
+      diagnosis: 0,
+      delivering: 0,
+      readyForHandover: 0,
+      busyTechnicians: 0,
+      freeTechnicians: 0,
       waitingPayment: totalAR,
-      dashboardReceivables,
+      dashboardReceivables: 0,
     };
+
+    const busyTechnicianKeys = new Set();
+    const dashboardCustomerKeys = new Set();
+
+    // Single pass $O(N)$ iteration over vehicles to calculate all counts and sets.
+    dashboardVehicles.forEach((vehicle) => {
+      const { status, technicianId, technicianName, customerName } = vehicle;
+
+      if (inProgressStatuses.has(status)) {
+        result.inProgress += 1;
+        const techKey = String(technicianId || technicianName || '').trim();
+        if (techKey) busyTechnicianKeys.add(techKey);
+      }
+
+      if (status === 'ready') result.ready += 1;
+      if (status === 'waiting_for_parts') result.waitingParts += 1;
+      if (status === 'diagnosis') result.diagnosis += 1;
+      if (status === 'delivering') result.delivering += 1;
+      if (status === 'ready' || status === 'delivering') result.readyForHandover += 1;
+
+      const normCustomer = normalizeCustomerName(customerName);
+      if (normCustomer) dashboardCustomerKeys.add(normCustomer);
+    });
+
+    result.busyTechnicians = busyTechnicianKeys.size;
+    result.freeTechnicians = Math.max(technicians.length - busyTechnicianKeys.size, 0);
+
+    dashboardCustomerKeys.forEach((key) => {
+      result.dashboardReceivables += (arLookup.get(key) || 0);
+    });
+
+    return result;
   }, [dashboardVehicles, technicians, totalAR, arCustomers]);
 
   const filteredVehicles = dashboardVehicles.filter(vehicle => {
@@ -767,7 +784,7 @@ const Dashboard = () => {
                         className="px-2.5 py-0.5 rounded-full bg-slate-800/50 text-slate-200 text-[11px] font-semibold"
                         data-testid={`vehicle-service-type-${vehicle.id}`}
                       >
-                        نوع الخدمة: {serviceType}
+                        نوع الخدمة: {serviceType || getServiceTypeLabel(vehicle.parts || [])}
                       </span>
                       </div>
                       {isUrgent && (
@@ -874,14 +891,14 @@ const Dashboard = () => {
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-slate-400 font-medium">{t('dashboard.estimatedCostLabel')}</span>
                         <span className="text-emerald-400 text-sm font-bold" data-testid={`vehicle-estimated-total-${vehicle.id}`}>
-                          {estimatedTotal
-                            ? estimatedTotal.toLocaleString(isRTL ? 'ar-SA' : 'en-US') + ` ${t('common.currency')}`
+                          {(estimatedTotal || vehicle.estimatedTotal || 0)
+                            ? (estimatedTotal || vehicle.estimatedTotal || 0).toLocaleString(isRTL ? 'ar-SA' : 'en-US') + ` ${t('common.currency')}`
                             : `0 ${t('common.currency')}`}
                         </span>
                       </div>
                       <div className="flex flex-col gap-1">
                         <span className="text-xs text-slate-400 font-medium">نوع الخدمة</span>
-                        <span className="text-slate-100 text-sm font-semibold" data-testid={`vehicle-service-type-expanded-${vehicle.id}`}>{serviceType}</span>
+                        <span className="text-slate-100 text-sm font-semibold" data-testid={`vehicle-service-type-expanded-${vehicle.id}`}>{serviceType || getServiceTypeLabel(vehicle.parts || [])}</span>
                         </div>
                       </div>
                     )}

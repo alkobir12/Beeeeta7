@@ -1,0 +1,3 @@
+## 2026-07-05 - Dashboard N+1 API and Rendering Optimization
+**Learning:** The dashboard was triggering N API calls (one for each vehicle) to fetch visits for summary data on mount, creating a significant network bottleneck. Additionally, calculating statistics using multiple filter passes on the vehicle list increased rendering time.
+**Action:** Implemented lazy loading for vehicle summaries triggered by expansion state. Refactored statistics into a single-pass O(N) iteration and hoisted helper functions to module level. Pre-calculated `estimatedTotal` on the backend to provide immediate UI fallbacks.

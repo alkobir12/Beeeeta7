@@ -20,6 +20,7 @@ class VehicleBase(BaseModel):
     technicianId: Optional[str] = None
     technicianName: Optional[str] = None
     notes: Optional[str] = None
+    parts: List[Any] = []
 
 
 class VehicleCreate(VehicleBase):
